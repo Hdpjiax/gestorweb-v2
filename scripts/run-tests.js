@@ -14,7 +14,8 @@ const tests = [
   ["renderer/monitor-view", "../tests/renderer/monitor-view.test.js"],
   ["renderer/schedules-view", "../tests/renderer/schedules-view.test.js"],
   ["renderer/browse-view", "../tests/renderer/browse-view.test.js"],
-  ["renderer/browser-corrections", "../tests/renderer/browser-corrections.test.js"]
+  ["renderer/browser-corrections", "../tests/renderer/browser-corrections.test.js"],
+  ["renderer/browser-shell-size", "../tests/renderer/browser-shell-size.test.js"]
 ];
 
 async function run() {
