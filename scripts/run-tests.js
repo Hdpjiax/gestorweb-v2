@@ -15,7 +15,8 @@ const tests = [
   ["renderer/schedules-view", "../tests/renderer/schedules-view.test.js"],
   ["renderer/browse-view", "../tests/renderer/browse-view.test.js"],
   ["renderer/browser-corrections", "../tests/renderer/browser-corrections.test.js"],
-  ["renderer/browser-shell-size", "../tests/renderer/browser-shell-size.test.js"]
+  ["renderer/browser-shell-size", "../tests/renderer/browser-shell-size.test.js"],
+  ["renderer/topbar-always", "../tests/renderer/topbar-always.test.js"]
 ];
 
 async function run() {
