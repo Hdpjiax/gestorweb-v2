@@ -19,3 +19,5 @@ export { renderInspectorAuthTab } from "./inspector-auth-tab.js";
 export { renderNewProfileModal, renderProfileAdvancedFields } from "./new-profile-modal-view.js";
 export { renderWelcomeModal } from "./welcome-modal-view.js";
 export { renderProxiesView, renderProxyRow, renderProxyBulk, renderProxyAdd } from "./proxies-view.js";
+export { renderProfileRow, toggleButton } from "./profile-row-view.js";
+export { renderInspectorActions } from "./inspector-actions-view.js";
