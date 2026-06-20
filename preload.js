@@ -2,63 +2,58 @@ const { contextBridge, ipcRenderer } = require("electron");
 
 const invoke = (channel, ...args) => ipcRenderer.invoke(channel, ...args);
 
-contextBridge.exposeInMainWorld("api", {
-  app: {
+contextBridge.exposeInMainWorld("api", Object.freeze({
+  app: Object.freeze({
     loadState: () => invoke("state:load"),
     saveState: (state) => invoke("state:save", state),
     openDataDir: () => invoke("app:openDataDir"),
     dbStats: () => invoke("app:dbStats"),
     healthcheck: () => invoke("app:healthcheck"),
     openExternal: (url) => invoke("app:openExternal", url)
-  },
-  browse: {
+  }),
+  browse: Object.freeze({
     prepareSession: (profile, proxy) => invoke("browse:prepareSession", profile, proxy),
     freshenMemory: (profileId) => invoke("browse:freshenMemory", profileId)
-  },
-  cookies: {
+  }),
+  cookies: Object.freeze({
     get: (profileId) => invoke("cookies:get", profileId),
     set: (profileId, cookies) => invoke("cookies:set", profileId, cookies),
     delete: (profileId, cookie) => invoke("cookies:delete", profileId, cookie),
     clear: (profileId) => invoke("cookies:clear", profileId)
-  },
-  license: {
+  }),
+  license: Object.freeze({
     hwid: () => invoke("license:hwid"),
     status: () => invoke("license:status"),
     claimByKey: (key) => invoke("license:claimByKey", key),
     install: (text) => invoke("license:install", text),
     ipcheck: () => invoke("license:ipcheck")
-  },
-  profiles: {
+  }),
+  profiles: Object.freeze({
     openWindow: (profile, proxy, url) => invoke("profiles:openWindow", profile, proxy, url),
     closeWindow: (profileId) => invoke("profiles:closeWindow", profileId),
     focusWindow: (profileId) => invoke("profiles:focusWindow", profileId),
     isWindowOpen: (profileId) => invoke("profiles:isWindowOpen", profileId),
     openPath: (profileId) => invoke("profiles:openPath", profileId)
-  },
-  proxies: {
+  }),
+  proxies: Object.freeze({
     check: (proxy) => invoke("proxies:check", proxy),
     checkAll: (proxies) => invoke("proxies:checkAll", proxies)
-  },
-  repeater: {
+  }),
+  repeater: Object.freeze({
     send: (request) => invoke("repeater:send", request)
-  },
-  security: {
+  }),
+  security: Object.freeze({
     status: () => invoke("security:status")
-  },
-  tor: {
+  }),
+  tor: Object.freeze({
     status: () => invoke("tor:status"),
     detect: () => invoke("tor:detect")
-  },
-  totp: {
+  }),
+  totp: Object.freeze({
     code: (secret) => invoke("totp:code", secret)
-  },
-  vault: {
+  }),
+  vault: Object.freeze({
     exportFile: (state) => invoke("vault:exportFile", state),
     importFile: () => invoke("vault:importFile")
-  },
-  on: (channel, callback) => {
-    const listener = (_event, payload) => callback(payload);
-    ipcRenderer.on(channel, listener);
-    return () => ipcRenderer.removeListener(channel, listener);
-  }
-});
+  })
+}));
