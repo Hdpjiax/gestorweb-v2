@@ -599,23 +599,34 @@ button:disabled {
   line-height: 1;
 }
 
-/* dot siempre visible */
+/* dot: color explícito por variante para evitar herencia de currentColor upstream */
 .pill::before {
   content: "";
   display: inline-block;
   width: 6px;
   height: 6px;
   border-radius: 999px;
-  background: currentColor;
   flex-shrink: 0;
+  background: var(--dim); /* fallback neutro */
 }
 
 .pill.live  { color: var(--live);   background: rgb(34 197 94 / 0.14); }
+.pill.live::before  { background: var(--live); }
+
 .pill.warn  { color: var(--warn);   background: rgb(245 158 11 / 0.13); }
+.pill.warn::before  { background: var(--warn); }
+
 .pill.danger{ color: var(--danger); background: rgb(248 113 113 / 0.12); }
+.pill.danger::before{ background: var(--danger); }
+
 .pill.dim   { color: var(--dim);    background: var(--bg-base); }
+.pill.dim::before   { background: var(--dim); }
+
 .pill.accent{ color: var(--accent); background: rgb(124 92 255 / 0.15); }
+.pill.accent::before{ background: var(--accent); }
+
 .pill.testing { color: var(--warn); background: rgb(245 158 11 / 0.13); }
+.pill.testing::before { background: var(--warn); }
 /* ─────────────────────────────────────────────────────────────────────── */
 
 .dot {
