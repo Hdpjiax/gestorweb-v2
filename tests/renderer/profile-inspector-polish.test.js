@@ -19,7 +19,7 @@ module.exports = async function profileInspectorPolishTests() {
   assert.match(css, /\.privacy-flag\.on/);
   assert.match(css, /\.inspector-actions/);
   assert.match(css, /test deteccion/);
-  assert.match(css, /borrar cookies|wipe/);
+  assert.match(css, /\.audit-row/);
 
   assert.match(js, /installProfileInspectorPolish/);
   assert.match(js, /lastInspectorScroll/);
