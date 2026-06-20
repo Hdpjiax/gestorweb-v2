@@ -1,0 +1,23 @@
+.browse-shell .browser-toolbar-reference .browser-profile-holder,
+.browse-shell .browser-toolbar-reference .browser-profile-chip,
+.browse-shell .browser-toolbar-reference .browser-go-btn,
+.browse-shell .browser-toolbar-reference .browser-tor-pill {
+  display: none !important;
+}
+
+.browse-shell .browser-profile-floating {
+  position: absolute;
+  left: 44px;
+  top: 50px;
+}
+
+.browse-shell .browser-profile-badge {
+  max-width: 118px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.browse-shell .browser-toolbar-reference {
+  flex-wrap: nowrap;
+}
