@@ -15,13 +15,14 @@ export function renderShell() {
     topbar: renderTopbar(),
     main: renderInfoView(state.view),
     overlays: renderLegacyOverlays(),
-    showInspector: false
+    showInspector: false,
+    viewClass: state.view === "browse" ? "browse-shell" : ""
   });
 }
 
-export function renderShellFrame({ sidebar = "", topbar = "", main = "", inspector = "", overlays = "", showInspector = false } = {}) {
+export function renderShellFrame({ sidebar = "", topbar = "", main = "", inspector = "", overlays = "", showInspector = false, viewClass = "" } = {}) {
   return `
-    <div class="app-shell ${showInspector ? "" : "no-inspector"}">
+    <div class="app-shell ${showInspector ? "" : "no-inspector"} ${viewClass}">
       ${sidebar}
       <div class="workspace">
         ${topbar}
