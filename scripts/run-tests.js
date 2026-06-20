@@ -10,7 +10,8 @@ const tests = [
   ["renderer/inspector-tabs", "../tests/renderer/inspector-tabs.test.js"],
   ["renderer/info-views", "../tests/renderer/info-views.test.js"],
   ["renderer/views-facade", "../tests/renderer/views-facade.test.js"],
-  ["renderer/shell-routing", "../tests/renderer/shell-routing.test.js"]
+  ["renderer/shell-routing", "../tests/renderer/shell-routing.test.js"],
+  ["renderer/monitor-view", "../tests/renderer/monitor-view.test.js"]
 ];
 
 async function run() {
