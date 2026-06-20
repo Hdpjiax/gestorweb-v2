@@ -54,7 +54,10 @@ function createWindow() {
     mainWindow = null;
   });
 }
-
+// Debe ser ANTES de app.whenReady() — después es no-op
+if (process.env.GW_TEST_USERDATA) {
+  app.setPath('userData', process.env.GW_TEST_USERDATA);
+}
 app.whenReady().then(() => {
   registerIpc(getMainWindow);
   createWindow();
