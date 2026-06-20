@@ -10,13 +10,17 @@
   height: 44px;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   padding: 6px 12px;
   background: #0b1017;
   border-bottom: 1px solid #1d2a3d;
   overflow: visible;
   position: relative;
   z-index: 60;
+}
+
+.browse-shell .clean-nav-btn {
+  color: #67758a;
 }
 
 .browse-shell .clean-url-bar {
@@ -30,6 +34,7 @@
   border-radius: 7px;
   background: #101927;
   padding: 0 11px;
+  margin-left: 4px;
 }
 
 .browse-shell .clean-url-bar:focus-within {
