@@ -17,6 +17,7 @@ function createElement(tagName) {
     children: [],
     attributes: {},
     dataset: {},
+    id: "",
     className: "",
     classList: createClassList(),
     textContent: "",
@@ -31,6 +32,7 @@ function createElement(tagName) {
     },
     setAttribute(name, value) {
       this.attributes[name] = String(value);
+      if (name === "id") this.id = String(value);
       if (name === "class") this.className = String(value);
       if (name.startsWith("data-")) {
         const key = name.slice(5).replace(/-([a-z])/g, (_, letter) => letter.toUpperCase());
@@ -38,6 +40,7 @@ function createElement(tagName) {
       }
     },
     getAttribute(name) {
+      if (name === "id") return this.id || null;
       return this.attributes[name] || null;
     },
     querySelectorAll() {
@@ -57,7 +60,7 @@ module.exports = async function uxPolishTests() {
     body,
     documentElement,
     createElement,
-    getElementById: (id) => head.children.find((child) => child.attributes.id === id) || null,
+    getElementById: (id) => head.children.find((child) => child.id === id || child.attributes.id === id) || null,
     querySelector: () => null,
     querySelectorAll: () => [],
     addEventListener: (event, handler) => {
@@ -77,7 +80,7 @@ module.exports = async function uxPolishTests() {
   installUxPolish();
 
   assert.equal(head.children.length, 1);
-  assert.equal(head.children[0].attributes.id, "gestor-ux-polish");
+  assert.equal(head.children[0].id, "gestor-ux-polish");
   assert.match(head.children[0].textContent, /prefers-reduced-motion/);
 
   listeners.keydown[0]({ key: "Tab" });
