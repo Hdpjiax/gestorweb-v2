@@ -7,26 +7,17 @@ const {
   partitionFor,
   sessionFor,
   profileDir,
-  preloadFileFor,
   writeFingerprintPreload,
   findGestorBrowser,
-  addonPaths,
-  writeJson,
-  readJson,
-  stateFile
+  addonPaths
 } = require("./utils");
 const { proxyRulesFor } = require("./proxies");
 
 const profileWindows = new Map();
 
-// Referencia a la ventana principal — se inyecta desde ipc.js antes de abrir
-// cualquier perfil para poder enviar eventos al renderer.
 let _mainWindowRef = null;
-function setMainWindowRef(ref) {
-  _mainWindowRef = ref;
-}
+function setMainWindowRef(ref) { _mainWindowRef = ref; }
 
-// Notifica al renderer principal que un perfil cerró su ventana/proceso.
 function notifyProfileClosed(profileId) {
   try {
     const win = typeof _mainWindowRef === "function" ? _mainWindowRef() : _mainWindowRef;
@@ -36,6 +27,7 @@ function notifyProfileClosed(profileId) {
   } catch {}
 }
 
+// ─── Firefox user.js ──────────────────────────────────────────────────────────
 function writeFirefoxProfilePrefs(profile, proxy) {
   const fp = profile.fingerprint || {};
   const dir = profileDir(profile.id);
@@ -71,7 +63,7 @@ function writeFirefoxProfilePrefs(profile, proxy) {
     add("network.proxy.socks_remote_dns", true);
   } else if (proxy?.host && proxy?.port) {
     add("network.proxy.type", 1);
-    if (String(proxy.scheme).startsWith("socks")) {
+    if (String(proxy.scheme || "").startsWith("socks")) {
       add("network.proxy.socks", proxy.host);
       add("network.proxy.socks_port", Number(proxy.port));
       add("network.proxy.socks_version", proxy.scheme === "socks4" ? 4 : 5);
@@ -82,9 +74,7 @@ function writeFirefoxProfilePrefs(profile, proxy) {
       add("network.proxy.ssl", proxy.host);
       add("network.proxy.ssl_port", Number(proxy.port));
     }
-    if (proxy.username || proxy.password) {
-      add("signon.autologin.proxy", true);
-    }
+    if (proxy.username || proxy.password) add("signon.autologin.proxy", true);
   } else {
     add("network.proxy.type", 0);
   }
@@ -92,6 +82,7 @@ function writeFirefoxProfilePrefs(profile, proxy) {
   return dir;
 }
 
+// ─── Camoufox config ──────────────────────────────────────────────────────────
 function camouConfig(profile, proxy) {
   const fp = profile.fingerprint || {};
   const width = fp.resolution?.width || 1920;
@@ -163,44 +154,7 @@ function camouConfig(profile, proxy) {
   return config;
 }
 
-function injectCursorAndSpoof(win, profile) {
-  win.webContents.on("did-finish-load", () => {
-    // Sin margin-left/top: el transform ya posiciona el centro del dot
-    // en (clientX - half, clientY - half) restando el radio en el propio translate.
-    win.webContents.insertCSS(`
-      #gw-cursor-dot {
-        position: fixed;
-        z-index: 2147483647;
-        width: 10px;
-        height: 10px;
-        border-radius: 999px;
-        background: #ef4444;
-        pointer-events: none;
-        box-shadow: 0 0 0 3px rgba(239,68,68,.30), 0 0 14px rgba(239,68,68,.70);
-        transform: translate(-9999px, -9999px);
-        will-change: transform;
-      }
-    `).catch(() => {});
-
-    win.webContents.executeJavaScript(`
-      (() => {
-        let dot = document.getElementById('gw-cursor-dot');
-        if (!dot) {
-          dot = document.createElement('div');
-          dot.id = 'gw-cursor-dot';
-          // Adjuntar al body cuando esté listo, o al documentElement
-          (document.body || document.documentElement).appendChild(dot);
-        }
-        // Restar la mitad del tamaño (5px) directamente en el translate
-        // para que el centro del dot quede exactamente bajo el cursor.
-        window.addEventListener('mousemove', (e) => {
-          dot.style.transform = 'translate(' + (e.clientX - 5) + 'px,' + (e.clientY - 5) + 'px)';
-        }, { passive: true, capture: true });
-      })();
-    `).catch(() => {});
-  });
-}
-
+// ─── Chromium window ──────────────────────────────────────────────────────────
 async function openChromiumWindow(profile, proxy, startUrl) {
   await prepareSession(profile, proxy);
   const fp = profile.fingerprint || {};
@@ -218,7 +172,6 @@ async function openChromiumWindow(profile, proxy, startUrl) {
       sandbox: true
     }
   });
-  injectCursorAndSpoof(win, profile);
   await win.loadURL(startUrl);
   win.on("closed", () => {
     profileWindows.delete(profile.id);
@@ -228,6 +181,7 @@ async function openChromiumWindow(profile, proxy, startUrl) {
   return { ok: true, mode: "chromium", id: profile.id };
 }
 
+// ─── Firefox window ───────────────────────────────────────────────────────────
 async function openFirefoxWindow(profile, proxy, startUrl) {
   const browserPath = findGestorBrowser();
   if (!browserPath) return openChromiumWindow(profile, proxy, startUrl);
@@ -248,6 +202,7 @@ async function openFirefoxWindow(profile, proxy, startUrl) {
   return { ok: true, mode: "firefox", pid: child.pid, id: profile.id, browserPath };
 }
 
+// ─── Dispatcher ───────────────────────────────────────────────────────────────
 async function openProfileWindow(profile, proxy, startUrl) {
   if (!profile?.id) return { ok: false, error: "missing profile" };
   const existing = profileWindows.get(profile.id);
@@ -256,7 +211,9 @@ async function openProfileWindow(profile, proxy, startUrl) {
     return { ok: true, reused: true, mode: existing.type };
   }
   const url = startUrl || profile.url || (profile.tor_mode ? "https://check.torproject.org/" : "https://duckduckgo.com/");
-  return profile.gw_engine !== false ? openFirefoxWindow(profile, proxy, url) : openChromiumWindow(profile, proxy, url);
+  return profile.gw_engine !== false
+    ? openFirefoxWindow(profile, proxy, url)
+    : openChromiumWindow(profile, proxy, url);
 }
 
 function closeProfileWindow(profileId) {
@@ -278,51 +235,44 @@ function focusProfileWindow(profileId) {
     return { ok: true };
   }
   if (item.type === "firefox" && item.child?.pid) {
-    spawn("powershell.exe", ["-NoProfile", "-Command", `$wshell = New-Object -ComObject wscript.shell; $wshell.AppActivate(${item.child.pid}) | Out-Null`], { windowsHide: true });
+    spawn("powershell.exe", ["-NoProfile", "-Command",
+      `$wshell = New-Object -ComObject wscript.shell; $wshell.AppActivate(${item.child.pid}) | Out-Null`
+    ], { windowsHide: true });
     return { ok: true };
   }
   return { ok: false };
 }
 
-// Mapa para rastrear si una sesión ya tiene handlers registrados.
-// Evita duplicar onBeforeRequest / onBeforeSendHeaders / onAuthRequired
-// cuando prepareSession se llama múltiples veces para el mismo perfil.
+// ─── Session / proxy setup ────────────────────────────────────────────────────
+// WeakSet: registra handlers de webRequest solo una vez por sesión particionada.
 const _sessionHandlersRegistered = new WeakSet();
+// WeakMap: almacena las credenciales de proxy activas por sesión.
+const _sessionProxyCreds = new WeakMap();
 
 async function prepareSession(profile, proxy) {
   if (!profile?.id) return { ok: false, error: "missing profile id" };
   const ses = sessionFor(profile.id);
   const fp = profile.fingerprint || {};
   const preload = writeFingerprintPreload(profile);
-  try {
-    ses.setUserAgent(fp.userAgent || "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:135.0) Gecko/20100101 Firefox/135.0", fp.locale || "es-MX");
-  } catch {}
-  try {
-    if (typeof ses.setPreloads === "function") ses.setPreloads([preload]);
-  } catch {}
 
-  const proxyRules = proxyRulesFor(profile, proxy);
+  // User-Agent y preload
+  try { ses.setUserAgent(fp.userAgent || "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:135.0) Gecko/20100101 Firefox/135.0", fp.locale || "es-MX"); } catch {}
+  try { if (typeof ses.setPreloads === "function") ses.setPreloads([preload]); } catch {}
+
   const hasProxy = !!(proxy?.host && proxy?.port) || !!profile.tor_mode;
   const hasProxyCreds = !!(proxy?.username || proxy?.password);
 
-  // ── Verificación de certificados ─────────────────────────────────────────
-  // Proxies residenciales/datacenter hacen intercepción TLS con CA propia.
-  // Desactivamos la verificación SOLO en la sesión particionada del perfil
-  // (persist:profile-X), no en la sesión por defecto de la app.
-  // Cuando no hay proxy, restauramos el comportamiento nativo (null).
+  // 1. Certificados — ANTES de setProxy para que aplique al handshake TLS
+  //    del proxy mismo. Solo en la sesión particionada del perfil.
   if (hasProxy) {
     ses.setCertificateVerifyProc((_req, cb) => cb(0));
   } else {
     ses.setCertificateVerifyProc(null);
   }
 
-  // ── Proxy ─────────────────────────────────────────────────────────────────
-  // setProxy siempre se re-aplica (puede cambiar entre llamadas).
-  // onAuthRequired también se re-aplica: null limpia el handler previo.
+  // 2. Proxy — setProxy es async y siempre se re-aplica (puede cambiar entre llamadas).
   try {
     if (hasProxy) {
-      // Construir regla limpia: solo scheme://host:port sin credenciales
-      // (las credenciales van en onAuthRequired, no en la URL de proxy).
       let cleanRules;
       if (profile.tor_mode) {
         cleanRules = "socks5://127.0.0.1:9050";
@@ -331,49 +281,44 @@ async function prepareSession(profile, proxy) {
         cleanRules = `${scheme}://${proxy.host}:${proxy.port}`;
       }
       await ses.setProxy({ proxyRules: cleanRules, proxyBypassRules: "<-loopback>" });
-
-      // Credenciales de proxy — null primero para limpiar handler anterior
-      ses.webRequest.onAuthRequired(null);
-      if (hasProxyCreds) {
-        ses.webRequest.onAuthRequired((details, callback) => {
-          // Solo responder a autenticación de proxy, no a basic-auth de sitios
-          if (!details.isProxy) return callback({});
-          callback({
-            authCredentials: {
-              username: String(proxy.username || ""),
-              password: String(proxy.password || "")
-            }
-          });
-        });
-      }
     } else {
       await ses.setProxy({ proxyRules: "direct://", proxyBypassRules: "<-loopback>" });
-      ses.webRequest.onAuthRequired(null);
     }
   } catch (e) {
     console.error("[windows] setProxy error:", e.message);
   }
 
-  // ── Handlers de request — registrar solo UNA VEZ por sesión ──────────────
-  // onBeforeRequest y onBeforeSendHeaders no tienen API de "remove" en Electron;
-  // si se llaman múltiples veces se encadenan. Usamos WeakSet para garantizar
-  // que solo se registren la primera vez que se prepara la sesión.
+  // 3. Credenciales de proxy — se guardan en WeakMap y se leen en el listener
+  //    'login' del Session, que es la API correcta en Electron (no webRequest).
+  //    El listener se registra solo la primera vez; las creds se actualizan vía WeakMap.
+  if (hasProxyCreds) {
+    _sessionProxyCreds.set(ses, { username: proxy.username || "", password: proxy.password || "" });
+  } else {
+    _sessionProxyCreds.delete(ses);
+  }
+
   if (!_sessionHandlersRegistered.has(ses)) {
     _sessionHandlersRegistered.add(ses);
 
+    // Credenciales de proxy: se responde solo cuando authInfo.isProxy === true.
+    ses.on("login", (_event, _webContents, authInfo, callback) => {
+      if (!authInfo.isProxy) return callback("", "");
+      const creds = _sessionProxyCreds.get(ses);
+      if (creds) callback(creds.username, creds.password);
+      else callback("", "");
+    });
+
+    // Bloqueo de trackers y limpieza de UTMs
     ses.webRequest.onBeforeRequest((details, callback) => {
       try {
         const url = new URL(details.url);
         if (profile.block_trackers && TRACKER_HOSTS.some((host) =>
           details.url.includes(host) || url.hostname.includes(host)
-        )) {
-          callback({ cancel: true });
-          return;
-        }
+        )) { callback({ cancel: true }); return; }
         if (profile.strip_tracking_params) {
           const before = url.toString();
           ["utm_source", "utm_medium", "utm_campaign", "utm_term", "utm_content",
-           "fbclid", "gclid", "msclkid"].forEach((key) => url.searchParams.delete(key));
+           "fbclid", "gclid", "msclkid"].forEach((k) => url.searchParams.delete(k));
           const after = url.toString();
           if (after !== before) { callback({ redirectURL: after }); return; }
         }
@@ -381,29 +326,22 @@ async function prepareSession(profile, proxy) {
       callback({});
     });
 
+    // Headers de fingerprint
     ses.webRequest.onBeforeSendHeaders((details, callback) => {
       const headers = { ...details.requestHeaders };
-      const fp = profile.fingerprint || {};
       if (fp.userAgent) headers["User-Agent"] = fp.userAgent;
-      if (fp.locale) {
-        headers["Accept-Language"] =
-          `${fp.locale},${String(fp.locale).split("-")[0]};q=0.9,en;q=0.7`;
-      }
+      if (fp.locale) headers["Accept-Language"] = `${fp.locale},${String(fp.locale).split("-")[0]};q=0.9,en;q=0.7`;
       if (profile.sanitize_headers) {
-        Object.keys(headers).forEach((key) => {
-          if (key.toLowerCase().startsWith("sec-ch-ua")) delete headers[key];
-        });
+        Object.keys(headers).forEach((k) => { if (k.toLowerCase().startsWith("sec-ch-ua")) delete headers[k]; });
       }
       if (profile.strict_referer) {
-        Object.keys(headers).forEach((key) => {
-          if (key.toLowerCase() === "referer") delete headers[key];
-        });
+        Object.keys(headers).forEach((k) => { if (k.toLowerCase() === "referer") delete headers[k]; });
       }
       callback({ requestHeaders: headers });
     });
   }
 
-  return { ok: true, partition: partitionFor(profile.id), proxyRules, preload };
+  return { ok: true, partition: partitionFor(profile.id), proxyRules: hasProxy ? "set" : "direct", preload };
 }
 
 module.exports = {
