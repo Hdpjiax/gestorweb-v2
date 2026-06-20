@@ -32,6 +32,11 @@ const {
   sanitizeRepeaterRequest,
   sanitizeTotpSecret
 } = require("./security");
+const {
+  createDefaultState,
+  migrateState,
+  prepareStateForSave
+} = require("./state-schema");
 
 function base32ToBuffer(secret) {
   const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
@@ -82,6 +87,20 @@ async function repeaterSend(request) {
   });
 }
 
+function loadAppState() {
+  const raw = readJson(stateFile(), null);
+  const state = migrateState(raw || createDefaultState());
+  writeJson(stateFile(), state);
+  return state;
+}
+
+function saveAppState(rawState) {
+  assertJsonSize(rawState || {});
+  const state = prepareStateForSave(rawState || {});
+  writeJson(stateFile(), state);
+  return state;
+}
+
 function resolveWindow(mainWindowRef) {
   if (typeof mainWindowRef === "function") return mainWindowRef();
   return mainWindowRef || null;
@@ -103,17 +122,25 @@ function sanitizeProfile(profile) {
 function registerIpc(mainWindowRef) {
   const getDialogWindow = () => resolveWindow(mainWindowRef);
 
-  ipcMain.handle("state:load", () => readJson(stateFile(), null));
+  ipcMain.handle("state:load", () => loadAppState());
   ipcMain.handle("state:save", (_event, state) => {
-    assertJsonSize(state || {});
-    writeJson(stateFile(), state || {});
+    saveAppState(state);
     return { ok: true };
   });
   ipcMain.handle("app:openDataDir", () => shell.openPath(dataDir()));
   ipcMain.handle("app:dbStats", () => {
     const file = stateFile();
+    const backup = `${file}.bak`;
     const exists = fs.existsSync(file);
-    return { dataDir: dataDir(), stateFile: file, bytes: exists ? fs.statSync(file).size : 0 };
+    const backupExists = fs.existsSync(backup);
+    return {
+      dataDir: dataDir(),
+      stateFile: file,
+      backupFile: backup,
+      bytes: exists ? fs.statSync(file).size : 0,
+      backupBytes: backupExists ? fs.statSync(backup).size : 0,
+      schemaVersion: loadAppState().schema_version
+    };
   });
   ipcMain.handle("app:healthcheck", () => ({ ok: true, electron: process.versions.electron, chrome: process.versions.chrome }));
   ipcMain.handle("app:openExternal", async (_event, url) => {
@@ -171,7 +198,7 @@ function registerIpc(mainWindowRef) {
     return ses.cookies.get({});
   });
   ipcMain.handle("license:hwid", () => getHwid());
-  ipcMain.handle("license:status", () => ({ hwid: getHwid(), active: !!readJson(stateFile(), {})?.license?.active }));
+  ipcMain.handle("license:status", () => ({ hwid: getHwid(), active: !!loadAppState()?.license?.active }));
   ipcMain.handle("license:claimByKey", (_event, key) => ({ active: /^GW-/i.test(String(key || "")), hwid: getHwid() }));
   ipcMain.handle("license:install", (_event, text) => ({ active: !!String(text || "").trim(), hwid: getHwid() }));
   ipcMain.handle("license:ipcheck", async () => {
@@ -181,7 +208,7 @@ function registerIpc(mainWindowRef) {
   ipcMain.handle("profiles:openWindow", (_event, profile, proxy, url) => openProfileWindow(sanitizeProfile(profile), proxy, safeProfileUrl(url)));
   ipcMain.handle("profiles:closeWindow", async (_event, profileId) => {
     const id = assertProfileId(profileId);
-    const state = readJson(stateFile(), {});
+    const state = loadAppState();
     const profile = state.profiles?.find((p) => String(p.id) === String(id));
     if (profile?.auto_wipe_close) {
       await sessionFor(id).clearStorageData({ storages: ["cookies", "cachestorage", "indexeddb", "localStorage", "sessionStorage"] });
@@ -212,10 +239,11 @@ function registerIpc(mainWindowRef) {
   ipcMain.handle("tor:detect", () => checkProxy({ host: "127.0.0.1", port: 9050, scheme: "socks5" }));
   ipcMain.handle("totp:code", (_event, secret) => totpCode(secret));
   ipcMain.handle("vault:exportFile", async (_event, state) => {
-    assertJsonSize(state || {});
+    const exportState = prepareStateForSave(state || {});
+    assertJsonSize(exportState);
     const result = await dialog.showSaveDialog(getDialogWindow(), { defaultPath: "gestor-web-vault.json", filters: [{ name: "JSON", extensions: ["json"] }] });
     if (result.canceled || !result.filePath) return { canceled: true };
-    writeJson(result.filePath, state || {});
+    writeJson(result.filePath, exportState);
     return { canceled: false, filePath: result.filePath };
   });
   ipcMain.handle("vault:importFile", async () => {
@@ -223,9 +251,9 @@ function registerIpc(mainWindowRef) {
     if (result.canceled || !result.filePaths[0]) return { canceled: true };
     const filePath = result.filePaths[0];
     if (fs.statSync(filePath).size > MAX_STATE_BYTES) return { canceled: true, error: "file_too_large" };
-    const state = readJson(filePath, null);
-    if (state) assertJsonSize(state);
-    return { canceled: false, state, filePath };
+    const imported = readJson(filePath, null);
+    if (imported) assertJsonSize(imported);
+    return { canceled: false, state: imported ? migrateState(imported) : null, filePath };
   });
 }
 
