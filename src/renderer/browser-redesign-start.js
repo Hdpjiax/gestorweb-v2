@@ -6,6 +6,12 @@ import "./browser-soft-fonts.js";
 
 const DEFAULT_SEARCH_HOME = "https://duckduckgo.com/";
 
+function openDefaultBrowserTab() {
+  ui.browserUrl = DEFAULT_SEARCH_HOME;
+  const go = document.querySelector('[data-action="browser-go"]');
+  if (go && !go.disabled) go.click();
+}
+
 function installBrowserProfileGuard() {
   document.addEventListener("change", (event) => {
     if (event.target?.id !== "browserProfile") return;
@@ -25,16 +31,24 @@ function installBrowserProfileGuard() {
       event.preventDefault();
       event.stopImmediatePropagation();
       alert("Primero selecciona un perfil para abrir el navegador.");
+      return;
+    }
+    if (action === "browser-new-tab") {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      openDefaultBrowserTab();
     }
   }, true);
 
   document.addEventListener("keydown", (event) => {
     if (!(event.ctrlKey && event.key.toLowerCase() === "t")) return;
+    event.preventDefault();
+    event.stopImmediatePropagation();
     if (!ui.browserProfileId) {
-      event.preventDefault();
-      event.stopImmediatePropagation();
       alert("Primero selecciona un perfil para abrir el navegador.");
+      return;
     }
+    openDefaultBrowserTab();
   }, true);
 }
 
