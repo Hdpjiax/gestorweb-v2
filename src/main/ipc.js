@@ -65,11 +65,11 @@ function totpCode(secret) {
   return { code, secondsLeft: step - (now % step) };
 }
 
-async function repeaterSend(request) {
+function requestWithNet(request, requestSession = null) {
   const safeRequest = sanitizeRepeaterRequest(request);
   return new Promise((resolve) => {
     const started = Date.now();
-    const req = electronNet.request({ method: safeRequest.method, url: safeRequest.url });
+    const req = electronNet.request({ method: safeRequest.method, url: safeRequest.url, session: requestSession || undefined });
     for (const [key, value] of Object.entries(safeRequest.headers || {})) req.setHeader(key, value);
     const chunks = [];
     req.on("response", (res) => {
@@ -85,6 +85,16 @@ async function repeaterSend(request) {
     if (safeRequest.body) req.write(safeRequest.body);
     req.end();
   });
+}
+
+function repeaterSend(request) {
+  return requestWithNet(request);
+}
+
+async function profileIpCheck(profileId) {
+  const id = assertProfileId(profileId);
+  const result = await requestWithNet({ method: "GET", url: "https://api.ipify.org?format=json" }, sessionFor(id));
+  try { return JSON.parse(result.body); } catch { return { ip: null, raw: result.body }; }
 }
 
 function loadAppState() {
@@ -150,6 +160,7 @@ function registerIpc(mainWindowRef) {
     return { ok: true };
   });
   ipcMain.handle("browse:prepareSession", (_event, profile, proxy) => prepareSession(sanitizeProfile(profile), proxy));
+  ipcMain.handle("browse:ipcheck", (_event, profileId) => profileIpCheck(profileId));
   ipcMain.handle("browse:freshenMemory", async (_event, profileId) => {
     const id = assertProfileId(profileId);
     await sessionFor(id).clearStorageData({ storages: ["appcache", "shadercache", "serviceworkers", "cachestorage"] });
@@ -244,7 +255,7 @@ function registerIpc(mainWindowRef) {
     const result = await dialog.showSaveDialog(getDialogWindow(), { defaultPath: "gestor-web-vault.json", filters: [{ name: "JSON", extensions: ["json"] }] });
     if (result.canceled || !result.filePath) return { canceled: true };
     writeJson(result.filePath, exportState);
-    return { canceled: false, filePath: result.filePath };
+    return { canceled: false, filePath };
   });
   ipcMain.handle("vault:importFile", async () => {
     const result = await dialog.showOpenDialog(getDialogWindow(), { filters: [{ name: "JSON", extensions: ["json"] }], properties: ["openFile"] });
