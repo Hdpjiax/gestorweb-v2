@@ -16,6 +16,7 @@ module.exports = async function browseViewTests() {
   const shell = read("src/renderer/views/shell-view.js");
   const facade = read("src/renderer/views/index.js");
   const polish = read("src/renderer/browser-polish.css");
+  const start = read("src/renderer/browser-redesign-start.js");
   const index = read("index.html");
 
   assert.match(browse, /export function renderBrowseView/);
@@ -25,7 +26,7 @@ module.exports = async function browseViewTests() {
   assert.match(browse, /renderBrowserEmpty/);
   assert.match(browse, /ensureBrowserIp/);
 
-  assert.match(tabs, /browser-new-tab|quick-open/);
+  assert.match(tabs, /browser-new-tab/);
   assert.match(tabs, /activate-browser-tab/);
   assert.match(tabs, /close-browser-tab/);
 
@@ -44,6 +45,10 @@ module.exports = async function browseViewTests() {
   assert.match(polish, /browser-empty-card/);
   assert.match(polish, /browser-toolbar-pro/);
   assert.match(index, /browser-polish\.css/);
+
+  assert.match(start, /DEFAULT_SEARCH_HOME/);
+  assert.match(start, /duckduckgo\.com/);
+  assert.match(start, /Primero selecciona un perfil/);
 
   assert.match(router, /renderBrowseView/);
   assert.match(router, /view === "browse"/);
