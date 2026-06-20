@@ -32,7 +32,7 @@ Este comando revisa todos los archivos `.js` del repositorio, incluyendo `main.j
 npm test
 ```
 
-Ejecuta pruebas unitarias ligeras para validadores de seguridad, helpers del renderer y parser de proxies.
+Ejecuta pruebas unitarias ligeras para validadores de seguridad, helpers del renderer, parser de proxies y pulido UX.
 
 ## QA completo
 
@@ -77,7 +77,18 @@ El instalador se genera en la carpeta `dist/`.
 - Pruebas de seguridad en `tests/main/security.test.js`.
 - Pruebas de helpers en `tests/renderer/helpers.test.js`.
 - Pruebas de parser de proxies en `tests/renderer/proxy-parser.test.js`.
+- Pruebas de pulido UX en `tests/renderer/ux-polish.test.js`.
 - Checklist manual en `QA_SMOKE_TEST.md`.
+
+## UI / UX implementado
+
+- Capa visual no invasiva en `src/renderer/ux-polish.js`.
+- Foco visible para navegacion por teclado.
+- Etiquetas accesibles automaticas para botones.
+- Roles basicos para modales y paleta.
+- Microinteracciones en botones, filas, tarjetas y modales.
+- Respeto a `prefers-reduced-motion`.
+- Guia de mantenimiento en `UI_UX_GUIDE.md`.
 
 ## Pendiente tecnico
 
