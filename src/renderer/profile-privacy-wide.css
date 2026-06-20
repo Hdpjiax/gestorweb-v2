@@ -1,0 +1,129 @@
+/* Final spacing tune for Privacy: wider cards, smaller side margins, slightly larger fine text. */
+.inspector {
+  width: 420px !important;
+  min-width: 420px !important;
+  max-width: 420px !important;
+}
+
+.inspector .inspector-head,
+.inspector-head {
+  padding-left: 14px !important;
+  padding-right: 14px !important;
+}
+
+.inspector .inspector-body,
+.inspector-body {
+  padding-left: 12px !important;
+  padding-right: 12px !important;
+}
+
+.inspector .privacy-stack {
+  gap: 13px !important;
+  font-size: 13px !important;
+}
+
+.inspector .privacy-stack h4,
+.inspector .privacy-stack .section-title,
+.inspector .privacy-stack > .muted,
+.inspector .privacy-stack .label {
+  margin-left: 2px !important;
+  margin-bottom: 8px !important;
+  font-size: 12.5px !important;
+  font-weight: 500 !important;
+}
+
+.inspector .privacy-header {
+  width: 100% !important;
+  height: 42px !important;
+  padding-left: 13px !important;
+  padding-right: 11px !important;
+  font-size: 12.5px !important;
+  font-weight: 500 !important;
+}
+
+.inspector .privacy-stack .callout:not(.warning-note):not(.tor-notice) {
+  width: 100% !important;
+  padding: 13px 14px !important;
+  font-size: 12.5px !important;
+  font-weight: 400 !important;
+}
+
+.inspector .privacy-stack .metric {
+  width: 100% !important;
+  padding-left: 15px !important;
+  padding-right: 15px !important;
+}
+
+.inspector .privacy-stack .metric .muted,
+.inspector .privacy-stack .metric > .muted:first-child {
+  font-size: 12.5px !important;
+  font-weight: 400 !important;
+}
+
+.inspector .privacy-stack .metric .accent {
+  font-size: 33px !important;
+  font-weight: 500 !important;
+}
+
+.inspector .preset-grid {
+  gap: 5px !important;
+}
+
+.inspector .preset-btn {
+  height: 31px !important;
+  font-size: 11.5px !important;
+  font-weight: 400 !important;
+}
+
+.inspector .privacy-flags {
+  gap: 6px !important;
+}
+
+.inspector .privacy-flag {
+  width: 100% !important;
+  height: 39px !important;
+  min-height: 39px !important;
+  max-height: 39px !important;
+  padding-left: 13px !important;
+  padding-right: 12px !important;
+  font-size: 12.5px !important;
+  font-weight: 400 !important;
+}
+
+.inspector .privacy-flag.on {
+  font-weight: 400 !important;
+}
+
+.inspector .privacy-flag .flag-state {
+  font-weight: 500 !important;
+}
+
+.inspector .audit-row .audit-btn {
+  height: 33px !important;
+  font-size: 12.5px !important;
+  font-weight: 500 !important;
+}
+
+.inspector .warning-note {
+  width: 100% !important;
+  padding: 12px 13px !important;
+  font-size: 11.5px !important;
+  font-weight: 400 !important;
+}
+
+.inspector .inspector-actions {
+  padding-left: 12px !important;
+  padding-right: 12px !important;
+}
+
+.inspector .inspector-actions .toggle-btn,
+.inspector .inspector-actions .btn,
+.inspector .inspector-actions .audit-btn {
+  font-size: 12.5px !important;
+  font-weight: 400 !important;
+}
+
+.inspector .inspector-actions .btn-primary {
+  font-size: 14.5px !important;
+  font-weight: 600 !important;
+}
