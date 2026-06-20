@@ -480,7 +480,20 @@ async function prepareSession(profile, proxy) {
     if (typeof ses.setPreloads === "function") ses.setPreloads([preload]);
   } catch {}
   const proxyRules = proxyRulesFor(profile, proxy);
-  await ses.setProxy({ proxyRules, proxyBypassRules: "<-loopback>" });
+  const hasProxyCreds = proxy && (proxy.username || proxy.password);
+  try {
+    if (hasProxyCreds) {
+      const cleanRules = `${proxy.scheme || "http"}://${proxy.host}:${proxy.port}`;
+      await ses.setProxy({ proxyRules: cleanRules, proxyBypassRules: "<-loopback>" });
+      ses.webRequest.onAuthRequired((details, callback) => {
+        callback({ username: proxy.username, password: proxy.password });
+      });
+    } else if (proxyRules) {
+      await ses.setProxy({ proxyRules, proxyBypassRules: "<-loopback>" });
+    } else {
+      await ses.setProxy({ proxyRules: "direct://", proxyBypassRules: "<-loopback>" });
+    }
+  } catch (e) { console.error("setProxy error:", e); }
 
   ses.webRequest.onBeforeRequest((details, callback) => {
     try {
