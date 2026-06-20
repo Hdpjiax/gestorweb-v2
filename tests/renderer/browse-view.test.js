@@ -35,6 +35,9 @@ module.exports = async function browseViewTests() {
   assert.match(tabs, /browser-tab-plus/);
 
   assert.match(toolbar, /clean-browser-toolbar/);
+  assert.match(toolbar, /browser-back/);
+  assert.match(toolbar, /browser-forward/);
+  assert.match(toolbar, /browser-reload/);
   assert.match(toolbar, /browser-go/);
   assert.match(toolbar, /browserProfile/);
   assert.match(toolbar, /browserUrl/);
@@ -44,12 +47,11 @@ module.exports = async function browseViewTests() {
   assert.match(toolbar, /browser-open-devtools/);
   assert.match(toolbar, /browser-pin-tab/);
   assert.match(toolbar, /browser-refresh-all/);
-  assert.doesNotMatch(toolbar, /browser-back/);
-  assert.doesNotMatch(toolbar, /browser-forward/);
   assert.doesNotMatch(toolbar, /browser-toolbar-reference/);
 
   assert.match(cleanToolbar, /clean-browser-toolbar/);
   assert.match(cleanToolbar, /browser-toolbar-reference/);
+  assert.match(cleanToolbar, /clean-nav-btn/);
   assert.match(cleanToolbar, /display: none !important/);
 
   assert.match(toolbarActions, /installBrowserToolbarActions/);
