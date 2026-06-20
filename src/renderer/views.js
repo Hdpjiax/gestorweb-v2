@@ -373,7 +373,7 @@ function renderProxiesView() {
       <div class="between">
         <div class="muted">${state.proxies.length} proxies en el pool${selectedCount ? ` · ${selectedCount} seleccionados` : ""}</div>
         <div class="flex" style="flex-wrap:wrap">
-          <button class="btn btn-ghost" data-action="health-check">test real</button>
+          <button class="btn btn-ghost" data-action="health-check" ${ui.proxyTesting ? "disabled" : ""}>${ui.proxyTesting ? "testeando..." : "test real"}</button>
           <button class="btn btn-ghost btn-danger" data-action="remove-dead-proxies" ${testedDead ? "" : "disabled"}>borrar caidos</button>
           <button class="btn btn-ghost btn-danger" data-action="remove-selected-proxies" ${selectedCount ? "" : "disabled"}>borrar seleccionados</button>
           <button class="btn btn-ghost btn-danger" data-action="remove-all-proxies" ${state.proxies.length ? "" : "disabled"}>borrar todos</button>
@@ -398,6 +398,9 @@ function renderProxyAdd() {
 }
 
 function renderProxyRow(p) {
+  if (ui.proxyTesting) {
+    return `<div class="row-grid proxy-grid"><input type="checkbox" data-action="toggle-proxy-selected" data-id="${p.id}" ${ui.selectedProxyIds.has(p.id) ? "checked" : ""} /><div class="mono">${p.label ? `<span class="dim">${esc(p.label)}</span> ` : ""}${esc(p.host)}:${esc(p.port)}</div><div class="muted">${esc(p.scheme)}</div><div class="mono muted">...</div><div><span class="pill testing"><span class="dot testing-dot"></span>testeando</span></div><div class="muted">${p.in_use ? "asignado" : "libre"}</div><button class="icon-btn" data-action="remove-proxy-row" data-id="${p.id}">x</button></div>`;
+  }
   return `<div class="row-grid proxy-grid"><input type="checkbox" data-action="toggle-proxy-selected" data-id="${p.id}" ${ui.selectedProxyIds.has(p.id) ? "checked" : ""} /><div class="mono">${p.label ? `<span class="dim">${esc(p.label)}</span> ` : ""}${esc(p.host)}:${esc(p.port)}</div><div class="muted">${esc(p.scheme)}</div><div class="mono muted">${p.latency_ms != null ? `${p.latency_ms}ms` : "-"}</div><div><span class="pill ${p.healthy ? "live" : "dim"}"><span class="dot"></span>${p.healthy ? "ok" : p.last_error === "sin test" ? "sin test" : "caido"}</span></div><div class="muted">${p.in_use ? "asignado" : "libre"}</div><button class="icon-btn" data-action="remove-proxy-row" data-id="${p.id}">x</button></div>`;
 }
 

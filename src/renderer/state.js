@@ -10,6 +10,7 @@ export const ui = {
   welcome: false,
   proxyAdding: false,
   proxyBulk: false,
+  proxyTesting: false,
   selectedProxyIds: new Set(),
   scheduleAdding: false,
   command: false,

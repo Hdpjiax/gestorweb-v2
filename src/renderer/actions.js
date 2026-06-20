@@ -471,11 +471,17 @@ function removeProxySet(ids, eventKind, payload) {
 
 async function healthCheck() {
   if (native?.proxies?.checkAll) {
-    const checked = await native.proxies.checkAll(state.proxies);
-    update((s) => {
-      s.proxies = checked;
-      logEvent("health_check", null, `${s.proxies.length} proxies`);
-    });
+    ui.proxyTesting = true;
+    rerender();
+    try {
+      const checked = await native.proxies.checkAll(state.proxies);
+      update((s) => {
+        s.proxies = checked;
+        logEvent("health_check", null, `${s.proxies.length} proxies`);
+      });
+    } finally {
+      ui.proxyTesting = false;
+    }
     return;
   }
   alert("El test real de proxies requiere ejecutar la app en Electron.");
