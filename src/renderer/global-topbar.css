@@ -1,0 +1,21 @@
+.app-shell .topbar {
+  flex: 0 0 74px;
+  min-height: 74px;
+  position: sticky;
+  top: 0;
+  z-index: 20;
+}
+
+.app-shell .workspace {
+  min-height: 0;
+  overflow: hidden;
+}
+
+.app-shell .content {
+  min-height: 0;
+}
+
+.browse-shell .topbar {
+  display: flex;
+  visibility: visible;
+}
