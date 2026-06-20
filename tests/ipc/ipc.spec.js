@@ -95,6 +95,7 @@ test('license:hwid devuelve string con formato GW-XXXX-XXXX-XXXX', async () => {
   expect(hwid).toMatch(/^GW-[A-F0-9]{4}-[A-F0-9]{4}-[A-F0-9]{4}$/);
 });
 
+// Este test debe correr ANTES de license:install para ver vault limpio
 test('license:status devuelve hwid y active:false en vault limpio', async () => {
   const status = await ipc('license:status');
   expect(status.hwid).toMatch(/^GW-/);
@@ -114,15 +115,26 @@ test('license:claimByKey rechaza clave GW-LIC-V1 sin GW_LICENSE_SECRET configura
   expect(result.reason).toMatch(/GW_LICENSE_SECRET/i);
 });
 
+// license:install muta el vault — guardamos el estado antes y lo restauramos
+// después para que los tests siguientes vean el vault original.
 test('license:install con clave válida GW-XXXX activa la licencia en el vault', async () => {
+  // Snapshot del estado actual
+  const snapshot = await ipc('state:load');
+
   const hwid = await ipc('license:hwid');
   const tail = hwid.replace(/-/g, '').toUpperCase().slice(-12);
   const validKey = `GW-${tail.slice(0,4)}-${tail.slice(4,8)}-${tail.slice(8,12)}`;
+
   const result = await ipc('license:install', validKey);
   expect(result.active).toBe(true);
   expect(result.tier).toBe('standard');
+
+  // Verificar que se persistió en vault
   const status = await ipc('license:status');
   expect(status.active).toBe(true);
+
+  // Restaurar vault al estado anterior para no contaminar tests siguientes
+  await ipc('state:save', { ...snapshot, license: undefined });
 });
 
 // ── TOTP ──────────────────────────────────────────────────────────────────────
@@ -143,7 +155,6 @@ test('totp:code rechaza secreto base32 inválido', async () => {
 test('proxies:check con proxy localhost inalcanzable devuelve healthy:false', async () => {
   const result = await ipc('proxies:check', { host: '127.0.0.1', port: 19999, scheme: 'http' });
   expect(result.healthy).toBe(false);
-  // latency_ms es null cuando falla
   expect(result.latency_ms).toBeNull();
   expect(typeof result.last_error).toBe('string');
 });
@@ -161,7 +172,7 @@ test('proxies:checkAll trunca a 500 proxies máximo', async () => {
 });
 
 // ── Repeater ──────────────────────────────────────────────────────────────────
-// example.com es de IANA — siempre disponible, siempre 200, sin dependencias externas
+// example.com es de IANA — siempre disponible, siempre 200
 test('repeater:send a URL real devuelve status 200 y ms > 0', async () => {
   const result = await ipc('repeater:send', { method: 'GET', url: 'https://example.com' });
   expect(result.status).toBe(200);
