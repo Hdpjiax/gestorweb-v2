@@ -53,75 +53,117 @@
 }
 
 .browser-toolbar-pro {
-  min-height: 42px;
-  padding: 6px 14px;
+  min-height: 48px;
+  padding: 7px 14px;
   background: #0b1017;
   border-bottom: 1px solid #1c2635;
-  gap: 8px;
+  gap: 10px;
 }
 
 .browser-nav-btn,
 .browser-tool-btn,
 .browser-go-btn {
-  height: 30px;
+  height: 32px;
   border: 0;
   border-radius: 7px;
-  color: #7b879a;
+  color: #9aa7bb;
   background: transparent;
   display: grid;
   place-items: center;
 }
 
 .browser-nav-btn {
-  width: 30px;
+  width: 32px;
   font-size: 20px;
 }
 
 .browser-tool-btn {
-  min-width: 30px;
+  min-width: 32px;
   padding: 0 8px;
   font-size: 13px;
 }
 
 .browser-go-btn {
-  min-width: 42px;
+  min-width: 44px;
   padding: 0 12px;
-  color: #dbeafe;
-  background: #111827;
+  color: #eaf2ff;
+  background: #1a2435;
+  border: 1px solid #31405a;
 }
 
 .browser-nav-btn:hover,
 .browser-tool-btn:hover,
 .browser-go-btn:hover {
-  background: #151d2a;
-  color: #e5e7eb;
+  background: #202b3d;
+  color: #fff;
+}
+
+.browser-profile-wrap {
+  width: 240px;
+  height: 34px;
+  flex: 0 0 240px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid #425173;
+  border-radius: 8px;
+  background: #172033;
+  padding: 0 10px;
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.04);
+}
+
+.browser-profile-wrap span {
+  color: #aebbea;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.browser-profile-wrap.needs-profile {
+  border-color: #7c5cff;
+  box-shadow: 0 0 0 2px rgb(124 92 255 / 0.22), inset 0 1px 0 rgb(255 255 255 / 0.04);
+}
+
+.browser-profile-wrap.needs-profile span {
+  color: #c8bfff;
 }
 
 .browser-profile-select {
-  width: 180px;
+  flex: 1;
+  min-width: 0;
   height: 30px;
+  border: 0;
+  outline: 0;
   border-radius: 6px;
-  background: #111827;
-  border-color: #202a3a;
-  color: #cbd5e1;
+  background: transparent;
+  color: #f8fafc;
+  font-size: 13px;
+  font-weight: 700;
 }
 
-.browser-profile-select.needs-profile {
-  color: #f59e0b;
-  border-color: rgb(245 158 11 / 0.45);
+.browser-profile-select option {
+  background: #111827;
+  color: #f8fafc;
+  font-size: 13px;
+}
+
+.browser-profile-select option:checked {
+  background: #7c5cff;
+  color: #fff;
 }
 
 .browser-url-box {
   flex: 1;
-  min-width: 280px;
-  height: 31px;
+  min-width: 300px;
+  height: 34px;
   display: flex;
   align-items: center;
   gap: 8px;
-  border: 1px solid #263144;
-  border-radius: 7px;
+  border: 1px solid #2f3e56;
+  border-radius: 8px;
   background: #111827;
-  padding: 0 10px;
+  padding: 0 11px;
 }
 
 .browser-url-box:focus-within {
@@ -130,7 +172,7 @@
 }
 
 .browser-url-box.locked {
-  opacity: 0.68;
+  opacity: 0.76;
 }
 
 .browser-url-lock {
@@ -154,7 +196,13 @@
 }
 
 .browser-url-input::placeholder {
-  color: #64748b;
+  color: #8a96aa;
+}
+
+.browser-tor-pill {
+  color: #b6c8ff;
+  background: #172033;
+  border: 1px solid #2d3b54;
 }
 
 .browser-pro .browser-stage {
