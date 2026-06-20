@@ -1,0 +1,28 @@
+node_modules/
+dist/
+out/
+*.log
+.DS_Store
+Thumbs.db
+*.local
+.env
+.env.*
+!.env.example
+gestor-browser/
+camoufox/
+firefox/
+*.crx
+*.pem
+session/
+storage/
+Crashpad/
+GPUCache/
+Databases/
+IndexedDB/
+Local Storage/
+Session Storage/
+cookies.sqlite
+cookies.json
+lockfile
+package-lock.json
+yarn.lock
