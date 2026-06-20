@@ -1,0 +1,1996 @@
+{
+  "license": {
+    "active": true,
+    "text": "GW-9488-BD24-6108",
+    "shortId": "ZXRLFDZXND74",
+    "hwid": "GW-9488-BD24-6108",
+    "activatedAt": 1781912141155
+  },
+  "onboardingSeen": true,
+  "view": "settings",
+  "selectedId": "prof_mqlox9ax_n7fak",
+  "filters": {
+    "search": "",
+    "group": "",
+    "proxyState": "all"
+  },
+  "profiles": [
+    {
+      "id": "prof_mqly4mi1_8ye6v",
+      "name": "m",
+      "url": "https://amazon.com.mx",
+      "group_tag": null,
+      "proxy_id": null,
+      "privacy_preset": "hardened",
+      "gw_engine": true,
+      "compat_mode": false,
+      "headless": true,
+      "har_enabled": true,
+      "webrtc_block": true,
+      "totp_secret": null,
+      "notes": "",
+      "cookies": [],
+      "macros": [],
+      "warmup": 49,
+      "open_count": 2,
+      "created_at": 1781935063273,
+      "fingerprint": {
+        "os": "Windows",
+        "browser": "Firefox",
+        "platform": "Win32",
+        "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:135.0) Gecko/20100101 Firefox/135.0",
+        "webgl": "ANGLE (NVIDIA, NVIDIA GeForce GTX 980 Direct3D11 vs_5_0 ps_5_0), or similar",
+        "canvas": "gw-n7p83fq4wy",
+        "audio": "gw-24yebyypt9",
+        "timezone": "America/Monterrey",
+        "locale": "es-MX",
+        "cores": 2,
+        "memoryGB": 4,
+        "noiseSeed": 489004785,
+        "resolution": {
+          "width": 1920,
+          "height": 1080
+        }
+      },
+      "block_trackers": true,
+      "strip_tracking_params": true,
+      "sanitize_headers": true,
+      "strict_referer": true,
+      "in_memory": true,
+      "auto_wipe_close": true,
+      "tor_mode": false,
+      "doh_enabled": true,
+      "harden_all": true,
+      "force_https": false
+    },
+    {
+      "id": "prof_mqlv51g0_kx6t5",
+      "name": "prueba2 con proxy",
+      "url": "https://amazon.com",
+      "group_tag": null,
+      "proxy_id": "proxy_mqm1yq6j_bjmml",
+      "privacy_preset": "standard",
+      "gw_engine": true,
+      "compat_mode": false,
+      "headless": true,
+      "har_enabled": true,
+      "webrtc_block": true,
+      "totp_secret": null,
+      "notes": "",
+      "cookies": [],
+      "macros": [],
+      "warmup": 39,
+      "open_count": 1,
+      "created_at": 1781930043792,
+      "fingerprint": {
+        "os": "Windows",
+        "browser": "Firefox",
+        "platform": "Win32",
+        "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:135.0) Gecko/20100101 Firefox/135.0",
+        "webgl": "ANGLE (Intel, Intel(R) Iris Xe Graphics Direct3D11 vs_5_0 ps_5_0), or similar",
+        "canvas": "gw-dz6bzznlfu",
+        "audio": "gw-2me4mnfm56",
+        "timezone": "America/Monterrey",
+        "locale": "es-MX",
+        "cores": 8,
+        "memoryGB": 16,
+        "noiseSeed": 423049624,
+        "resolution": {
+          "width": 1920,
+          "height": 1080
+        }
+      },
+      "block_trackers": true,
+      "strip_tracking_params": true,
+      "sanitize_headers": true,
+      "strict_referer": true,
+      "in_memory": true,
+      "auto_wipe_close": true,
+      "tor_mode": false,
+      "doh_enabled": true,
+      "harden_all": true,
+      "force_https": true
+    },
+    {
+      "id": "prof_mqlox9ax_n7fak",
+      "name": "Prueba1",
+      "url": "https://shein.com",
+      "group_tag": null,
+      "proxy_id": "proxy_mqm1yq6j_8z2gm",
+      "privacy_preset": "hardened",
+      "gw_engine": true,
+      "compat_mode": false,
+      "headless": true,
+      "har_enabled": true,
+      "webrtc_block": true,
+      "totp_secret": null,
+      "notes": "",
+      "cookies": [],
+      "macros": [],
+      "warmup": 49,
+      "open_count": 4,
+      "created_at": 1781919603033,
+      "fingerprint": {
+        "os": "Windows",
+        "browser": "Firefox",
+        "platform": "Win32",
+        "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:135.0) Gecko/20100101 Firefox/135.0",
+        "webgl": "ANGLE (AMD, AMD Radeon RX 580 Direct3D11 vs_5_0 ps_5_0), or similar",
+        "canvas": "gw-x8dl8n8qpc",
+        "audio": "gw-5wfacj4mw8",
+        "timezone": "America/Monterrey",
+        "locale": "es-MX",
+        "cores": 4,
+        "memoryGB": 32,
+        "noiseSeed": 449976799,
+        "resolution": {
+          "width": 1920,
+          "height": 1080
+        }
+      },
+      "block_trackers": true,
+      "strip_tracking_params": true,
+      "sanitize_headers": true,
+      "strict_referer": true,
+      "in_memory": true,
+      "auto_wipe_close": true,
+      "tor_mode": false,
+      "doh_enabled": true,
+      "harden_all": true,
+      "force_https": true
+    }
+  ],
+  "proxies": [
+    {
+      "id": "proxy_mqm1yq6j_bjmml",
+      "healthy": true,
+      "latency_ms": 157,
+      "last_error": null,
+      "scheme": "http",
+      "host": "209.97.150.167",
+      "port": 3128,
+      "username": null,
+      "password": null,
+      "label": null,
+      "in_use": true
+    },
+    {
+      "id": "proxy_mqm1yq6j_55tks",
+      "healthy": true,
+      "latency_ms": 390,
+      "last_error": null,
+      "scheme": "http",
+      "host": "139.162.78.109",
+      "port": 3128,
+      "username": null,
+      "password": null,
+      "label": null,
+      "in_use": false
+    },
+    {
+      "id": "proxy_mqm1yq6j_8z2gm",
+      "healthy": true,
+      "latency_ms": 336,
+      "last_error": null,
+      "scheme": "http",
+      "host": "161.35.70.249",
+      "port": 3128,
+      "username": null,
+      "password": null,
+      "label": null,
+      "in_use": true
+    }
+  ],
+  "schedules": [],
+  "events": [
+    {
+      "id": "evt_mqm31hh3_4pp39",
+      "kind": "proxy_removed",
+      "profile_id": null,
+      "payload": "proxy_mqm31awy_qty5x",
+      "ts": 1781943314871
+    },
+    {
+      "id": "evt_mqm31cnl_ytaug",
+      "kind": "health_check",
+      "profile_id": null,
+      "payload": "4 proxies",
+      "ts": 1781943308625
+    },
+    {
+      "id": "evt_mqm31awy_5ykcp",
+      "kind": "proxy_added",
+      "profile_id": null,
+      "payload": "127.0.0.1",
+      "ts": 1781943306370
+    },
+    {
+      "id": "evt_mqm2suyd_l7xy8",
+      "kind": "closed",
+      "profile_id": "prof_mqly4mi1_8ye6v",
+      "payload": "m",
+      "ts": 1781942912437
+    },
+    {
+      "id": "evt_mqm2suyd_cbm4l",
+      "kind": "auto_wiped_on_close",
+      "profile_id": "prof_mqly4mi1_8ye6v",
+      "payload": "",
+      "ts": 1781942912437
+    },
+    {
+      "id": "evt_mqm2s81l_24w8z",
+      "kind": "closed",
+      "profile_id": "prof_mqly4mi1_8ye6v",
+      "payload": "m",
+      "ts": 1781942882745
+    },
+    {
+      "id": "evt_mqm2s81l_n3sqk",
+      "kind": "auto_wiped_on_close",
+      "profile_id": "prof_mqly4mi1_8ye6v",
+      "payload": "",
+      "ts": 1781942882745
+    },
+    {
+      "id": "evt_mqm2rxm9_karrf",
+      "kind": "opened",
+      "profile_id": "prof_mqly4mi1_8ye6v",
+      "payload": "ventana externa (chromium)",
+      "ts": 1781942869233
+    },
+    {
+      "id": "evt_mqm2rw70_mqcsw",
+      "kind": "rotate_proxy",
+      "profile_id": "prof_mqly4mi1_8ye6v",
+      "payload": "proxy removido",
+      "ts": 1781942867388
+    },
+    {
+      "id": "evt_mqm2m720_g9swr",
+      "kind": "health_check",
+      "profile_id": null,
+      "payload": "3 proxies",
+      "ts": 1781942601528
+    },
+    {
+      "id": "evt_mqm2aa7b_6ws4c",
+      "kind": "rotate_proxy",
+      "profile_id": "prof_mqlox9ax_n7fak",
+      "payload": "161.35.70.249:3128",
+      "ts": 1781942045735
+    },
+    {
+      "id": "evt_mqm2a920_fjeh5",
+      "kind": "rotate_proxy",
+      "profile_id": "prof_mqly4mi1_8ye6v",
+      "payload": "139.162.78.109:3128",
+      "ts": 1781942044248
+    },
+    {
+      "id": "evt_mqm2a4k4_7wgxc",
+      "kind": "rotate_proxy",
+      "profile_id": "prof_mqlv51g0_kx6t5",
+      "payload": "209.97.150.167:3128",
+      "ts": 1781942038420
+    },
+    {
+      "id": "evt_mqm29xq1_f7m3r",
+      "kind": "proxy_removed",
+      "profile_id": null,
+      "payload": "proxy_mqm28z90_md6y7",
+      "ts": 1781942029561
+    },
+    {
+      "id": "evt_mqm29xeg_v2rqw",
+      "kind": "proxy_removed",
+      "profile_id": null,
+      "payload": "proxy_mqm28z90_rjxdc",
+      "ts": 1781942029144
+    },
+    {
+      "id": "evt_mqm29x01_3zbkk",
+      "kind": "proxy_removed",
+      "profile_id": null,
+      "payload": "proxy_mqm28z90_8wkjq",
+      "ts": 1781942028625
+    },
+    {
+      "id": "evt_mqm29wei_gqhed",
+      "kind": "proxy_removed",
+      "profile_id": null,
+      "payload": "proxy_mqm28z90_j32kb",
+      "ts": 1781942027850
+    },
+    {
+      "id": "evt_mqm29w8a_ghkb5",
+      "kind": "proxy_removed",
+      "profile_id": null,
+      "payload": "proxy_mqm28z90_fpp9d",
+      "ts": 1781942027626
+    },
+    {
+      "id": "evt_mqm29w22_6kf6t",
+      "kind": "proxy_removed",
+      "profile_id": null,
+      "payload": "proxy_mqm28z90_72cp4",
+      "ts": 1781942027403
+    },
+    {
+      "id": "evt_mqm29vvd_e94a4",
+      "kind": "proxy_removed",
+      "profile_id": null,
+      "payload": "proxy_mqm28z90_srt5v",
+      "ts": 1781942027161
+    },
+    {
+      "id": "evt_mqm29vlz_w6gy8",
+      "kind": "proxy_removed",
+      "profile_id": null,
+      "payload": "proxy_mqm28z90_bxpzx",
+      "ts": 1781942026823
+    },
+    {
+      "id": "evt_mqm29vfb_vl9p2",
+      "kind": "proxy_removed",
+      "profile_id": null,
+      "payload": "proxy_mqm28z90_htg57",
+      "ts": 1781942026583
+    },
+    {
+      "id": "evt_mqm29v5b_54j6s",
+      "kind": "proxy_removed",
+      "profile_id": null,
+      "payload": "proxy_mqm28z90_hvm24",
+      "ts": 1781942026223
+    },
+    {
+      "id": "evt_mqm29uwc_dc83f",
+      "kind": "proxy_removed",
+      "profile_id": null,
+      "payload": "proxy_mqm28z90_24z93",
+      "ts": 1781942025900
+    },
+    {
+      "id": "evt_mqm29uoa_nqz4d",
+      "kind": "proxy_removed",
+      "profile_id": null,
+      "payload": "proxy_mqm28z90_lzmb5",
+      "ts": 1781942025610
+    },
+    {
+      "id": "evt_mqm29uhq_csmnr",
+      "kind": "proxy_removed",
+      "profile_id": null,
+      "payload": "proxy_mqm28z90_xy4uc",
+      "ts": 1781942025374
+    },
+    {
+      "id": "evt_mqm29uc8_4h73f",
+      "kind": "proxy_removed",
+      "profile_id": null,
+      "payload": "proxy_mqm28z90_6amr5",
+      "ts": 1781942025176
+    },
+    {
+      "id": "evt_mqm29u6c_yxwsq",
+      "kind": "proxy_removed",
+      "profile_id": null,
+      "payload": "proxy_mqm28z90_r6c2r",
+      "ts": 1781942024964
+    },
+    {
+      "id": "evt_mqm29tvv_zp283",
+      "kind": "proxy_removed",
+      "profile_id": null,
+      "payload": "proxy_mqm28z90_zbm36",
+      "ts": 1781942024587
+    },
+    {
+      "id": "evt_mqm29tq0_3eu5y",
+      "kind": "proxy_removed",
+      "profile_id": null,
+      "payload": "proxy_mqm28z90_q6vrl",
+      "ts": 1781942024376
+    },
+    {
+      "id": "evt_mqm29tjk_mljvr",
+      "kind": "proxy_removed",
+      "profile_id": null,
+      "payload": "proxy_mqm28z90_5yjpw",
+      "ts": 1781942024144
+    },
+    {
+      "id": "evt_mqm29tci_enn83",
+      "kind": "proxy_removed",
+      "profile_id": null,
+      "payload": "proxy_mqm28z90_b86yt",
+      "ts": 1781942023890
+    },
+    {
+      "id": "evt_mqm29t62_scyu3",
+      "kind": "proxy_removed",
+      "profile_id": null,
+      "payload": "proxy_mqm28z90_6ufsc",
+      "ts": 1781942023658
+    },
+    {
+      "id": "evt_mqm29sz5_scpfc",
+      "kind": "proxy_removed",
+      "profile_id": null,
+      "payload": "proxy_mqm28z90_dvcpt",
+      "ts": 1781942023409
+    },
+    {
+      "id": "evt_mqm29spt_j7gfm",
+      "kind": "proxy_removed",
+      "profile_id": null,
+      "payload": "proxy_mqm28z90_5mt3j",
+      "ts": 1781942023073
+    },
+    {
+      "id": "evt_mqm29se0_5wukk",
+      "kind": "proxy_removed",
+      "profile_id": null,
+      "payload": "proxy_mqm28z90_bke2r",
+      "ts": 1781942022649
+    },
+    {
+      "id": "evt_mqm29s5w_zz5mq",
+      "kind": "proxy_removed",
+      "profile_id": null,
+      "payload": "proxy_mqm28z90_sqe5v",
+      "ts": 1781942022356
+    },
+    {
+      "id": "evt_mqm29rwk_5wlg2",
+      "kind": "proxy_removed",
+      "profile_id": null,
+      "payload": "proxy_mqm28z90_85quh",
+      "ts": 1781942022020
+    },
+    {
+      "id": "evt_mqm29rnk_6cpel",
+      "kind": "proxy_removed",
+      "profile_id": null,
+      "payload": "proxy_mqm28z90_gduqa",
+      "ts": 1781942021696
+    },
+    {
+      "id": "evt_mqm29rh8_etg4e",
+      "kind": "proxy_removed",
+      "profile_id": null,
+      "payload": "proxy_mqm28z90_3bcz4",
+      "ts": 1781942021468
+    },
+    {
+      "id": "evt_mqm29rbk_hfmw2",
+      "kind": "proxy_removed",
+      "profile_id": null,
+      "payload": "proxy_mqm28z90_d67h5",
+      "ts": 1781942021264
+    },
+    {
+      "id": "evt_mqm29r5u_e2sqm",
+      "kind": "proxy_removed",
+      "profile_id": null,
+      "payload": "proxy_mqm28z90_anrx3",
+      "ts": 1781942021058
+    },
+    {
+      "id": "evt_mqm29qxa_74u4c",
+      "kind": "proxy_removed",
+      "profile_id": null,
+      "payload": "proxy_mqm28z90_398bt",
+      "ts": 1781942020750
+    },
+    {
+      "id": "evt_mqm29pus_fmde4",
+      "kind": "proxy_dead_removed",
+      "profile_id": null,
+      "payload": "10 caidos",
+      "ts": 1781942019364
+    },
+    {
+      "id": "evt_mqm29o2z_3zlau",
+      "kind": "health_check",
+      "profile_id": null,
+      "payload": "43 proxies",
+      "ts": 1781942017067
+    },
+    {
+      "id": "evt_mqm28z90_euxds",
+      "kind": "proxy_bulk_import",
+      "profile_id": null,
+      "payload": "40 agregados desde text",
+      "ts": 1781941984884
+    },
+    {
+      "id": "evt_mqm28ptg_c7mc5",
+      "kind": "proxy_removed",
+      "profile_id": null,
+      "payload": "proxy_mqm1yq6j_wpflb",
+      "ts": 1781941972660
+    },
+    {
+      "id": "evt_mqm28oq6_kckm6",
+      "kind": "health_check",
+      "profile_id": null,
+      "payload": "4 proxies",
+      "ts": 1781941971246
+    },
+    {
+      "id": "evt_mqm1zeb1_74xfx",
+      "kind": "proxy_removed",
+      "profile_id": null,
+      "payload": "proxy_mqm1wx9m_jl34a",
+      "ts": 1781941537837
+    },
+    {
+      "id": "evt_mqm1zdvm_tl7en",
+      "kind": "proxy_removed",
+      "profile_id": null,
+      "payload": "proxy_mqm1wx9m_njy3j",
+      "ts": 1781941537282
+    },
+    {
+      "id": "evt_mqm1zdp1_d2443",
+      "kind": "proxy_removed",
+      "profile_id": null,
+      "payload": "proxy_mqm1wx9m_97rg3",
+      "ts": 1781941537045
+    },
+    {
+      "id": "evt_mqm1zdej_mvbgu",
+      "kind": "proxy_removed",
+      "profile_id": null,
+      "payload": "proxy_mqm1wx9m_bfhcu",
+      "ts": 1781941536667
+    },
+    {
+      "id": "evt_mqm1zd7w_b8agd",
+      "kind": "proxy_removed",
+      "profile_id": null,
+      "payload": "proxy_mqm1wx9m_epmrp",
+      "ts": 1781941536428
+    },
+    {
+      "id": "evt_mqm1zcox_xbe5c",
+      "kind": "proxy_removed",
+      "profile_id": null,
+      "payload": "proxy_mqm1yq6j_25jkm",
+      "ts": 1781941535745
+    },
+    {
+      "id": "evt_mqm1zbyv_gmlkt",
+      "kind": "proxy_removed",
+      "profile_id": null,
+      "payload": "proxy_mqm1yq6j_x7mxj",
+      "ts": 1781941534807
+    },
+    {
+      "id": "evt_mqm1zboh_8fpcz",
+      "kind": "health_check",
+      "profile_id": null,
+      "payload": "27 proxies",
+      "ts": 1781941534433
+    },
+    {
+      "id": "evt_mqm1zblo_j7ybh",
+      "kind": "proxy_removed",
+      "profile_id": null,
+      "payload": "proxy_mqm1yq6j_nlcux",
+      "ts": 1781941534332
+    },
+    {
+      "id": "evt_mqm1zb6b_m2qz8",
+      "kind": "proxy_removed",
+      "profile_id": null,
+      "payload": "proxy_mqm1yq6j_nye7u",
+      "ts": 1781941533779
+    },
+    {
+      "id": "evt_mqm1zapg_7r7bh",
+      "kind": "proxy_removed",
+      "profile_id": null,
+      "payload": "proxy_mqm1yq6j_s6g5j",
+      "ts": 1781941533172
+    },
+    {
+      "id": "evt_mqm1zab3_4llcg",
+      "kind": "proxy_removed",
+      "profile_id": null,
+      "payload": "proxy_mqm1yq6j_jkmku",
+      "ts": 1781941532655
+    },
+    {
+      "id": "evt_mqm1z9yi_h59ee",
+      "kind": "proxy_removed",
+      "profile_id": null,
+      "payload": "proxy_mqm1yq6j_7ly4f",
+      "ts": 1781941532202
+    },
+    {
+      "id": "evt_mqm1z9lb_3gzt9",
+      "kind": "proxy_removed",
+      "profile_id": null,
+      "payload": "proxy_mqm1yq6j_pc3hp",
+      "ts": 1781941531727
+    },
+    {
+      "id": "evt_mqm1z9av_epuae",
+      "kind": "proxy_removed",
+      "profile_id": null,
+      "payload": "proxy_mqm1yq6j_fx4l7",
+      "ts": 1781941531351
+    },
+    {
+      "id": "evt_mqm1z90s_cm8gb",
+      "kind": "proxy_removed",
+      "profile_id": null,
+      "payload": "proxy_mqm1yq6j_hfpda",
+      "ts": 1781941530988
+    },
+    {
+      "id": "evt_mqm1z8j9_32luf",
+      "kind": "proxy_removed",
+      "profile_id": null,
+      "payload": "proxy_mqm1yq6j_jvdhl",
+      "ts": 1781941530357
+    },
+    {
+      "id": "evt_mqm1z7xg_zwxqg",
+      "kind": "proxy_removed",
+      "profile_id": null,
+      "payload": "proxy_mqm1yq6j_hvunq",
+      "ts": 1781941529572
+    },
+    {
+      "id": "evt_mqm1z6sh_83mc6",
+      "kind": "proxy_removed",
+      "profile_id": null,
+      "payload": "proxy_mqm1yq6j_sj8lz",
+      "ts": 1781941528097
+    },
+    {
+      "id": "evt_mqm1z3u5_q72cd",
+      "kind": "proxy_removed",
+      "profile_id": null,
+      "payload": "proxy_mqm1yq6j_u9gtr",
+      "ts": 1781941524269
+    },
+    {
+      "id": "evt_mqm1z39n_7btdh",
+      "kind": "proxy_removed",
+      "profile_id": null,
+      "payload": "proxy_mqm1yq6j_4vlpp",
+      "ts": 1781941523531
+    },
+    {
+      "id": "evt_mqm1z2vu_nfdwc",
+      "kind": "proxy_removed",
+      "profile_id": null,
+      "payload": "proxy_mqm1yq6j_xyf6q",
+      "ts": 1781941523034
+    },
+    {
+      "id": "evt_mqm1z2la_rjngg",
+      "kind": "proxy_removed",
+      "profile_id": null,
+      "payload": "proxy_mqm1yq6j_bqltz",
+      "ts": 1781941522654
+    },
+    {
+      "id": "evt_mqm1z22n_8h7nv",
+      "kind": "proxy_removed",
+      "profile_id": null,
+      "payload": "proxy_mqm1yq6j_3cxee",
+      "ts": 1781941521983
+    },
+    {
+      "id": "evt_mqm1yq6j_ls9cb",
+      "kind": "proxy_bulk_import",
+      "profile_id": null,
+      "payload": "22 agregados desde text",
+      "ts": 1781941506571
+    },
+    {
+      "id": "evt_mqm1xsj4_hb4mm",
+      "kind": "proxy_removed",
+      "profile_id": null,
+      "payload": "proxy_mqm0t8bc_gclun",
+      "ts": 1781941462960
+    },
+    {
+      "id": "evt_mqm1xs1z_87yd8",
+      "kind": "proxy_removed",
+      "profile_id": null,
+      "payload": "proxy_mqm1wx9m_fur5k",
+      "ts": 1781941462343
+    },
+    {
+      "id": "evt_mqm1xrkd_l8fm4",
+      "kind": "proxy_removed",
+      "profile_id": null,
+      "payload": "proxy_mqm1wx9m_yur82",
+      "ts": 1781941461709
+    },
+    {
+      "id": "evt_mqm1xr8g_zpk5r",
+      "kind": "proxy_removed",
+      "profile_id": null,
+      "payload": "proxy_mqm1wx9m_uwxs9",
+      "ts": 1781941461280
+    },
+    {
+      "id": "evt_mqm1xqw8_z2e4c",
+      "kind": "proxy_removed",
+      "profile_id": null,
+      "payload": "proxy_mqm1wx9m_rzfv8",
+      "ts": 1781941460840
+    },
+    {
+      "id": "evt_mqm1xblp_v94jy",
+      "kind": "health_check",
+      "profile_id": null,
+      "payload": "10 proxies",
+      "ts": 1781941441021
+    },
+    {
+      "id": "evt_mqm1wx9m_626b7",
+      "kind": "proxy_bulk_import",
+      "profile_id": null,
+      "payload": "9 agregados desde text",
+      "ts": 1781941422442
+    },
+    {
+      "id": "evt_mqm1wqqc_g8vwv",
+      "kind": "proxy_removed",
+      "profile_id": null,
+      "payload": "proxy_mqm0s2zh_re8jr",
+      "ts": 1781941413972
+    },
+    {
+      "id": "evt_mqm1wpxl_a7f3x",
+      "kind": "proxy_removed",
+      "profile_id": null,
+      "payload": "proxy_mqm0tf8h_e27jn",
+      "ts": 1781941412937
+    },
+    {
+      "id": "evt_mqm1sbds_ut5fs",
+      "kind": "health_check",
+      "profile_id": null,
+      "payload": "3 proxies",
+      "ts": 1781941207456
+    },
+    {
+      "id": "evt_mqm1jakl_vpl2k",
+      "kind": "health_check",
+      "profile_id": null,
+      "payload": "3 proxies",
+      "ts": 1781940786501
+    },
+    {
+      "id": "evt_mqm0tmns_z4wsz",
+      "kind": "health_check",
+      "profile_id": null,
+      "payload": "3 proxies",
+      "ts": 1781939589112
+    },
+    {
+      "id": "evt_mqm0tf8h_fds7m",
+      "kind": "proxy_added",
+      "profile_id": null,
+      "payload": "122.54.226.216",
+      "ts": 1781939579489
+    },
+    {
+      "id": "evt_mqm0t8bc_frsz9",
+      "kind": "proxy_added",
+      "profile_id": null,
+      "payload": "165.101.254.25",
+      "ts": 1781939570520
+    },
+    {
+      "id": "evt_mqm0szy4_mplnt",
+      "kind": "health_check",
+      "profile_id": null,
+      "payload": "1 proxies",
+      "ts": 1781939559676
+    },
+    {
+      "id": "evt_mqm0szbc_sjl4u",
+      "kind": "health_check",
+      "profile_id": null,
+      "payload": "1 proxies",
+      "ts": 1781939558856
+    },
+    {
+      "id": "evt_mqm0sz7h_xc42e",
+      "kind": "health_check",
+      "profile_id": null,
+      "payload": "1 proxies",
+      "ts": 1781939558717
+    },
+    {
+      "id": "evt_mqm0skhz_yr5ru",
+      "kind": "health_check",
+      "profile_id": null,
+      "payload": "1 proxies",
+      "ts": 1781939539655
+    },
+    {
+      "id": "evt_mqm0sa3t_36ajl",
+      "kind": "health_check",
+      "profile_id": null,
+      "payload": "1 proxies",
+      "ts": 1781939526185
+    },
+    {
+      "id": "evt_mqm0s2zh_m5xsg",
+      "kind": "proxy_added",
+      "profile_id": null,
+      "payload": "177.234.192.231",
+      "ts": 1781939516957
+    },
+    {
+      "id": "evt_mqm0n0zi_748fa",
+      "kind": "proxy_removed",
+      "profile_id": null,
+      "payload": "proxy_mqlwn5kn_up4xj",
+      "ts": 1781939281086
+    },
+    {
+      "id": "evt_mqm0n0v2_xuvbz",
+      "kind": "proxy_removed",
+      "profile_id": null,
+      "payload": "proxy_mqlwvghh_ge8ng",
+      "ts": 1781939280926
+    },
+    {
+      "id": "evt_mqm0n0qr_h9v2w",
+      "kind": "proxy_removed",
+      "profile_id": null,
+      "payload": "proxy_mqlwvghh_slpsk",
+      "ts": 1781939280771
+    },
+    {
+      "id": "evt_mqm0n0ma_9znxj",
+      "kind": "proxy_removed",
+      "profile_id": null,
+      "payload": "proxy_mqlwvghh_5e3pj",
+      "ts": 1781939280610
+    },
+    {
+      "id": "evt_mqm0n0hk_sqbex",
+      "kind": "proxy_removed",
+      "profile_id": null,
+      "payload": "proxy_mqlwvghh_tee7h",
+      "ts": 1781939280440
+    },
+    {
+      "id": "evt_mqm0mxan_h6uc3",
+      "kind": "health_check",
+      "profile_id": null,
+      "payload": "5 proxies",
+      "ts": 1781939276303
+    },
+    {
+      "id": "evt_mqm0mqu8_8xl5k",
+      "kind": "health_check",
+      "profile_id": null,
+      "payload": "5 proxies",
+      "ts": 1781939267936
+    },
+    {
+      "id": "evt_mqm0mjh3_95jwd",
+      "kind": "closed",
+      "profile_id": "prof_mqly4mi1_8ye6v",
+      "payload": "m",
+      "ts": 1781939258391
+    },
+    {
+      "id": "evt_mqm0mjh3_9msw4",
+      "kind": "auto_wiped_on_close",
+      "profile_id": "prof_mqly4mi1_8ye6v",
+      "payload": "",
+      "ts": 1781939258391
+    },
+    {
+      "id": "evt_mqm015v7_wa9mt",
+      "kind": "opened",
+      "profile_id": "prof_mqly4mi1_8ye6v",
+      "payload": "ventana externa (chromium)",
+      "ts": 1781938260979
+    },
+    {
+      "id": "evt_mqlzabno_5tdwa",
+      "kind": "closed",
+      "profile_id": "prof_mqlox9ax_n7fak",
+      "payload": "Prueba1",
+      "ts": 1781937008772
+    },
+    {
+      "id": "evt_mqlzabno_ftd2g",
+      "kind": "auto_wiped_on_close",
+      "profile_id": "prof_mqlox9ax_n7fak",
+      "payload": "",
+      "ts": 1781937008772
+    },
+    {
+      "id": "evt_mqlzabax_j7f9j",
+      "kind": "closed",
+      "profile_id": "prof_mqlv51g0_kx6t5",
+      "payload": "prueba2 con proxy",
+      "ts": 1781937008313
+    },
+    {
+      "id": "evt_mqlzabax_7akgh",
+      "kind": "auto_wiped_on_close",
+      "profile_id": "prof_mqlv51g0_kx6t5",
+      "payload": "",
+      "ts": 1781937008313
+    },
+    {
+      "id": "evt_mqlzaazf_3uyb6",
+      "kind": "closed",
+      "profile_id": "prof_mqly4mi1_8ye6v",
+      "payload": "m",
+      "ts": 1781937007899
+    },
+    {
+      "id": "evt_mqlzaazf_8j56p",
+      "kind": "auto_wiped_on_close",
+      "profile_id": "prof_mqly4mi1_8ye6v",
+      "payload": "",
+      "ts": 1781937007899
+    },
+    {
+      "id": "evt_mqlz8hpm_jeqky",
+      "kind": "opened",
+      "profile_id": "prof_mqlox9ax_n7fak",
+      "payload": "https://abrahamjuliot.github.io/creepjs/",
+      "ts": 1781936923306
+    },
+    {
+      "id": "evt_mqlz855h_s9rdj",
+      "kind": "opened",
+      "profile_id": "prof_mqlox9ax_n7fak",
+      "payload": "https://shein.com",
+      "ts": 1781936907029
+    },
+    {
+      "id": "evt_mqlz7uln_qnz9e",
+      "kind": "opened",
+      "profile_id": "prof_mqlv51g0_kx6t5",
+      "payload": "https://abrahamjuliot.github.io/creepjs/",
+      "ts": 1781936893355
+    },
+    {
+      "id": "evt_mqlz7nle_aup7t",
+      "kind": "opened",
+      "profile_id": "prof_mqly4mi1_8ye6v",
+      "payload": "https://amazon.com.mx",
+      "ts": 1781936884274
+    },
+    {
+      "id": "evt_mqlz7jg0_cp3vc",
+      "kind": "opened",
+      "profile_id": "prof_mqly4mi1_8ye6v",
+      "payload": "https://abrahamjuliot.github.io/creepjs/",
+      "ts": 1781936878896
+    },
+    {
+      "id": "evt_mqlz7b6n_55v4u",
+      "kind": "rotate_proxy",
+      "profile_id": "prof_mqly4mi1_8ye6v",
+      "payload": "proxy removido",
+      "ts": 1781936868191
+    },
+    {
+      "id": "evt_mqly4mi1_86dlh",
+      "kind": "created",
+      "profile_id": "prof_mqly4mi1_8ye6v",
+      "payload": "https://amazon.com.mx",
+      "ts": 1781935063273
+    },
+    {
+      "id": "evt_mqly3yc8_usaul",
+      "kind": "rotate_proxy",
+      "profile_id": "prof_mqlv51g0_kx6t5",
+      "payload": "8.213.156.191:800",
+      "ts": 1781935031960
+    },
+    {
+      "id": "evt_mqly3vps_llyjp",
+      "kind": "wiped",
+      "profile_id": "prof_mqlv51g0_kx6t5",
+      "payload": "cookies/cache",
+      "ts": 1781935028560
+    },
+    {
+      "id": "evt_mqly3fef_acrpt",
+      "kind": "updated",
+      "profile_id": "prof_mqlv51g0_kx6t5",
+      "payload": "notas",
+      "ts": 1781935007415
+    },
+    {
+      "id": "evt_mqly35bt_wmuth",
+      "kind": "rotate_proxy",
+      "profile_id": "prof_mqlv51g0_kx6t5",
+      "payload": "proxy removido",
+      "ts": 1781934994361
+    },
+    {
+      "id": "evt_mqly32iu_zps2l",
+      "kind": "rotate_proxy",
+      "profile_id": "prof_mqlv51g0_kx6t5",
+      "payload": "8.213.156.191:800",
+      "ts": 1781934990726
+    },
+    {
+      "id": "evt_mqly3175_wt9ul",
+      "kind": "rotate_proxy",
+      "profile_id": "prof_mqlv51g0_kx6t5",
+      "payload": "proxy removido",
+      "ts": 1781934989009
+    },
+    {
+      "id": "evt_mqly2uor_74zsg",
+      "kind": "health_check",
+      "profile_id": null,
+      "payload": "5 proxies",
+      "ts": 1781934980571
+    },
+    {
+      "id": "evt_mqly2qko_d6jhq",
+      "kind": "proxy_removed",
+      "profile_id": null,
+      "payload": "proxy_mqlwvghh_bdd3m",
+      "ts": 1781934975240
+    },
+    {
+      "id": "evt_mqly2qfp_anekz",
+      "kind": "proxy_removed",
+      "profile_id": null,
+      "payload": "proxy_mqlwvghh_9lz2e",
+      "ts": 1781934975061
+    },
+    {
+      "id": "evt_mqly2qar_2ex6k",
+      "kind": "proxy_removed",
+      "profile_id": null,
+      "payload": "proxy_mqlwvghh_354bv",
+      "ts": 1781934974883
+    },
+    {
+      "id": "evt_mqly2q6c_wjlqt",
+      "kind": "proxy_removed",
+      "profile_id": null,
+      "payload": "proxy_mqlwvghh_3n8pd",
+      "ts": 1781934974724
+    },
+    {
+      "id": "evt_mqly2q2i_tshww",
+      "kind": "proxy_removed",
+      "profile_id": null,
+      "payload": "proxy_mqlwvghh_uwbhs",
+      "ts": 1781934974586
+    },
+    {
+      "id": "evt_mqly2puj_x6b9h",
+      "kind": "proxy_removed",
+      "profile_id": null,
+      "payload": "proxy_mqlwvghh_kgjyx",
+      "ts": 1781934974299
+    },
+    {
+      "id": "evt_mqly2pq6_fkx4q",
+      "kind": "proxy_removed",
+      "profile_id": null,
+      "payload": "proxy_mqlwvghh_33dmj",
+      "ts": 1781934974142
+    },
+    {
+      "id": "evt_mqly2plc_4hm7x",
+      "kind": "proxy_removed",
+      "profile_id": null,
+      "payload": "proxy_mqlwvghh_peu23",
+      "ts": 1781934973968
+    },
+    {
+      "id": "evt_mqly2phc_bah3g",
+      "kind": "proxy_removed",
+      "profile_id": null,
+      "payload": "proxy_mqlwvghh_bswl5",
+      "ts": 1781934973824
+    },
+    {
+      "id": "evt_mqly2p7c_8sx5z",
+      "kind": "proxy_removed",
+      "profile_id": null,
+      "payload": "proxy_mqlwvghh_pgxse",
+      "ts": 1781934973464
+    },
+    {
+      "id": "evt_mqlwvghh_52g2n",
+      "kind": "proxy_bulk_import",
+      "profile_id": null,
+      "payload": "14 agregados desde text",
+      "ts": 1781932955957
+    },
+    {
+      "id": "evt_mqlwohhw_nr6el",
+      "kind": "rotate_proxy",
+      "profile_id": "prof_mqlv51g0_kx6t5",
+      "payload": "58.214.243.92:8080",
+      "ts": 1781932630676
+    },
+    {
+      "id": "evt_mqlwoehi_nb7jv",
+      "kind": "closed",
+      "profile_id": "prof_mqlv51g0_kx6t5",
+      "payload": "prueba2 con proxy",
+      "ts": 1781932626774
+    },
+    {
+      "id": "evt_mqlwoabz_gjn53",
+      "kind": "proxy_removed",
+      "profile_id": null,
+      "payload": "proxy_mqlwn5kn_vqptb",
+      "ts": 1781932621391
+    },
+    {
+      "id": "evt_mqlwoa0c_2bdz9",
+      "kind": "proxy_removed",
+      "profile_id": null,
+      "payload": "proxy_mqlwn5kn_9mkur",
+      "ts": 1781932620972
+    },
+    {
+      "id": "evt_mqlwo9sp_uq6lf",
+      "kind": "proxy_removed",
+      "profile_id": null,
+      "payload": "proxy_mqlwn5kn_sr9xf",
+      "ts": 1781932620697
+    },
+    {
+      "id": "evt_mqlwo9hj_99ypk",
+      "kind": "proxy_removed",
+      "profile_id": null,
+      "payload": "proxy_mqlwn5kn_r4g5x",
+      "ts": 1781932620295
+    },
+    {
+      "id": "evt_mqlwo9d7_r4l6q",
+      "kind": "proxy_removed",
+      "profile_id": null,
+      "payload": "proxy_mqlwn5kn_5m96v",
+      "ts": 1781932620139
+    },
+    {
+      "id": "evt_mqlwo99f_8l3jh",
+      "kind": "proxy_removed",
+      "profile_id": null,
+      "payload": "proxy_mqlwn5kn_w4uye",
+      "ts": 1781932620003
+    },
+    {
+      "id": "evt_mqlwo947_h74cj",
+      "kind": "proxy_removed",
+      "profile_id": null,
+      "payload": "proxy_mqlwn5kn_c72k9",
+      "ts": 1781932619815
+    },
+    {
+      "id": "evt_mqlwo8yg_r2cd3",
+      "kind": "proxy_removed",
+      "profile_id": null,
+      "payload": "proxy_mqlwn5kn_dpp4z",
+      "ts": 1781932619608
+    },
+    {
+      "id": "evt_mqlwo8u9_jrbmr",
+      "kind": "proxy_removed",
+      "profile_id": null,
+      "payload": "proxy_mqlwn5kn_673dc",
+      "ts": 1781932619457
+    },
+    {
+      "id": "evt_mqlwnwcp_9c5bl",
+      "kind": "health_check",
+      "profile_id": null,
+      "payload": "10 proxies",
+      "ts": 1781932603273
+    },
+    {
+      "id": "evt_mqlwnleq_y3tds",
+      "kind": "health_check",
+      "profile_id": null,
+      "payload": "10 proxies",
+      "ts": 1781932589090
+    },
+    {
+      "id": "evt_mqlwnla7_zzspu",
+      "kind": "proxy_removed",
+      "profile_id": null,
+      "payload": "proxy_mqlwn5kn_r4g5x",
+      "ts": 1781932588927
+    },
+    {
+      "id": "evt_mqlwnl3h_py9fn",
+      "kind": "health_check",
+      "profile_id": null,
+      "payload": "10 proxies",
+      "ts": 1781932588685
+    },
+    {
+      "id": "evt_mqlwnfgc_a2ehy",
+      "kind": "health_check",
+      "profile_id": null,
+      "payload": "10 proxies",
+      "ts": 1781932581372
+    },
+    {
+      "id": "evt_mqlwn5kn_4lz3f",
+      "kind": "proxy_bulk_import",
+      "profile_id": null,
+      "payload": "10 agregados desde text",
+      "ts": 1781932568567
+    },
+    {
+      "id": "evt_mqlwmuc5_ew39c",
+      "kind": "proxy_all_removed",
+      "profile_id": null,
+      "payload": "3016 proxies",
+      "ts": 1781932554005
+    },
+    {
+      "id": "evt_mqlvukti_tt4g3",
+      "kind": "opened",
+      "profile_id": "prof_mqlv51g0_kx6t5",
+      "payload": "prueba2 con proxy",
+      "ts": 1781931235302
+    },
+    {
+      "id": "evt_mqlvuera_qc7ce",
+      "kind": "proxy_removed",
+      "profile_id": null,
+      "payload": "proxy_mqlvfvtl_rcsz7",
+      "ts": 1781931227446
+    },
+    {
+      "id": "evt_mqlvuegf_cmwdh",
+      "kind": "proxy_removed",
+      "profile_id": null,
+      "payload": "proxy_mqlvfvtl_zjsru",
+      "ts": 1781931227055
+    },
+    {
+      "id": "evt_mqlvue5k_4sxkz",
+      "kind": "proxy_removed",
+      "profile_id": null,
+      "payload": "proxy_mqlvfvtl_4mgkx",
+      "ts": 1781931226664
+    },
+    {
+      "id": "evt_mqlvuduk_6fzff",
+      "kind": "proxy_removed",
+      "profile_id": null,
+      "payload": "proxy_mqlvfvtl_uuyjf",
+      "ts": 1781931226268
+    },
+    {
+      "id": "evt_mqlvudio_n4dge",
+      "kind": "proxy_removed",
+      "profile_id": null,
+      "payload": "proxy_mqlvfvtl_qws63",
+      "ts": 1781931225840
+    },
+    {
+      "id": "evt_mqlvud73_hgp55",
+      "kind": "proxy_removed",
+      "profile_id": null,
+      "payload": "proxy_mqlvfvtl_e5ysq",
+      "ts": 1781931225423
+    },
+    {
+      "id": "evt_mqlvucvl_37shw",
+      "kind": "proxy_removed",
+      "profile_id": null,
+      "payload": "proxy_mqlvfvtl_7fgwl",
+      "ts": 1781931225009
+    },
+    {
+      "id": "evt_mqlvuck2_vsp5t",
+      "kind": "proxy_removed",
+      "profile_id": null,
+      "payload": "proxy_mqlvfvtl_ljjgy",
+      "ts": 1781931224594
+    },
+    {
+      "id": "evt_mqlvuc8n_e9xl9",
+      "kind": "proxy_removed",
+      "profile_id": null,
+      "payload": "proxy_mqlvfvtl_tf5bn",
+      "ts": 1781931224183
+    },
+    {
+      "id": "evt_mqlvubx9_zavbs",
+      "kind": "proxy_removed",
+      "profile_id": null,
+      "payload": "proxy_mqlvfvtl_ywuds",
+      "ts": 1781931223773
+    },
+    {
+      "id": "evt_mqlvubkh_skwp8",
+      "kind": "proxy_removed",
+      "profile_id": null,
+      "payload": "proxy_mqlvfvtl_ajg3p",
+      "ts": 1781931223313
+    },
+    {
+      "id": "evt_mqlvub8r_p9esb",
+      "kind": "proxy_removed",
+      "profile_id": null,
+      "payload": "proxy_mqlvfvtl_7a4fu",
+      "ts": 1781931222891
+    },
+    {
+      "id": "evt_mqlvuax5_hkkdw",
+      "kind": "proxy_removed",
+      "profile_id": null,
+      "payload": "proxy_mqlvfvtl_q3q73",
+      "ts": 1781931222473
+    },
+    {
+      "id": "evt_mqlvual5_xcw2s",
+      "kind": "proxy_removed",
+      "profile_id": null,
+      "payload": "proxy_mqlvfvtl_xtrrx",
+      "ts": 1781931222041
+    },
+    {
+      "id": "evt_mqlvua9d_mrfdl",
+      "kind": "proxy_removed",
+      "profile_id": null,
+      "payload": "proxy_mqlvfvtl_4mmes",
+      "ts": 1781931221617
+    },
+    {
+      "id": "evt_mqlvu9wc_m9tvt",
+      "kind": "proxy_removed",
+      "profile_id": null,
+      "payload": "proxy_mqlvfvtl_r7fpt",
+      "ts": 1781931221148
+    },
+    {
+      "id": "evt_mqlvu9jg_73jn6",
+      "kind": "proxy_removed",
+      "profile_id": null,
+      "payload": "proxy_mqlvfvtl_mgxme",
+      "ts": 1781931220684
+    },
+    {
+      "id": "evt_mqlvu98c_zzu9l",
+      "kind": "proxy_removed",
+      "profile_id": null,
+      "payload": "proxy_mqlvfvtl_wen7k",
+      "ts": 1781931220284
+    },
+    {
+      "id": "evt_mqlvu8w7_p6bsk",
+      "kind": "proxy_removed",
+      "profile_id": null,
+      "payload": "proxy_mqlvfvtl_endhq",
+      "ts": 1781931219848
+    },
+    {
+      "id": "evt_mqlvu8jw_ugz8a",
+      "kind": "proxy_removed",
+      "profile_id": null,
+      "payload": "proxy_mqlvfvtl_vbus3",
+      "ts": 1781931219404
+    },
+    {
+      "id": "evt_mqlvu879_2clr7",
+      "kind": "proxy_removed",
+      "profile_id": null,
+      "payload": "proxy_mqlvfvtl_wlz88",
+      "ts": 1781931218949
+    },
+    {
+      "id": "evt_mqlvqhcl_34dqd",
+      "kind": "proxy_removed",
+      "profile_id": null,
+      "payload": "proxy_mqlvfvtl_6nxn7",
+      "ts": 1781931044181
+    },
+    {
+      "id": "evt_mqlvqh2x_py86r",
+      "kind": "proxy_removed",
+      "profile_id": null,
+      "payload": "proxy_mqlvfvtl_x75mj",
+      "ts": 1781931043833
+    },
+    {
+      "id": "evt_mqlvqgt7_5feqt",
+      "kind": "proxy_removed",
+      "profile_id": null,
+      "payload": "proxy_mqlvfvtl_xaz9x",
+      "ts": 1781931043483
+    },
+    {
+      "id": "evt_mqlvqgk0_bdaaz",
+      "kind": "proxy_removed",
+      "profile_id": null,
+      "payload": "proxy_mqlvfvtl_ad44n",
+      "ts": 1781931043152
+    },
+    {
+      "id": "evt_mqlvqgad_werel",
+      "kind": "proxy_removed",
+      "profile_id": null,
+      "payload": "proxy_mqlvfvtl_786gr",
+      "ts": 1781931042805
+    },
+    {
+      "id": "evt_mqlvqg0o_sna9s",
+      "kind": "proxy_removed",
+      "profile_id": null,
+      "payload": "proxy_mqlvfvtl_y6lud",
+      "ts": 1781931042456
+    },
+    {
+      "id": "evt_mqlvqfr1_6bwex",
+      "kind": "proxy_removed",
+      "profile_id": null,
+      "payload": "proxy_mqlvfvtl_vaqml",
+      "ts": 1781931042109
+    },
+    {
+      "id": "evt_mqlvqfhz_wbgrp",
+      "kind": "proxy_removed",
+      "profile_id": null,
+      "payload": "proxy_mqlvfvtm_vj5je",
+      "ts": 1781931041783
+    },
+    {
+      "id": "evt_mqlvqf93_xpmlj",
+      "kind": "proxy_removed",
+      "profile_id": null,
+      "payload": "proxy_mqlvfvtm_nvgww",
+      "ts": 1781931041463
+    },
+    {
+      "id": "evt_mqlvqezo_bzb7d",
+      "kind": "proxy_removed",
+      "profile_id": null,
+      "payload": "proxy_mqlvfvtm_jxjhm",
+      "ts": 1781931041124
+    },
+    {
+      "id": "evt_mqlvqeqw_pf5sq",
+      "kind": "proxy_removed",
+      "profile_id": null,
+      "payload": "proxy_mqlvfvtm_jyhm5",
+      "ts": 1781931040808
+    },
+    {
+      "id": "evt_mqlvqehe_6evtu",
+      "kind": "proxy_removed",
+      "profile_id": null,
+      "payload": "proxy_mqlvfvtm_hts3f",
+      "ts": 1781931040466
+    },
+    {
+      "id": "evt_mqlvqe56_s5h5d",
+      "kind": "proxy_removed",
+      "profile_id": null,
+      "payload": "proxy_mqlvfvtm_s53xh",
+      "ts": 1781931040026
+    },
+    {
+      "id": "evt_mqlvqdu4_u8mdf",
+      "kind": "proxy_removed",
+      "profile_id": null,
+      "payload": "proxy_mqlvfvtm_pbsve",
+      "ts": 1781931039628
+    },
+    {
+      "id": "evt_mqlvqdk7_h45pm",
+      "kind": "proxy_removed",
+      "profile_id": null,
+      "payload": "proxy_mqlvfvtm_g32bu",
+      "ts": 1781931039271
+    },
+    {
+      "id": "evt_mqlvqd8t_hgjm7",
+      "kind": "proxy_removed",
+      "profile_id": null,
+      "payload": "proxy_mqlvfvtm_9u3bj",
+      "ts": 1781931038861
+    },
+    {
+      "id": "evt_mqlvqcwu_ywtv7",
+      "kind": "proxy_removed",
+      "profile_id": null,
+      "payload": "proxy_mqlvfvtm_9sgrj",
+      "ts": 1781931038430
+    },
+    {
+      "id": "evt_mqlvqcnv_y9dme",
+      "kind": "proxy_removed",
+      "profile_id": null,
+      "payload": "proxy_mqlvfvtm_we8nb",
+      "ts": 1781931038107
+    },
+    {
+      "id": "evt_mqlvqcf0_tmyrd",
+      "kind": "proxy_removed",
+      "profile_id": null,
+      "payload": "proxy_mqlvfvtm_puqfj",
+      "ts": 1781931037788
+    },
+    {
+      "id": "evt_mqlvqc5x_3vc8d",
+      "kind": "proxy_removed",
+      "profile_id": null,
+      "payload": "proxy_mqlvfvtm_bgkrt",
+      "ts": 1781931037461
+    },
+    {
+      "id": "evt_mqlvqbwk_vh22x",
+      "kind": "proxy_removed",
+      "profile_id": null,
+      "payload": "proxy_mqlvfvtm_am3xc",
+      "ts": 1781931037124
+    },
+    {
+      "id": "evt_mqlvqbni_nms5r",
+      "kind": "proxy_removed",
+      "profile_id": null,
+      "payload": "proxy_mqlvfvtm_8zbhs",
+      "ts": 1781931036799
+    },
+    {
+      "id": "evt_mqlvqbeo_t9rs4",
+      "kind": "proxy_removed",
+      "profile_id": null,
+      "payload": "proxy_mqlvfvtm_fwt4b",
+      "ts": 1781931036480
+    },
+    {
+      "id": "evt_mqlvqb5b_fu56a",
+      "kind": "proxy_removed",
+      "profile_id": null,
+      "payload": "proxy_mqlvfvtm_pujzw",
+      "ts": 1781931036143
+    },
+    {
+      "id": "evt_mqlvqawd_2bx6u",
+      "kind": "proxy_removed",
+      "profile_id": null,
+      "payload": "proxy_mqlvfvtm_htezu",
+      "ts": 1781931035821
+    },
+    {
+      "id": "evt_mqlvqant_s4jy9",
+      "kind": "proxy_removed",
+      "profile_id": null,
+      "payload": "proxy_mqlvfvtm_zzznf",
+      "ts": 1781931035513
+    },
+    {
+      "id": "evt_mqlvqaez_th2uy",
+      "kind": "proxy_removed",
+      "profile_id": null,
+      "payload": "proxy_mqlvfvtm_6fzsk",
+      "ts": 1781931035195
+    },
+    {
+      "id": "evt_mqlvqa55_wquut",
+      "kind": "proxy_removed",
+      "profile_id": null,
+      "payload": "proxy_mqlvfvtm_7yjmb",
+      "ts": 1781931034841
+    },
+    {
+      "id": "evt_mqlvq9va_zmf3k",
+      "kind": "proxy_removed",
+      "profile_id": null,
+      "payload": "proxy_mqlvfvtm_gyux8",
+      "ts": 1781931034486
+    },
+    {
+      "id": "evt_mqlvq9ji_nwc4x",
+      "kind": "proxy_removed",
+      "profile_id": null,
+      "payload": "proxy_mqlvfvtm_5lukm",
+      "ts": 1781931034062
+    },
+    {
+      "id": "evt_mqlvq99t_qsx2b",
+      "kind": "proxy_removed",
+      "profile_id": null,
+      "payload": "proxy_mqlvfvtm_ekgal",
+      "ts": 1781931033713
+    },
+    {
+      "id": "evt_mqlvq91d_yu6la",
+      "kind": "proxy_removed",
+      "profile_id": null,
+      "payload": "proxy_mqlvfvtm_dhrp4",
+      "ts": 1781931033409
+    },
+    {
+      "id": "evt_mqlvq8rl_38pdy",
+      "kind": "proxy_removed",
+      "profile_id": null,
+      "payload": "proxy_mqlvfvtm_hzrfn",
+      "ts": 1781931033057
+    },
+    {
+      "id": "evt_mqlvq8j1_xnuc3",
+      "kind": "proxy_removed",
+      "profile_id": null,
+      "payload": "proxy_mqlvfvtm_y7euz",
+      "ts": 1781931032749
+    },
+    {
+      "id": "evt_mqlvq8ab_j3ahc",
+      "kind": "proxy_removed",
+      "profile_id": null,
+      "payload": "proxy_mqlvfvtm_r54vr",
+      "ts": 1781931032435
+    },
+    {
+      "id": "evt_mqlvq81h_xkmgf",
+      "kind": "proxy_removed",
+      "profile_id": null,
+      "payload": "proxy_mqlvfvtm_7tjfu",
+      "ts": 1781931032117
+    },
+    {
+      "id": "evt_mqlvq7sr_dhfl3",
+      "kind": "proxy_removed",
+      "profile_id": null,
+      "payload": "proxy_mqlvfvtm_7sdwf",
+      "ts": 1781931031803
+    },
+    {
+      "id": "evt_mqlvq7jp_pg6nt",
+      "kind": "proxy_removed",
+      "profile_id": null,
+      "payload": "proxy_mqlvfvtm_q5zx3",
+      "ts": 1781931031477
+    },
+    {
+      "id": "evt_mqlvq7aq_k95k5",
+      "kind": "proxy_removed",
+      "profile_id": null,
+      "payload": "proxy_mqlvfvtm_v8x6d",
+      "ts": 1781931031154
+    },
+    {
+      "id": "evt_mqlvq71p_fzhsv",
+      "kind": "proxy_removed",
+      "profile_id": null,
+      "payload": "proxy_mqlvfvtm_fd3gm",
+      "ts": 1781931030829
+    },
+    {
+      "id": "evt_mqlvq6sq_4asmt",
+      "kind": "proxy_removed",
+      "profile_id": null,
+      "payload": "proxy_mqlvfvtm_ds8em",
+      "ts": 1781931030506
+    },
+    {
+      "id": "evt_mqlvq6jl_2ymd9",
+      "kind": "proxy_removed",
+      "profile_id": null,
+      "payload": "proxy_mqlvfvtm_bnyzy",
+      "ts": 1781931030177
+    },
+    {
+      "id": "evt_mqlvq6ao_6qthj",
+      "kind": "proxy_removed",
+      "profile_id": null,
+      "payload": "proxy_mqlvfvtm_lq2rl",
+      "ts": 1781931029856
+    },
+    {
+      "id": "evt_mqlvq615_drabm",
+      "kind": "proxy_removed",
+      "profile_id": null,
+      "payload": "proxy_mqlvfvtm_skh2j",
+      "ts": 1781931029513
+    },
+    {
+      "id": "evt_mqlvq5s5_acg7g",
+      "kind": "proxy_removed",
+      "profile_id": null,
+      "payload": "proxy_mqlvfvtm_u3r35",
+      "ts": 1781931029189
+    },
+    {
+      "id": "evt_mqlvq5fx_pvjwv",
+      "kind": "proxy_removed",
+      "profile_id": null,
+      "payload": "proxy_mqlvfvtm_llvc4",
+      "ts": 1781931028749
+    },
+    {
+      "id": "evt_mqlvq565_tjjn2",
+      "kind": "proxy_removed",
+      "profile_id": null,
+      "payload": "proxy_mqlvfvtm_jj4tc",
+      "ts": 1781931028397
+    },
+    {
+      "id": "evt_mqlvq4x5_3yp7g",
+      "kind": "proxy_removed",
+      "profile_id": null,
+      "payload": "proxy_mqlvfvtm_vmvfu",
+      "ts": 1781931028073
+    },
+    {
+      "id": "evt_mqlvq4nu_a5gv8",
+      "kind": "proxy_removed",
+      "profile_id": null,
+      "payload": "proxy_mqlvfvtm_p6cx2",
+      "ts": 1781931027738
+    },
+    {
+      "id": "evt_mqlvq4ej_gcpm2",
+      "kind": "proxy_removed",
+      "profile_id": null,
+      "payload": "proxy_mqlvfvtm_6n9m2",
+      "ts": 1781931027403
+    },
+    {
+      "id": "evt_mqlvq45d_nkqsb",
+      "kind": "proxy_removed",
+      "profile_id": null,
+      "payload": "proxy_mqlvfvtm_zkua4",
+      "ts": 1781931027073
+    },
+    {
+      "id": "evt_mqlvq3vk_qqu9g",
+      "kind": "proxy_removed",
+      "profile_id": null,
+      "payload": "proxy_mqlvfvtm_j6rra",
+      "ts": 1781931026720
+    },
+    {
+      "id": "evt_mqlvq3mq_uvuqn",
+      "kind": "proxy_removed",
+      "profile_id": null,
+      "payload": "proxy_mqlvfvtm_xrgmu",
+      "ts": 1781931026402
+    },
+    {
+      "id": "evt_mqlvq3at_adyl7",
+      "kind": "proxy_removed",
+      "profile_id": null,
+      "payload": "proxy_mqlvfvtm_jtb6b",
+      "ts": 1781931025973
+    },
+    {
+      "id": "evt_mqlvq311_njcrl",
+      "kind": "proxy_removed",
+      "profile_id": null,
+      "payload": "proxy_mqlvfvtm_3cm4c",
+      "ts": 1781931025621
+    },
+    {
+      "id": "evt_mqlvq2rc_u5388",
+      "kind": "proxy_removed",
+      "profile_id": null,
+      "payload": "proxy_mqlvfvtm_mtas9",
+      "ts": 1781931025272
+    },
+    {
+      "id": "evt_mqlvq2hr_r6ltg",
+      "kind": "proxy_removed",
+      "profile_id": null,
+      "payload": "proxy_mqlvfvtm_77pke",
+      "ts": 1781931024927
+    },
+    {
+      "id": "evt_mqlvq285_fl5m2",
+      "kind": "proxy_removed",
+      "profile_id": null,
+      "payload": "proxy_mqlvfvtm_mkt2w",
+      "ts": 1781931024581
+    },
+    {
+      "id": "evt_mqlvq1yv_tkmsu",
+      "kind": "proxy_removed",
+      "profile_id": null,
+      "payload": "proxy_mqlvfvtm_26qsj",
+      "ts": 1781931024247
+    },
+    {
+      "id": "evt_mqlvq0hb_vhawv",
+      "kind": "proxy_removed",
+      "profile_id": null,
+      "payload": "proxy_mqlvfvtm_fhxq6",
+      "ts": 1781931022319
+    },
+    {
+      "id": "evt_mqlvq04t_5tvby",
+      "kind": "proxy_removed",
+      "profile_id": null,
+      "payload": "proxy_mqlvfvtm_68zrc",
+      "ts": 1781931021869
+    },
+    {
+      "id": "evt_mqlvpzv4_x6arv",
+      "kind": "proxy_removed",
+      "profile_id": null,
+      "payload": "proxy_mqlvfvtm_gzlj2",
+      "ts": 1781931021520
+    },
+    {
+      "id": "evt_mqlvpzlo_lc75d",
+      "kind": "proxy_removed",
+      "profile_id": null,
+      "payload": "proxy_mqlvfvtm_gcnb3",
+      "ts": 1781931021180
+    },
+    {
+      "id": "evt_mqlvpzby_7cvng",
+      "kind": "proxy_removed",
+      "profile_id": null,
+      "payload": "proxy_mqlvfvtm_5enb8",
+      "ts": 1781931020830
+    },
+    {
+      "id": "evt_mqlvpz2e_f26ax",
+      "kind": "proxy_removed",
+      "profile_id": null,
+      "payload": "proxy_mqlvfvtm_smlk4",
+      "ts": 1781931020486
+    },
+    {
+      "id": "evt_mqlvpytf_axqdd",
+      "kind": "proxy_removed",
+      "profile_id": null,
+      "payload": "proxy_mqlvfvtm_bnkyu",
+      "ts": 1781931020163
+    },
+    {
+      "id": "evt_mqlvpykm_zbaln",
+      "kind": "proxy_removed",
+      "profile_id": null,
+      "payload": "proxy_mqlvfvtm_sgzkn",
+      "ts": 1781931019846
+    },
+    {
+      "id": "evt_mqlvpybn_4e2z3",
+      "kind": "proxy_removed",
+      "profile_id": null,
+      "payload": "proxy_mqlvfvtm_ph5ue",
+      "ts": 1781931019523
+    },
+    {
+      "id": "evt_mqlvpy2l_jppk3",
+      "kind": "proxy_removed",
+      "profile_id": null,
+      "payload": "proxy_mqlvfvtm_q5hdk",
+      "ts": 1781931019197
+    },
+    {
+      "id": "evt_mqlvpxtb_5x3bq",
+      "kind": "proxy_removed",
+      "profile_id": null,
+      "payload": "proxy_mqlvfvtm_vfltb",
+      "ts": 1781931018863
+    },
+    {
+      "id": "evt_mqlvpxki_hpdg6",
+      "kind": "proxy_removed",
+      "profile_id": null,
+      "payload": "proxy_mqlvfvtm_gt4kg",
+      "ts": 1781931018546
+    },
+    {
+      "id": "evt_mqlvpx93_rnmew",
+      "kind": "proxy_removed",
+      "profile_id": null,
+      "payload": "proxy_mqlvfvtm_kqrw3",
+      "ts": 1781931018135
+    },
+    {
+      "id": "evt_mqlvpwyz_kh6ru",
+      "kind": "proxy_removed",
+      "profile_id": null,
+      "payload": "proxy_mqlvfvtm_bv37y",
+      "ts": 1781931017771
+    },
+    {
+      "id": "evt_mqlvpwpb_fjhuz",
+      "kind": "proxy_removed",
+      "profile_id": null,
+      "payload": "proxy_mqlvfvtm_dcv8r",
+      "ts": 1781931017423
+    },
+    {
+      "id": "evt_mqlvpwfq_um8vc",
+      "kind": "proxy_removed",
+      "profile_id": null,
+      "payload": "proxy_mqlvfvtm_5s2xa",
+      "ts": 1781931017078
+    },
+    {
+      "id": "evt_mqlvpw6p_6n246",
+      "kind": "proxy_removed",
+      "profile_id": null,
+      "payload": "proxy_mqlvfvtm_pwvbk",
+      "ts": 1781931016753
+    }
+  ],
+  "liveIds": [],
+  "browserTabs": [],
+  "activeTabId": null,
+  "netEntries": [
+    {
+      "id": "net_mqlz81yi_mzkcw",
+      "method": "WEBVIEW",
+      "url": "https://abrahamjuliot.github.io/creepjs/",
+      "status": -100,
+      "ts": 1781936902890
+    },
+    {
+      "id": "net_mqlv6jtw_9smvj",
+      "method": "WEBVIEW",
+      "url": "https://shein.com.mx/",
+      "status": -336,
+      "ts": 1781930114276
+    },
+    {
+      "id": "net_mqlv6fl6_lfs8a",
+      "method": "WEBVIEW",
+      "url": "https://shein.com.mx/",
+      "status": -336,
+      "ts": 1781930108778
+    },
+    {
+      "id": "net_mqlruhtk_h7w4r",
+      "method": "WEBVIEW",
+      "url": "https://abrahamjuliot.github.io/creepjs/",
+      "status": -130,
+      "ts": 1781924512953
+    }
+  ],
+  "settings": {
+    "theme": "midnight",
+    "chromiumReady": false,
+    "torReady": false,
+    "vaultToken": "4A5XLXWV5THVMWQR8SV328YF"
+  }
+}
