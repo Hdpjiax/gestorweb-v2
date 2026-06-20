@@ -1,0 +1,357 @@
+/* Final exact profile panel visual layer */
+.inspector {
+  width: 378px !important;
+  min-width: 378px !important;
+  max-width: 378px !important;
+  background: #101720 !important;
+  border-left: 1px solid #243044 !important;
+  color: #e8eef8 !important;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
+}
+
+.inspector * {
+  letter-spacing: normal;
+}
+
+.inspector-head {
+  padding: 18px 16px 20px !important;
+  border-bottom: 1px solid #243044 !important;
+  background: #101720 !important;
+}
+
+.inspector-head .title {
+  margin: 0 0 7px !important;
+  color: #fff !important;
+  font-size: 18px !important;
+  line-height: 1.2 !important;
+  font-weight: 700 !important;
+}
+
+.inspector-head .small-note {
+  color: #8190a8 !important;
+  font-size: 12px !important;
+  font-weight: 400 !important;
+}
+
+.inspector .tabs {
+  height: 48px !important;
+  padding: 0 8px !important;
+  gap: 4px !important;
+  align-items: end !important;
+  border-bottom: 1px solid #243044 !important;
+  background: #101720 !important;
+}
+
+.inspector .tab {
+  height: 36px !important;
+  padding: 0 10px !important;
+  gap: 6px !important;
+  border: 1px solid transparent !important;
+  border-radius: 6px 6px 0 0 !important;
+  background: transparent !important;
+  color: #8290a8 !important;
+  font-size: 12px !important;
+  font-weight: 500 !important;
+}
+
+.inspector .tab svg {
+  display: block !important;
+  width: 14px !important;
+  height: 14px !important;
+}
+
+.inspector .tab.active {
+  color: #fff !important;
+  border-color: #fbbf24 !important;
+  border-bottom-color: #101720 !important;
+  background: #111923 !important;
+  box-shadow: 0 0 0 1px rgb(251 191 36 / 0.08) !important;
+}
+
+.inspector-body {
+  padding: 16px !important;
+  background: #101720 !important;
+  scrollbar-width: thin;
+  scrollbar-color: #2b374d #101720;
+}
+
+.inspector-body::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.inspector-body::-webkit-scrollbar-track {
+  background: #101720;
+}
+
+.inspector-body::-webkit-scrollbar-thumb {
+  border: 2px solid #101720;
+  border-radius: 999px;
+  background: #2b374d;
+}
+
+.inspector-score {
+  position: relative !important;
+  margin-top: 34px !important;
+  padding: 17px 16px 16px !important;
+  display: grid !important;
+  gap: 12px !important;
+  border: 1px solid #7c5cff !important;
+  border-radius: 7px !important;
+  background: #171d2a !important;
+}
+
+.inspector-score::before {
+  content: "AISLAMIENTO" !important;
+  position: absolute !important;
+  left: 0 !important;
+  top: -31px !important;
+  color: #8ba0bd !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.09em !important;
+}
+
+.score-labels {
+  order: 1 !important;
+  margin: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+}
+
+.score-labels span:first-child {
+  color: #7c5cff !important;
+  font-size: 18px !important;
+  font-weight: 800 !important;
+}
+
+.score-labels span:last-child,
+.score-labels .mono {
+  color: #7c5cff !important;
+  font-family: inherit !important;
+  font-size: 22px !important;
+  font-weight: 800 !important;
+}
+
+.score-bar {
+  order: 2 !important;
+  height: 7px !important;
+  background: #060b12 !important;
+}
+
+.score-fill {
+  background: #7c5cff !important;
+}
+
+.fp-tab,
+.privacy-stack {
+  display: grid !important;
+  gap: 16px !important;
+}
+
+.fp-header,
+.fp-header .fp-info {
+  display: none !important;
+}
+
+.check-list {
+  display: grid !important;
+  overflow: hidden !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: #121a25 !important;
+}
+
+.check-row {
+  min-height: 33px !important;
+  display: grid !important;
+  grid-template-columns: 18px minmax(0, 1fr) auto !important;
+  gap: 8px !important;
+  align-items: center !important;
+  padding: 0 11px !important;
+  border-bottom: 1px solid #202a39 !important;
+  background: #121a25 !important;
+  color: #f8fafc !important;
+  font-size: 12px !important;
+  font-weight: 500 !important;
+}
+
+.check-row:last-child {
+  border-bottom: 0 !important;
+}
+
+.check-row > span:nth-child(2) {
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+.check-row .mono,
+.check-row > span:last-child {
+  font-family: "JetBrains Mono", "Cascadia Mono", Consolas, monospace !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  text-align: right !important;
+  white-space: nowrap !important;
+}
+
+.check-row .warn,
+.check-row > span:last-child.warn {
+  color: #f59e0b !important;
+}
+
+.raw-data {
+  margin: 6px 0 0 !important;
+  color: #7c5cff !important;
+  font-size: 12px !important;
+  font-weight: 500 !important;
+}
+
+.privacy-header {
+  min-height: 42px !important;
+  padding: 0 12px !important;
+  border: 1px solid #16a34a !important;
+  border-radius: 7px !important;
+  background: #07321f !important;
+  color: #fff !important;
+  font-size: 12px !important;
+  font-weight: 650 !important;
+}
+
+.callout,
+.tor-notice {
+  padding: 13px !important;
+  border: 1px solid #16a34a !important;
+  border-radius: 4px !important;
+  background: #092f1f !important;
+  color: #d8fce8 !important;
+  font-size: 12px !important;
+  line-height: 1.52 !important;
+  font-weight: 500 !important;
+}
+
+.privacy-stack .metric {
+  padding: 17px 16px 16px !important;
+  border: 1px solid #243044 !important;
+  border-radius: 7px !important;
+  background: #121a25 !important;
+}
+
+.privacy-stack .metric .accent {
+  color: #22c55e !important;
+  font-size: 31px !important;
+  font-weight: 700 !important;
+}
+
+.privacy-stack .progress {
+  height: 6px !important;
+  background: #060b12 !important;
+}
+
+.privacy-stack .progress span {
+  background: #22c55e !important;
+}
+
+.preset-grid {
+  gap: 4px !important;
+}
+
+.preset-btn {
+  height: 30px !important;
+  border-radius: 4px !important;
+  font-size: 11px !important;
+  font-weight: 500 !important;
+}
+
+.privacy-flags {
+  display: grid !important;
+  gap: 6px !important;
+  border: 0 !important;
+  background: transparent !important;
+}
+
+.privacy-flag {
+  min-height: 38px !important;
+  padding: 0 12px !important;
+  border: 1px solid #263449 !important;
+  border-radius: 4px !important;
+  background: #111827 !important;
+  color: #7f8da6 !important;
+  font-size: 12px !important;
+  font-weight: 500 !important;
+}
+
+.privacy-flag.on {
+  color: #fff !important;
+  border-color: #6847d9 !important;
+  background: #1d1936 !important;
+}
+
+.privacy-flag .flag-icon {
+  display: none !important;
+}
+
+.privacy-flag .flag-state {
+  margin-left: auto !important;
+  min-width: 31px !important;
+  height: 20px !important;
+  background: #071019 !important;
+  font-size: 0 !important;
+}
+
+.privacy-flag .flag-state::after {
+  content: "off" !important;
+  font-size: 10px !important;
+}
+
+.privacy-flag.on .flag-state {
+  color: #22c55e !important;
+  background: #064e3b !important;
+}
+
+.privacy-flag.on .flag-state::after {
+  content: "on" !important;
+}
+
+.inspector-actions {
+  padding: 14px 14px 16px !important;
+  border-top: 1px solid #243044 !important;
+  background: #101720 !important;
+  box-shadow: 0 -12px 28px rgb(0 0 0 / 0.22) !important;
+  display: grid !important;
+  gap: 8px !important;
+}
+
+.inspector-actions .toggle-btn,
+.inspector-actions .btn,
+.inspector-actions .audit-btn {
+  min-height: 34px !important;
+  border-radius: 5px !important;
+  font-size: 12px !important;
+  font-weight: 500 !important;
+}
+
+.inspector-actions .btn-primary {
+  color: #fff !important;
+  background: #7c5cff !important;
+  font-size: 14px !important;
+  font-weight: 700 !important;
+}
+
+.audit-row .audit-btn:first-child span {
+  font-size: 0 !important;
+}
+
+.audit-row .audit-btn:first-child span::after {
+  content: "test deteccion" !important;
+  font-size: 13px !important;
+}
+
+.warning-note {
+  padding: 12px 13px !important;
+  border-radius: 5px !important;
+  font-size: 11px !important;
+  line-height: 1.48 !important;
+  font-weight: 500 !important;
+}
