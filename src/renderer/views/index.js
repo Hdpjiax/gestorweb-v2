@@ -16,3 +16,5 @@ export { renderSettingsView } from "./settings-view.js";
 export { renderInspectorFingerprintTab } from "./inspector-fingerprint-tab.js";
 export { renderInspectorPrivacyTab } from "./inspector-privacy-tab.js";
 export { renderInspectorAuthTab } from "./inspector-auth-tab.js";
+export { renderNewProfileModal, renderProfileAdvancedFields } from "./new-profile-modal-view.js";
+export { renderWelcomeModal } from "./welcome-modal-view.js";
