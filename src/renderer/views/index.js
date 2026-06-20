@@ -5,3 +5,4 @@ export { renderInfoView } from "./info-view-router.js";
 export { renderInspectorView } from "./inspector-view.js";
 export { renderInspectorKnownTab } from "./inspector-tab-router.js";
 export { renderProfileViewWithRow } from "./profile-view.js";
+export { renderSchedulesView } from "./schedules-view.js";
