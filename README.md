@@ -32,7 +32,7 @@ Este comando revisa todos los archivos `.js` del repositorio, incluyendo `main.j
 npm test
 ```
 
-Ejecuta pruebas unitarias ligeras para validadores de seguridad, helpers del renderer, parser de proxies y pulido UX.
+Ejecuta pruebas unitarias ligeras para validadores de seguridad, esquema de estado, helpers del renderer, parser de proxies y pulido UX.
 
 ## QA completo
 
@@ -75,6 +75,7 @@ El instalador se genera en la carpeta `dist/`.
 
 - Runner ligero en `scripts/run-tests.js`.
 - Pruebas de seguridad en `tests/main/security.test.js`.
+- Pruebas de esquema de estado en `tests/main/state-schema.test.js`.
 - Pruebas de helpers en `tests/renderer/helpers.test.js`.
 - Pruebas de parser de proxies en `tests/renderer/proxy-parser.test.js`.
 - Pruebas de pulido UX en `tests/renderer/ux-polish.test.js`.
@@ -90,11 +91,21 @@ El instalador se genera en la carpeta `dist/`.
 - Respeto a `prefers-reduced-motion`.
 - Guia de mantenimiento en `UI_UX_GUIDE.md`.
 
+## Backend / persistencia implementado
+
+- Esquema de estado versionado en `src/main/state-schema.js`.
+- Migracion automatica a `schema_version: 2`.
+- Escritura JSON recuperable con archivo temporal y `.bak`.
+- Recuperacion automatica desde backup si `state.json` no se puede leer.
+- Limpieza de `liveIds` al cargar/migrar para evitar sesiones fantasma.
+- Historiales limitados para evitar crecimiento excesivo del archivo.
+- Guia de datos en `DATA_STORAGE.md`.
+
 ## Pendiente tecnico
 
 - Separar componentes grandes de `src/renderer/views.js`.
-- Agregar pruebas para normalizacion de estado, flujos de IPC y persistencia.
-- Ampliar validacion defensiva de payloads IPC con esquemas versionados.
+- Agregar pruebas para flujos de IPC y persistencia con Electron real.
+- Ampliar validacion defensiva de payloads IPC con esquemas versionados por entidad.
 - Revisar compatibilidad de sandbox/webview en build final de Windows.
-- Migrar persistencia a SQLite o a archivos versionados por esquema.
+- Evaluar migracion futura a SQLite si crece el volumen de datos.
 - Sustituir la activacion simulada por verificacion real basada en firma.
