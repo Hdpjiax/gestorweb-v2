@@ -26,16 +26,10 @@ function proxyResult(proxy, started, healthy, lastError = null) {
   };
 }
 
-function tlsErrorMessage(error) {
-  const code = error?.code || error?.authorizationError || "";
-  const message = error?.message || "certificado TLS invalido";
-  if (/CERT|UNABLE_TO|SELF_SIGNED|ISSUER|VERIFY/i.test(`${code} ${message}`)) {
-    return `certificado TLS invalido: ${code || message}`;
-  }
-  return message;
-}
-
-function validateTlsOverSocket(socket, servername = TLS_TEST_HOST) {
+// El health-check solo verifica que el túnel CONNECT funciona.
+// No validamos el cert TLS del destino (rejectUnauthorized:false) porque
+// los proxies MITM/residenciales usan su propia CA que no está en el OS store.
+function validateTunnelOverSocket(socket, servername = TLS_TEST_HOST) {
   return new Promise((resolve) => {
     let done = false;
     const finish = (healthy, lastError = null, tlsSocket = null) => {
@@ -48,16 +42,13 @@ function validateTlsOverSocket(socket, servername = TLS_TEST_HOST) {
     const tlsSocket = tls.connect({
       socket,
       servername,
-      rejectUnauthorized: true
+      rejectUnauthorized: false  // Solo testamos conectividad, no la CA del proxy
     });
 
     tlsSocket.setTimeout(PROXY_TIMEOUT_MS);
-    tlsSocket.once("secureConnect", () => {
-      if (tlsSocket.authorized) finish(true, null, tlsSocket);
-      else finish(false, `certificado TLS invalido: ${tlsSocket.authorizationError || "no autorizado"}`, tlsSocket);
-    });
+    tlsSocket.once("secureConnect", () => finish(true, null, tlsSocket));
     tlsSocket.once("timeout", () => finish(false, "timeout TLS", tlsSocket));
-    tlsSocket.once("error", (error) => finish(false, tlsErrorMessage(error), tlsSocket));
+    tlsSocket.once("error", (err) => finish(false, err.message, tlsSocket));
   });
 }
 
@@ -82,7 +73,7 @@ function checkHttpProxy(proxy) {
       socket.removeAllListeners("data");
       socket.removeAllListeners("timeout");
       socket.removeAllListeners("error");
-      const tlsResult = await validateTlsOverSocket(socket, TLS_TEST_HOST);
+      const tlsResult = await validateTunnelOverSocket(socket, TLS_TEST_HOST);
       resolve(proxyResult(proxy, started, tlsResult.healthy, tlsResult.lastError));
     };
 
@@ -135,7 +126,7 @@ function checkSocks5Proxy(proxy) {
       socket.removeAllListeners("data");
       socket.removeAllListeners("timeout");
       socket.removeAllListeners("error");
-      const tlsResult = await validateTlsOverSocket(socket, TLS_TEST_HOST);
+      const tlsResult = await validateTunnelOverSocket(socket, TLS_TEST_HOST);
       resolve(proxyResult(proxy, started, tlsResult.healthy, tlsResult.lastError));
     };
 
@@ -199,7 +190,7 @@ function checkSocks4Proxy(proxy) {
       socket.removeAllListeners("data");
       socket.removeAllListeners("timeout");
       socket.removeAllListeners("error");
-      const tlsResult = await validateTlsOverSocket(socket, TLS_TEST_HOST);
+      const tlsResult = await validateTunnelOverSocket(socket, TLS_TEST_HOST);
       resolve(proxyResult(proxy, started, tlsResult.healthy, tlsResult.lastError));
     };
 
@@ -230,5 +221,5 @@ module.exports = {
   checkHttpProxy,
   checkSocks5Proxy,
   checkSocks4Proxy,
-  validateTlsOverSocket
+  validateTunnelOverSocket
 };

@@ -3,6 +3,7 @@ const path = require("path");
 const { registerIpc } = require("./src/main/ipc");
 const { readJson, stateFile, sessionFor } = require("./src/main/utils");
 const proxySessions = require("./src/main/proxy-partitions");
+const { prepareSession } = require("./src/main/windows");
 
 if (process.env.GW_TEST_USERDATA) {
   app.setPath("userData", process.env.GW_TEST_USERDATA);
@@ -25,6 +26,30 @@ async function clearBrowserSessionsOnExit() {
       });
     } catch {}
   }));
+}
+
+// Pre-aplica setCertificateVerifyProc a todas las sesiones que ya tienen
+// proxy asignado en el estado guardado. Esto elimina la race condition donde
+// Chromium abre una conexión TLS antes de que prepareSession corra por primera vez.
+async function prewarmProxySessions() {
+  try {
+    const stored = readJson(stateFile(), null);
+    if (!stored) return;
+    const profiles = Array.isArray(stored.profiles) ? stored.profiles : [];
+    const proxies = Array.isArray(stored.proxies) ? stored.proxies : [];
+    const proxyMap = new Map(proxies.map((p) => [String(p.id), p]));
+
+    await Promise.all(profiles.map(async (profile) => {
+      if (!profile?.id) return;
+      const proxy = profile.proxy_id ? proxyMap.get(String(profile.proxy_id)) : null;
+      const hasTorMode = !!profile.tor_mode;
+      const hasProxy = !!(proxy?.host && proxy?.port) || hasTorMode;
+      if (!hasProxy) return;
+      try {
+        await prepareSession(profile, proxy || null);
+      } catch {}
+    }));
+  } catch {}
 }
 
 function createWindow() {
@@ -54,19 +79,8 @@ function createWindow() {
   });
 }
 
-// ── Hook global de certificados ───────────────────────────────────────────────
-// Debe registrarse ANTES de app.whenReady().
-//
-// CertVerifyProcBuiltin corre en el hilo de red de Chromium y puede ganarle
-// la carrera a setCertificateVerifyProc en el primer handshake TLS.
-// Este hook del proceso main se evalúa de forma síncrona y está garantizado
-// a dispararse antes de que Chromium rechace cualquier certificado.
-//
-// Solo bypaseamos la verificación para sesiones que tienen un proxy MITM activo
-// (proxies residenciales, Bright Data, etc. que usan su propia CA).
-// La comparación es por identidad de objeto Session — Session.partition
-// NO existe en la API de Electron, por lo que comparar strings de partición
-// siempre devuelve undefined y nunca funcionaría.
+// Hook global: intercepta certificate-error antes de que Chromium lo rechace.
+// Compara por identidad de objeto Session (Session.partition no existe en la API).
 app.on("certificate-error", (event, webContents, _url, _error, _certificate, callback) => {
   try {
     if (proxySessions.has(webContents.session)) {
@@ -77,7 +91,9 @@ app.on("certificate-error", (event, webContents, _url, _error, _certificate, cal
   callback(false);
 });
 
-app.whenReady().then(() => {
+app.whenReady().then(async () => {
+  // Pre-calentar sesiones con proxy ANTES de crear ventanas
+  await prewarmProxySessions();
   registerIpc(getMainWindow);
   createWindow();
   app.on("activate", () => {

@@ -179,12 +179,25 @@ function sanitizeProfile(profile) {
   };
 }
 
+// Resuelve el proxy asignado a un perfil desde el estado guardado.
+// Si el renderer pasa proxy=null pero el perfil tiene proxy_id,
+// resolvemos automáticamente para que proxy-per-profile siempre funcione.
+function resolveProxyForProfile(profile, explicitProxy) {
+  if (explicitProxy?.host && explicitProxy?.port) return explicitProxy;
+  if (!profile?.proxy_id) return null;
+  try {
+    const state = loadAppState();
+    const found = (state.proxies || []).find((p) => String(p.id) === String(profile.proxy_id));
+    return found || null;
+  } catch {
+    return null;
+  }
+}
+
 // ─── IPC HANDLERS ─────────────────────────────────────────────────────────────
 function registerIpc(mainWindowRef) {
   const getDialogWindow = () => resolveWindow(mainWindowRef);
 
-  // Inyectar referencia de ventana principal en windows.js para que pueda
-  // enviar 'profiles:windowClosed' al renderer cuando un perfil cierra.
   setMainWindowRef(mainWindowRef);
 
   ipcMain.handle("state:load", () => loadAppState());
@@ -214,7 +227,11 @@ function registerIpc(mainWindowRef) {
     await shell.openExternal(safeUrl);
     return { ok: true };
   });
-  ipcMain.handle("browse:prepareSession", (_event, profile, proxy) => prepareSession(sanitizeProfile(profile), proxy));
+  ipcMain.handle("browse:prepareSession", (_event, profile, proxy) => {
+    const sanitized = sanitizeProfile(profile);
+    const resolvedProxy = resolveProxyForProfile(sanitized, proxy);
+    return prepareSession(sanitized, resolvedProxy);
+  });
   ipcMain.handle("browse:ipcheck", (_event, profileId) => profileIpCheck(profileId));
   ipcMain.handle("browse:freshenMemory", async (_event, profileId) => {
     const id = assertProfileId(profileId);
@@ -290,7 +307,12 @@ function registerIpc(mainWindowRef) {
   });
 
   // ── Perfiles / ventanas ─────────────────────────────────────────────────────
-  ipcMain.handle("profiles:openWindow", (_event, profile, proxy, url) => openProfileWindow(sanitizeProfile(profile), proxy, safeProfileUrl(url)));
+  ipcMain.handle("profiles:openWindow", (_event, profile, proxy, url) => {
+    const sanitized = sanitizeProfile(profile);
+    // Resolver proxy automáticamente desde proxy_id si el renderer no pasó uno
+    const resolvedProxy = resolveProxyForProfile(sanitized, proxy);
+    return openProfileWindow(sanitized, resolvedProxy, safeProfileUrl(url));
+  });
   ipcMain.handle("profiles:closeWindow", async (_event, profileId) => {
     const id = assertProfileId(profileId);
     const state = loadAppState();
