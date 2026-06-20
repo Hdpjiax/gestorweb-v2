@@ -1,4 +1,22 @@
 /* Final privacy tab alignment layer. Fingerprint is intentionally untouched. */
+.inspector {
+  width: 404px !important;
+  min-width: 404px !important;
+  max-width: 404px !important;
+}
+
+.inspector .inspector-head,
+.inspector-head {
+  padding-left: 18px !important;
+  padding-right: 18px !important;
+}
+
+.inspector .inspector-body,
+.inspector-body {
+  padding-left: 18px !important;
+  padding-right: 18px !important;
+}
+
 .inspector .privacy-stack,
 .inspector .privacy-stack * {
   box-sizing: border-box !important;
@@ -8,6 +26,7 @@
   gap: 14px !important;
   color: #dbe7f7 !important;
   font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
+  font-weight: 400 !important;
 }
 
 .inspector .privacy-stack h4,
@@ -18,7 +37,7 @@
   color: #a6bdd8 !important;
   font-size: 12px !important;
   line-height: 1.25 !important;
-  font-weight: 600 !important;
+  font-weight: 500 !important;
   letter-spacing: 0.04em !important;
   text-transform: uppercase !important;
 }
@@ -36,7 +55,7 @@
   color: #f3fff7 !important;
   font-size: 12px !important;
   line-height: 1 !important;
-  font-weight: 600 !important;
+  font-weight: 500 !important;
 }
 
 .inspector .privacy-header .pill,
@@ -52,7 +71,7 @@
   color: #31e77a !important;
   background: #075234 !important;
   font-size: 10px !important;
-  font-weight: 600 !important;
+  font-weight: 500 !important;
   line-height: 1 !important;
   text-transform: lowercase !important;
 }
@@ -72,7 +91,7 @@
 .inspector .privacy-stack .callout:not(.warning-note):not(.tor-notice) b,
 .inspector .privacy-stack .callout:not(.warning-note):not(.tor-notice) strong {
   color: #21e277 !important;
-  font-weight: 600 !important;
+  font-weight: 500 !important;
 }
 
 .inspector .privacy-stack .metric {
@@ -93,7 +112,7 @@
   margin: 0 !important;
   color: #8799b5 !important;
   font-size: 12px !important;
-  font-weight: 500 !important;
+  font-weight: 400 !important;
   letter-spacing: 0.08em !important;
   text-transform: uppercase !important;
 }
@@ -102,7 +121,7 @@
   color: #20dc76 !important;
   font-size: 32px !important;
   line-height: 1 !important;
-  font-weight: 600 !important;
+  font-weight: 500 !important;
   letter-spacing: -0.04em !important;
 }
 
@@ -123,7 +142,7 @@
   color: #20dc76 !important;
   background: #05120f !important;
   font-size: 10px !important;
-  font-weight: 600 !important;
+  font-weight: 500 !important;
   text-transform: none !important;
 }
 
@@ -199,7 +218,7 @@
   border-color: #6847d9 !important;
   background: #1d1936 !important;
   color: #ffffff !important;
-  font-weight: 500 !important;
+  font-weight: 400 !important;
 }
 
 .inspector .privacy-flag > span:first-child,
@@ -225,7 +244,7 @@
   background: #071019 !important;
   color: #6b7c92 !important;
   font-size: 0 !important;
-  font-weight: 600 !important;
+  font-weight: 500 !important;
 }
 
 .inspector .privacy-flag .flag-state::after {
@@ -257,7 +276,7 @@
   background: #111923 !important;
   color: #f8fafc !important;
   font-size: 12px !important;
-  font-weight: 600 !important;
+  font-weight: 500 !important;
 }
 
 .inspector .warning-note {
@@ -274,11 +293,11 @@
 .inspector .warning-note b,
 .inspector .warning-note strong {
   color: #fbbf24 !important;
-  font-weight: 600 !important;
+  font-weight: 500 !important;
 }
 
 .inspector .inspector-actions {
-  padding: 13px 14px 15px !important;
+  padding: 13px 18px 15px !important;
   gap: 8px !important;
   background: #101720 !important;
   border-top: 1px solid #243044 !important;
@@ -300,7 +319,7 @@
   border-radius: 5px !important;
   font-size: 12px !important;
   line-height: 1 !important;
-  font-weight: 500 !important;
+  font-weight: 400 !important;
 }
 
 .inspector .inspector-actions .btn-primary {
@@ -308,5 +327,5 @@
   background: #7c5cff !important;
   color: #fff !important;
   font-size: 14px !important;
-  font-weight: 650 !important;
+  font-weight: 600 !important;
 }
