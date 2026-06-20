@@ -138,11 +138,11 @@
 }
 
 .inspector-body {
-  flex: 1 1 auto;
+  flex: 1;
   min-height: 0;
   overflow: auto;
-  padding: 16px;
-  background: #101720;
+  padding: 14px 12px;
+    background: #101720;
   scrollbar-width: thin;
   scrollbar-color: #263449 #101720;
 }
@@ -163,7 +163,7 @@
 }
 
 .inspector-body::-webkit-scrollbar-thumb:hover {
-  background: #34445d;
+  background: #415d34;
 }
 
 .check-list,

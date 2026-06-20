@@ -1,8 +1,8 @@
 /* Final spacing tune for Privacy: wider cards, smaller side margins, slightly larger fine text. */
 .inspector {
-  width: 420px !important;
-  min-width: 420px !important;
-  max-width: 420px !important;
+  width: 400px !important;
+  min-width: 400px !important;
+  max-width: 400px !important;
 }
 
 .inspector .inspector-head,
@@ -11,11 +11,7 @@
   padding-right: 14px !important;
 }
 
-.inspector .inspector-body,
-.inspector-body {
-  padding-left: 12px !important;
-  padding-right: 12px !important;
-}
+
 
 .inspector .privacy-stack {
   gap: 13px !important;
@@ -61,7 +57,6 @@
 }
 
 .inspector .privacy-stack .metric .accent {
-  font-size: 33px !important;
   font-weight: 500 !important;
 }
 

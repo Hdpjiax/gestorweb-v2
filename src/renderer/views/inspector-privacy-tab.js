@@ -29,7 +29,7 @@ export function renderInspectorPrivacyTab(profile) {
       ${profile.compat_mode ? `<div class="callout"><strong class="live">Modo compatibilidad activo.</strong> Spoofs agresivos desactivados para captchas, pagos y banking.</div>` : ""}
       ${profile.tor_mode ? `<div class="tor-notice">${ICONS.warning}<span>Anonymous requiere Tor en 127.0.0.1:9050. Asegurate de que TOR este corriendo.</span></div>` : ""}
       <div class="metric">
-        <div class="between">
+        <div class="">
           <strong class="accent" style="font-size:30px">${score}</strong>
           <span class="dim">/ 100</span>
           <span class="pill accent">${tier}</span>

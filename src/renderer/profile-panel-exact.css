@@ -69,7 +69,13 @@
 }
 
 .inspector-body {
-  padding: 16px !important;
+  flex: 1 !important;
+  min-height: 0;
+  /* ← clave para flex containers */
+  overflow-y: auto !important;
+  /* scroll vertical */
+  overflow-x: hidden !important;
+  /* nada se sale por los lados */
   background: #101720 !important;
   scrollbar-width: thin;
   scrollbar-color: #2b374d #101720;
@@ -181,14 +187,14 @@
   border-bottom: 0 !important;
 }
 
-.check-row > span:nth-child(2) {
+.check-row>span:nth-child(2) {
   overflow: hidden !important;
   text-overflow: ellipsis !important;
   white-space: nowrap !important;
 }
 
 .check-row .mono,
-.check-row > span:last-child {
+.check-row>span:last-child {
   font-family: "JetBrains Mono", "Cascadia Mono", Consolas, monospace !important;
   font-size: 12px !important;
   font-weight: 600 !important;
@@ -197,7 +203,7 @@
 }
 
 .check-row .warn,
-.check-row > span:last-child.warn {
+.check-row>span:last-child.warn {
   color: #f59e0b !important;
 }
 
@@ -240,7 +246,6 @@
 
 .privacy-stack .metric .accent {
   color: #22c55e !important;
-  font-size: 31px !important;
   font-weight: 700 !important;
 }
 

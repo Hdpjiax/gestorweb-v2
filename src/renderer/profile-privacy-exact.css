@@ -11,11 +11,7 @@
   padding-right: 18px !important;
 }
 
-.inspector .inspector-body,
-.inspector-body {
-  padding-left: 18px !important;
-  padding-right: 18px !important;
-}
+
 
 .inspector .privacy-stack,
 .inspector .privacy-stack * {
@@ -31,7 +27,7 @@
 
 .inspector .privacy-stack h4,
 .inspector .privacy-stack .section-title,
-.inspector .privacy-stack > .muted,
+.inspector .privacy-stack>.muted,
 .inspector .privacy-stack .label {
   margin: 0 0 8px !important;
   color: #a6bdd8 !important;
@@ -108,7 +104,7 @@
 }
 
 .inspector .privacy-stack .metric .muted,
-.inspector .privacy-stack .metric > .muted:first-child {
+.inspector .privacy-stack .metric>.muted:first-child {
   margin: 0 !important;
   color: #8799b5 !important;
   font-size: 12px !important;
@@ -119,7 +115,6 @@
 
 .inspector .privacy-stack .metric .accent {
   color: #20dc76 !important;
-  font-size: 32px !important;
   line-height: 1 !important;
   font-weight: 500 !important;
   letter-spacing: -0.04em !important;
@@ -221,7 +216,7 @@
   font-weight: 400 !important;
 }
 
-.inspector .privacy-flag > span:first-child,
+.inspector .privacy-flag>span:first-child,
 .inspector .privacy-flag .flag-label {
   min-width: 0 !important;
   overflow: hidden !important;
