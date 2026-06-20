@@ -367,12 +367,30 @@ function renderWelcomeModal() {
 function renderProxiesView() {
   const selectedCount = ui.selectedProxyIds.size;
   const testedDead = state.proxies.filter((p) => !p.healthy && p.last_error && p.last_error !== "sin test").length;
+  const healthy = state.proxies.filter((p) => p.healthy).length;
+  const tested = state.proxies.filter((p) => p.last_error && p.last_error !== "sin test").length + healthy;
+  const pending = Math.max(0, state.proxies.length - tested);
+  const latencies = state.proxies.filter((p) => p.latency_ms != null).map((p) => p.latency_ms);
+  const avgLatency = latencies.length ? `${Math.round(latencies.reduce((a, b) => a + b, 0) / latencies.length)}ms` : "-";
   const allSelected = state.proxies.length > 0 && selectedCount === state.proxies.length;
   return `
-    <section class="section stack">
-      <div class="between">
-        <div class="muted">${state.proxies.length} proxies en el pool${selectedCount ? ` · ${selectedCount} seleccionados` : ""}</div>
-        <div class="flex" style="flex-wrap:wrap">
+    <section class="section proxy-shell">
+      <div class="proxy-hero">
+        <div>
+          <div class="label">Proxy pool</div>
+          <h2>Red de salida</h2>
+          <p class="muted">Pruebas reales por proxy con HTTP CONNECT, SOCKS5 y SOCKS4. Cada fila se actualiza cuando termina su test.</p>
+        </div>
+        <div class="proxy-stats">
+          <div class="proxy-stat"><span>Total</span><strong>${state.proxies.length}</strong></div>
+          <div class="proxy-stat live"><span>Vivos</span><strong>${healthy}</strong></div>
+          <div class="proxy-stat danger"><span>Caidos</span><strong>${testedDead}</strong></div>
+          <div class="proxy-stat"><span>Media</span><strong>${avgLatency}</strong></div>
+        </div>
+      </div>
+      <div class="proxy-toolbar">
+        <div class="muted">${selectedCount ? `${selectedCount} seleccionados` : `${pending} sin test`}</div>
+        <div class="flex proxy-actions">
           <button class="btn btn-ghost" data-action="health-check" ${ui.proxyTesting ? "disabled" : ""}>${ui.proxyTesting ? "testeando..." : "test real"}</button>
           <button class="btn btn-ghost btn-danger" data-action="remove-dead-proxies" ${testedDead ? "" : "disabled"}>borrar caidos</button>
           <button class="btn btn-ghost btn-danger" data-action="remove-selected-proxies" ${selectedCount ? "" : "disabled"}>borrar seleccionados</button>
@@ -383,8 +401,10 @@ function renderProxiesView() {
       </div>
       ${ui.proxyBulk ? renderProxyBulk() : ""}
       ${ui.proxyAdding ? renderProxyAdd() : ""}
-      <div class="table-head proxy-grid"><div><input type="checkbox" data-action="toggle-all-proxies" ${allSelected ? "checked" : ""} /></div><div>Endpoint</div><div>Esquema</div><div>Latencia</div><div>Estado</div><div>En uso</div><div></div></div>
-      <div class="stack-sm">${state.proxies.length ? state.proxies.map(renderProxyRow).join("") : `<div class="empty"><div>No hay proxies. Anade uno.</div></div>`}</div>
+      <div class="proxy-table-card">
+        <div class="table-head proxy-grid proxy-table-head"><div><input type="checkbox" data-action="toggle-all-proxies" ${allSelected ? "checked" : ""} /></div><div>Endpoint</div><div>Esquema</div><div>Latencia</div><div>Estado</div><div>En uso</div><div></div></div>
+        <div class="proxy-list">${state.proxies.length ? state.proxies.map(renderProxyRow).join("") : `<div class="empty proxy-empty"><div>No hay proxies. Anade uno.</div></div>`}</div>
+      </div>
     </section>
   `;
 }
@@ -398,10 +418,19 @@ function renderProxyAdd() {
 }
 
 function renderProxyRow(p) {
+  const hasTest = p.last_error && p.last_error !== "sin test";
+  const statusClass = p.healthy ? "live" : hasTest ? "danger" : "dim";
+  const rowClass = p.healthy ? "proxy-ok" : hasTest ? "proxy-bad" : "";
+  const statusLabel = p.healthy ? "ok" : hasTest ? "caido" : "sin test";
+  const meta = [
+    p.label ? `<span class="proxy-tag">${esc(p.label)}</span>` : "",
+    p.username || p.password ? `<span class="proxy-tag">auth</span>` : ""
+  ].filter(Boolean).join("");
+  const endpoint = `<div class="proxy-endpoint"><div class="mono" title="${attr(`${p.host}:${p.port}`)}">${esc(p.host)}:${esc(p.port)}</div>${meta ? `<div class="proxy-meta">${meta}</div>` : ""}</div>`;
   if (ui.testingProxyIds.has(p.id)) {
-    return `<div class="row-grid proxy-grid"><input type="checkbox" data-action="toggle-proxy-selected" data-id="${p.id}" ${ui.selectedProxyIds.has(p.id) ? "checked" : ""} /><div class="mono">${p.label ? `<span class="dim">${esc(p.label)}</span> ` : ""}${esc(p.host)}:${esc(p.port)}</div><div class="muted">${esc(p.scheme)}</div><div class="mono muted">...</div><div><span class="pill testing"><span class="dot testing-dot"></span>testeando</span></div><div class="muted">${p.in_use ? "asignado" : "libre"}</div><button class="icon-btn" data-action="remove-proxy-row" data-id="${p.id}">x</button></div>`;
+    return `<div class="row-grid proxy-grid proxy-row proxy-testing"><input type="checkbox" data-action="toggle-proxy-selected" data-id="${p.id}" ${ui.selectedProxyIds.has(p.id) ? "checked" : ""} />${endpoint}<div class="muted">${esc(p.scheme)}</div><div class="mono muted">...</div><div><span class="pill testing"><span class="dot testing-dot"></span>testeando</span></div><div class="muted">${p.in_use ? "asignado" : "libre"}</div><button class="icon-btn" data-action="remove-proxy-row" data-id="${p.id}">x</button></div>`;
   }
-  return `<div class="row-grid proxy-grid"><input type="checkbox" data-action="toggle-proxy-selected" data-id="${p.id}" ${ui.selectedProxyIds.has(p.id) ? "checked" : ""} /><div class="mono">${p.label ? `<span class="dim">${esc(p.label)}</span> ` : ""}${esc(p.host)}:${esc(p.port)}</div><div class="muted">${esc(p.scheme)}</div><div class="mono muted">${p.latency_ms != null ? `${p.latency_ms}ms` : "-"}</div><div><span class="pill ${p.healthy ? "live" : "dim"}"><span class="dot"></span>${p.healthy ? "ok" : p.last_error === "sin test" ? "sin test" : "caido"}</span></div><div class="muted">${p.in_use ? "asignado" : "libre"}</div><button class="icon-btn" data-action="remove-proxy-row" data-id="${p.id}">x</button></div>`;
+  return `<div class="row-grid proxy-grid proxy-row ${rowClass}"><input type="checkbox" data-action="toggle-proxy-selected" data-id="${p.id}" ${ui.selectedProxyIds.has(p.id) ? "checked" : ""} />${endpoint}<div class="muted">${esc(p.scheme)}</div><div class="mono muted">${p.latency_ms != null ? `${p.latency_ms}ms` : "-"}</div><div><span class="pill ${statusClass}" title="${attr(p.last_error || statusLabel)}"><span class="dot"></span>${statusLabel}</span></div><div class="muted">${p.in_use ? "asignado" : "libre"}</div><button class="icon-btn" data-action="remove-proxy-row" data-id="${p.id}">x</button></div>`;
 }
 
 function renderSchedulesView() {
