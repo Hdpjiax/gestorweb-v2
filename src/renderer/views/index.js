@@ -18,3 +18,4 @@ export { renderInspectorPrivacyTab } from "./inspector-privacy-tab.js";
 export { renderInspectorAuthTab } from "./inspector-auth-tab.js";
 export { renderNewProfileModal, renderProfileAdvancedFields } from "./new-profile-modal-view.js";
 export { renderWelcomeModal } from "./welcome-modal-view.js";
+export { renderProxiesView, renderProxyRow, renderProxyBulk, renderProxyAdd } from "./proxies-view.js";
