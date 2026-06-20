@@ -35,22 +35,268 @@
   flex: 0 0 34px;
   min-height: 34px;
   display: flex;
-  flex-direction: row-reverse;
+  flex-direction: row;
   justify-content: flex-start;
   align-items: end;
+  gap: 2px;
   overflow-x: auto;
   overflow-y: hidden;
-  padding-right: 12px;
-  padding-left: 12px;
+  padding: 0 10px;
+  background: #0d1219;
+  border-bottom: 1px solid #223044;
 }
 
 .browse-shell .browser-tab-wrap {
+  flex: 0 0 230px;
+  max-width: 230px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  border: 1px solid #1c283a;
+  border-bottom-color: #223044;
+  background: #0f1724;
+  border-radius: 8px 8px 0 0;
+  overflow: hidden;
+}
+
+.browse-shell .browser-tab-wrap.active {
+  background: #111b2b;
+  border-color: #30405c;
+  border-bottom-color: #111b2b;
+}
+
+.browse-shell .browser-tab {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  padding: 0 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: 0;
+  background: transparent;
+  color: #dbeafe;
+  font-size: 12px;
+  font-weight: 700;
+  text-align: left;
+}
+
+.browse-shell .tab-spinner {
+  color: #ffffff;
+  font-weight: 800;
   flex: 0 0 auto;
 }
 
-.browse-shell .browser-toolbar-pro {
-  flex: 0 0 48px;
-  min-height: 48px;
+.browse-shell .tab-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.browse-shell .tab-close {
+  flex: 0 0 28px;
+  width: 28px;
+  height: 100%;
+  border: 0;
+  background: transparent;
+  color: #7d8aa0;
+}
+
+.browse-shell .browser-tab-plus {
+  flex: 0 0 34px;
+  width: 34px;
+  height: 32px;
+  border: 0;
+  background: transparent;
+  color: #9aa8bd;
+  font-size: 22px;
+  display: grid;
+  place-items: center;
+}
+
+.browse-shell .browser-tor-state {
+  margin-left: auto;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  color: #637086;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.browse-shell .browser-toolbar-reference {
+  flex: 0 0 44px;
+  min-height: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  background: #0b1017;
+  border-bottom: 1px solid #1d2a3d;
+  overflow: visible;
+  position: relative;
+  z-index: 5;
+}
+
+.browse-shell .browser-chrome-btn,
+.browse-shell .browser-go-btn,
+.browse-shell .browser-profile-badge {
+  height: 32px;
+  min-width: 32px;
+  border: 0;
+  border-radius: 7px;
+  display: grid;
+  place-items: center;
+  color: #8fa0b8;
+  background: transparent;
+  font-size: 14px;
+}
+
+.browse-shell .browser-chrome-btn:hover,
+.browse-shell .browser-go-btn:hover {
+  background: #141f30;
+  color: #ffffff;
+}
+
+.browse-shell .browser-profile-holder {
+  position: relative;
+  flex: 0 0 182px;
+  width: 182px;
+}
+
+.browse-shell .browser-profile-chip {
+  width: 100%;
+  height: 32px;
+  border: 1px solid #2c3a52;
+  border-radius: 8px;
+  background: #101927;
+  color: #dbeafe;
+  padding: 0 12px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  font-size: 12px;
+  font-weight: 700;
+  text-align: left;
+}
+
+.browse-shell .browser-profile-chip.needs-profile {
+  color: #94a3b8;
+  border-color: #2c3a52;
+}
+
+.browse-shell .browser-profile-native {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+  width: 1px;
+  height: 1px;
+}
+
+.browse-shell .browser-profile-popover {
+  position: absolute;
+  left: 0;
+  top: 42px;
+  width: 480px;
+  background: #111827;
+  border: 1px solid #2b3a52;
+  border-radius: 10px;
+  box-shadow: 0 24px 80px rgb(0 0 0 / 0.65);
+  overflow: hidden;
+  z-index: 50;
+}
+
+.browse-shell .browser-profile-search {
+  height: 48px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 16px;
+  color: #7d8ba1;
+  font-size: 15px;
+  border-bottom: 1px solid #243145;
+}
+
+.browse-shell .browser-profile-list {
+  display: grid;
+  max-height: 240px;
+  overflow: auto;
+}
+
+.browse-shell .browser-profile-option {
+  height: 40px;
+  border: 0;
+  background: transparent;
+  color: #e5e7eb;
+  padding: 0 16px;
+  text-align: left;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.browse-shell .browser-profile-option:hover,
+.browse-shell .browser-profile-option:first-child {
+  background: #1c2738;
+}
+
+.browse-shell .browser-url-box {
+  flex: 1 1 auto;
+  min-width: 220px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid #26354c;
+  border-radius: 7px;
+  background: #101927;
+  padding: 0 11px;
+}
+
+.browse-shell .browser-url-box:focus-within {
+  border-color: #7c5cff;
+  box-shadow: 0 0 0 1px rgb(124 92 255 / 0.35);
+}
+
+.browse-shell .browser-url-lock {
+  color: #22c55e;
+  font-size: 12px;
+}
+
+.browse-shell .browser-url-box.locked .browser-url-lock {
+  color: #f59e0b;
+}
+
+.browse-shell .browser-url-input {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.browse-shell .browser-url-input::placeholder {
+  color: #7d8798;
+}
+
+.browse-shell .browser-go-btn {
+  padding: 0 11px;
+  color: #eaf2ff;
+  background: #111b2b;
+  border: 1px solid #2d3c55;
+  font-weight: 800;
+}
+
+.browse-shell .browser-profile-badge {
+  min-width: 42px;
+  padding: 0 10px;
+  background: #111b2b;
+  color: #bfdbfe;
+  font-weight: 800;
 }
 
 .browse-shell .browser-stage {
