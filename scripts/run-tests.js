@@ -7,7 +7,8 @@ const tests = [
   ["renderer/proxy-parser", "../tests/renderer/proxy-parser.test.js"],
   ["renderer/ux-polish", "../tests/renderer/ux-polish.test.js"],
   ["renderer/inspector-score", "../tests/renderer/inspector-score.test.js"],
-  ["renderer/inspector-tabs", "../tests/renderer/inspector-tabs.test.js"]
+  ["renderer/inspector-tabs", "../tests/renderer/inspector-tabs.test.js"],
+  ["renderer/info-views", "../tests/renderer/info-views.test.js"]
 ];
 
 async function run() {
