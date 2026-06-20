@@ -1,7 +1,12 @@
-import { esc } from "../helpers.js";
+import { esc, attr } from "../helpers.js";
 import { state, ui } from "../state.js";
 import { radioSegments } from "../utils.js";
 import { templates, resolutions, timezones, locales } from "../icons.js";
+
+function freeHealthyProxies() {
+  const usedProxyIds = new Set(state.profiles.map((profile) => profile.proxy_id).filter(Boolean));
+  return state.proxies.filter((proxy) => proxy.healthy && !usedProxyIds.has(proxy.id));
+}
 
 export function renderProfileAdvancedFields() {
   return `
@@ -10,19 +15,19 @@ export function renderProfileAdvancedFields() {
         <div>
           <label class="label">Resolucion</label>
           <select class="select" name="resolution">
-            ${resolutions.map((r) => `<option value="${r}" ${r === "1920x1080" ? "selected" : ""}>${r}</option>`).join("")}
+            ${resolutions.map((r) => `<option value="${attr(r)}" ${r === "1920x1080" ? "selected" : ""}>${esc(r)}</option>`).join("")}
           </select>
         </div>
         <div>
           <label class="label">Timezone</label>
           <select class="select" name="timezone">
-            ${timezones.map((t) => `<option value="${t}" ${t === "America/Monterrey" ? "selected" : ""}>${t}</option>`).join("")}
+            ${timezones.map((t) => `<option value="${attr(t)}" ${t === "America/Monterrey" ? "selected" : ""}>${esc(t)}</option>`).join("")}
           </select>
         </div>
         <div>
           <label class="label">Idioma</label>
           <select class="select" name="locale">
-            ${locales.map((l) => `<option value="${l}" ${l === "es-MX" ? "selected" : ""}>${l}</option>`).join("")}
+            ${locales.map((l) => `<option value="${attr(l)}" ${l === "es-MX" ? "selected" : ""}>${esc(l)}</option>`).join("")}
           </select>
         </div>
       </div>
@@ -40,6 +45,11 @@ export function renderProfileAdvancedFields() {
 }
 
 export function renderNewProfileModal() {
+  const availableProxies = freeHealthyProxies();
+  const proxyNote = state.proxies.length
+    ? "Solo aparecen proxies libres con test real OK. Si no ves uno, ejecuta test real o libera el proxy en otro perfil."
+    : "Aun no hay proxies cargados. Puedes crear el perfil sin proxy y asignarlo despues.";
+
   return `
     <div class="modal-backdrop" data-action="close-modal">
       <form id="newProfileForm" class="modal-card" data-modal-card>
@@ -65,18 +75,19 @@ export function renderNewProfileModal() {
               <option value="win_firefox_mx">Windows / Firefox 135 (MX)</option>
               ${templates
                 .filter((t) => t.id !== "win_firefox_mx")
-                .map((t) => `<option value="${t.id}">${esc(t.label)}</option>`)
+                .map((t) => `<option value="${attr(t.id)}">${esc(t.label)}</option>`)
                 .join("")}
             </select>
           </div>
           <div>
-            <label class="label">Proxy</label>
-            <select class="select" name="proxy_id">
+            <label class="label">Proxy libre</label>
+            <select class="select mono" name="proxy_id">
               <option value="">Sin proxy</option>
-              ${state.proxies
-                .map((p) => `<option value="${p.id}">${esc(p.label || `${p.host}:${p.port}`)} ${p.healthy ? "+" : "-"}</option>`)
+              ${availableProxies
+                .map((p) => `<option value="${attr(p.id)}">${esc(p.label || `${p.scheme}://${p.host}:${p.port}`)} · ${p.latency_ms != null ? `${p.latency_ms}ms` : "ok"}</option>`)
                 .join("")}
             </select>
+            <div class="small-note">${esc(proxyNote)}</div>
           </div>
           <div>
             <label class="label">Privacidad</label>
