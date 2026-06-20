@@ -7,7 +7,7 @@
   "license": "UNLICENSED",
   "scripts": {
     "start": "electron .",
-    "check": "node --check main.js && node --check preload.js && node --check app.js",
+    "check": "node scripts/check-js.js",
     "dist": "electron-builder --win nsis"
   },
   "build": {
