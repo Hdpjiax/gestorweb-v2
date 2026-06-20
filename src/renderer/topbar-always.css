@@ -1,3 +1,5 @@
+@import url("./profile-panel-exact.css");
+
 .app-shell .workspace {
   height: 100vh;
   display: flex;
