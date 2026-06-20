@@ -1,0 +1,265 @@
+.topbar-browser {
+  height: 62px;
+  padding: 0 18px;
+  background: #0d1219;
+}
+
+.topbar-browser .total {
+  display: none;
+}
+
+.browser-ip-pill {
+  color: #22c55e;
+  background: rgb(34 197 94 / 0.13);
+}
+
+.browser-pro {
+  height: 100%;
+  background: #010302;
+}
+
+.browser-pro .browser-tabs {
+  min-height: 36px;
+  padding: 0 10px;
+  justify-content: flex-end;
+  background: #0d1219;
+  border-bottom: 1px solid #202938;
+}
+
+.browser-pro .browser-tab-wrap {
+  height: 30px;
+  border-radius: 0;
+  background: #111827;
+}
+
+.browser-pro .browser-tab-wrap.active {
+  background: #151c28;
+}
+
+.browser-pro .browser-tab {
+  min-width: 190px;
+  max-width: 240px;
+  height: 30px;
+  padding: 0 10px;
+  border-radius: 0;
+  background: transparent;
+  color: #cbd5e1;
+  text-align: left;
+}
+
+.browser-pro .tab-close {
+  height: 30px;
+  color: #748097;
+}
+
+.browser-toolbar-pro {
+  min-height: 46px;
+  padding: 7px 14px;
+  background: #0b1017;
+  border-bottom: 1px solid #1c2635;
+  gap: 8px;
+}
+
+.browser-nav-btn,
+.browser-tool-btn,
+.browser-go-btn {
+  height: 30px;
+  border: 0;
+  border-radius: 7px;
+  color: #7b879a;
+  background: transparent;
+  display: grid;
+  place-items: center;
+}
+
+.browser-nav-btn {
+  width: 30px;
+  font-size: 20px;
+}
+
+.browser-tool-btn {
+  min-width: 30px;
+  padding: 0 8px;
+  font-size: 13px;
+}
+
+.browser-go-btn {
+  min-width: 42px;
+  padding: 0 12px;
+  color: #dbeafe;
+  background: #111827;
+}
+
+.browser-nav-btn:hover,
+.browser-tool-btn:hover,
+.browser-go-btn:hover {
+  background: #151d2a;
+  color: #e5e7eb;
+}
+
+.browser-profile-select {
+  width: 180px;
+  height: 30px;
+  border-radius: 6px;
+  background: #111827;
+  border-color: #202a3a;
+  color: #cbd5e1;
+}
+
+.browser-profile-select.needs-profile {
+  color: #f59e0b;
+  border-color: rgb(245 158 11 / 0.45);
+}
+
+.browser-url-box {
+  flex: 1;
+  min-width: 280px;
+  height: 31px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid #263144;
+  border-radius: 7px;
+  background: #111827;
+  padding: 0 10px;
+}
+
+.browser-url-box:focus-within {
+  border-color: #7c5cff;
+  box-shadow: 0 0 0 1px rgb(124 92 255 / 0.35);
+}
+
+.browser-url-box.locked {
+  opacity: 0.68;
+}
+
+.browser-url-lock {
+  color: #22c55e;
+  font-size: 12px;
+}
+
+.browser-url-box.locked .browser-url-lock {
+  color: #f59e0b;
+}
+
+.browser-url-input {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: #e5e7eb;
+  font-size: 13px;
+}
+
+.browser-url-input::placeholder {
+  color: #64748b;
+}
+
+.browser-pro .browser-stage {
+  padding: 0;
+  background: #010302;
+  color: #8a96a8;
+}
+
+.browser-empty-card {
+  width: min(560px, 92%);
+  text-align: center;
+  display: grid;
+  justify-items: center;
+  gap: 12px;
+  margin-top: -20px;
+}
+
+.browser-empty-icon {
+  width: 70px;
+  height: 70px;
+  display: grid;
+  place-items: center;
+  border: 5px solid #334155;
+  border-radius: 20px;
+  color: #334155;
+  font-size: 36px;
+  line-height: 1;
+}
+
+.browser-empty-card h2 {
+  margin: 6px 0 0;
+  color: #f8fafc;
+  font-size: 21px;
+  letter-spacing: -0.02em;
+}
+
+.browser-empty-card p {
+  margin: 0;
+}
+
+.browser-empty-cta {
+  margin-top: 10px;
+  border-radius: 8px;
+  padding: 9px 15px;
+}
+
+.browser-empty-label {
+  margin-top: 28px;
+  justify-self: start;
+  padding-left: 4px;
+  color: #475569;
+}
+
+.browser-quick-grid {
+  width: 448px;
+  max-width: 100%;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.browser-quick-link {
+  height: 29px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border-radius: 5px;
+  padding: 0 12px;
+  color: #8793a7;
+  background: #111827;
+  border-color: #1f2937;
+  font-size: 12px;
+}
+
+.browser-quick-link:hover {
+  color: #e5e7eb;
+  background: #172033;
+}
+
+.browser-quick-link:disabled,
+.browser-empty-cta:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.quick-tag {
+  color: #536176;
+  border: 1px solid #253044;
+  border-radius: 999px;
+  padding: 2px 9px;
+  font-size: 10px;
+  text-transform: uppercase;
+}
+
+.browser-pro .webview-shell {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  border-radius: 0;
+  background: #000;
+}
+
+.browser-pro .webview-frame {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
