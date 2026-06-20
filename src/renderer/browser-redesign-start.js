@@ -1,2 +1,3 @@
-// Desactivado temporalmente: el rediseño se integrará directo en la vista real del navegador.
-export {};
+import { installBrowserNativeFix } from "./browser-native-fix.js";
+
+installBrowserNativeFix();
