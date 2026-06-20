@@ -21,6 +21,9 @@ export const ui = {
   cookieSearch: "",
   browserProfileId: "",
   browserUrl: "",
+  browserIp: null,
+  browserIpProfileId: null,
+  browserIpStatus: "sin perfil",
   repeaterOutput: ""
 };
 
@@ -73,14 +76,24 @@ export function save() {
   native?.app?.saveState?.(state).catch(() => {});
 }
 
+function clearBrowserRuntime(next) {
+  return normalize({
+    ...next,
+    liveIds: [],
+    browserTabs: [],
+    activeTabId: null,
+    view: next.view === "browse" ? "all" : next.view
+  });
+}
+
 export async function load() {
   if (native?.app?.loadState) {
     const stored = await native.app.loadState();
-    if (stored) return normalize({ ...clone(defaults), ...stored });
+    if (stored) return clearBrowserRuntime({ ...clone(defaults), ...stored });
   }
   try {
     const raw = localStorage.getItem(STORAGE_KEY) || localStorage.getItem("gestor-web-rebuild:v1");
-    return raw ? normalize({ ...clone(defaults), ...JSON.parse(raw), liveIds: [] }) : clone(defaults);
+    return raw ? clearBrowserRuntime({ ...clone(defaults), ...JSON.parse(raw) }) : clone(defaults);
   } catch {
     return clone(defaults);
   }
