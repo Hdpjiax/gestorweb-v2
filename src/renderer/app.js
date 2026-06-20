@@ -1,12 +1,12 @@
-import { load, setState, normalize, defaults, setRenderFn, setBindFn, render, save, native } from "./state.js";
+import { load, setState, normalize, defaults, setRenderFn, setBindFn, render, native } from "./state.js";
 import { clone } from "./helpers.js";
 import { bind, startScheduler, initKeyboard, closeProfile } from "./actions.js";
-import { renderApp } from "./views/index.js";
+import { renderShell } from "./views/index.js";
 
 async function init() {
   const stored = await load();
   setState(normalize({ ...clone(defaults), ...stored }));
-  setRenderFn(renderApp);
+  setRenderFn(renderShell);
   setBindFn(bind);
   render();
   startScheduler();
