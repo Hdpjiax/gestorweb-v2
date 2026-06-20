@@ -5,7 +5,7 @@ import { renderTopbar } from "./topbar-view.js";
 import { renderInfoView } from "./info-view-router.js";
 import { renderLegacyOverlays } from "./overlay-view.js";
 
-const MODULAR_INFO_VIEWS = new Set(["history", "stats", "settings"]);
+const MODULAR_INFO_VIEWS = new Set(["history", "stats", "settings", "monitor"]);
 
 export function renderShell() {
   if (!MODULAR_INFO_VIEWS.has(state.view)) return renderOriginalView();
