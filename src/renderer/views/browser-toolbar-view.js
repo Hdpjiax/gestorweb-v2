@@ -14,10 +14,10 @@ function selectedProfileName() {
   return state.profiles.find((profile) => profile.id === ui.browserProfileId)?.name || "elige perfil...";
 }
 
-function renderProfileOverlay() {
+function renderProfilePopover() {
   if (ui.browserProfileId) return "";
   return `
-    <div class="browser-profile-popover">
+    <div class="browser-profile-popover browser-profile-floating">
       <div class="browser-profile-search">${ICONS.search} <span>elige perfil...</span></div>
       <div class="browser-profile-list">
         ${state.profiles.map((profile) => `<button class="browser-profile-option" data-action="select-browser-profile" data-id="${attr(profile.id)}">${esc(profile.name)}</button>`).join("")}
@@ -34,12 +34,7 @@ export function renderBrowserToolbar(activeTab) {
       <button class="browser-chrome-btn" data-action="browser-back" title="Atras">${BROWSER_ICONS.back}</button>
       <button class="browser-chrome-btn" data-action="browser-forward" title="Adelante">${BROWSER_ICONS.forward}</button>
       <button class="browser-chrome-btn" data-action="browser-reload" title="Recargar">${ICONS.refresh}</button>
-      <div class="browser-profile-holder">
-        <button class="browser-profile-chip ${hasProfile ? "" : "needs-profile"}" data-action="browser-profile-menu" title="Elegir perfil">
-          <span class="profile-chip-label">${esc(profileName)}</span>
-        </button>
-        ${renderProfileOverlay()}
-      </div>
+      ${renderProfilePopover()}
       <select id="browserProfile" class="browser-profile-native" aria-label="Perfil">
         <option value="">elige perfil...</option>
         ${state.profiles.map((profile) => `<option value="${attr(profile.id)}" ${ui.browserProfileId === profile.id ? "selected" : ""}>${esc(profile.name)}</option>`).join("")}
@@ -52,8 +47,7 @@ export function renderBrowserToolbar(activeTab) {
       <button class="browser-chrome-btn" title="Codigo">${BROWSER_ICONS.code}</button>
       <button class="browser-chrome-btn" title="Fijar">${BROWSER_ICONS.pin}</button>
       <button class="browser-chrome-btn" title="Sonido">${BROWSER_ICONS.volume}</button>
-      <button class="browser-chrome-btn" data-action="browser-reload" title="Recargar">${ICONS.refresh}</button>
-      <button class="browser-profile-badge" title="Perfil activo">${hasProfile ? esc(profileName.slice(0, 2)) : "--"}</button>
+      <button class="browser-profile-badge" title="Perfil activo">${hasProfile ? esc(profileName) : "perfil"}</button>
     </div>
   `;
 }
