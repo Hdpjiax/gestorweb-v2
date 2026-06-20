@@ -16,6 +16,8 @@ module.exports = async function browseViewTests() {
   const shell = read("src/renderer/views/shell-view.js");
   const facade = read("src/renderer/views/index.js");
   const polish = read("src/renderer/browser-polish.css");
+  const size = read("src/renderer/browser-size.css");
+  const toolbarFinal = read("src/renderer/browser-toolbar-final.css");
   const start = read("src/renderer/browser-redesign-start.js");
   const index = read("index.html");
 
@@ -29,11 +31,14 @@ module.exports = async function browseViewTests() {
   assert.match(tabs, /browser-new-tab/);
   assert.match(tabs, /activate-browser-tab/);
   assert.match(tabs, /close-browser-tab/);
+  assert.match(tabs, /browser-tab-plus/);
 
   assert.match(toolbar, /browser-go/);
   assert.match(toolbar, /browserProfile/);
   assert.match(toolbar, /browserUrl/);
-  assert.match(toolbar, /needs-profile/);
+  assert.match(toolbar, /browser-profile-popover/);
+  assert.match(toolbar, /select-browser-profile/);
+  assert.doesNotMatch(toolbar, /needs-profile/);
 
   assert.match(active, /webview-frame/);
   assert.match(active, /open-external/);
@@ -46,7 +51,12 @@ module.exports = async function browseViewTests() {
   assert.match(polish, /browser-empty-screen/);
   assert.match(polish, /browser-empty-panel/);
   assert.match(polish, /browser-toolbar-pro/);
+  assert.match(size, /flex-direction: row/);
+  assert.match(toolbarFinal, /browser-toolbar-reference/);
+  assert.match(toolbarFinal, /browser-profile-floating/);
   assert.match(index, /browser-polish\.css/);
+  assert.match(index, /browser-size\.css/);
+  assert.match(index, /browser-toolbar-final\.css/);
 
   assert.match(start, /DEFAULT_SEARCH_HOME/);
   assert.match(start, /duckduckgo\.com/);
