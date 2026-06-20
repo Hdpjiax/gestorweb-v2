@@ -13,7 +13,8 @@ contextBridge.exposeInMainWorld("api", Object.freeze({
   }),
   browse: Object.freeze({
     prepareSession: (profile, proxy) => invoke("browse:prepareSession", profile, proxy),
-    freshenMemory: (profileId) => invoke("browse:freshenMemory", profileId)
+    freshenMemory: (profileId) => invoke("browse:freshenMemory", profileId),
+    ipcheck: (profileId) => invoke("browse:ipcheck", profileId)
   }),
   cookies: Object.freeze({
     get: (profileId) => invoke("cookies:get", profileId),
