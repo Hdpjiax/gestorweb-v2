@@ -1,0 +1,180 @@
+.browse-shell .browser-toolbar-reference,
+.browse-shell .browser-toolbar-pro,
+.browse-shell .browser-toolbar:not(.clean-browser-toolbar) {
+  display: none !important;
+}
+
+.browse-shell .clean-browser-toolbar {
+  flex: 0 0 44px;
+  min-height: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  background: #0b1017;
+  border-bottom: 1px solid #1d2a3d;
+  overflow: visible;
+  position: relative;
+  z-index: 60;
+}
+
+.browse-shell .clean-url-bar {
+  flex: 1 1 auto;
+  min-width: 260px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid #26354c;
+  border-radius: 7px;
+  background: #101927;
+  padding: 0 11px;
+}
+
+.browse-shell .clean-url-bar:focus-within {
+  border-color: #7c5cff;
+  box-shadow: 0 0 0 1px rgb(124 92 255 / 0.35);
+}
+
+.browse-shell .clean-url-status {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 16px;
+  color: #22c55e;
+}
+
+.browse-shell .clean-url-bar.is-locked .clean-url-status {
+  color: #f59e0b;
+}
+
+.browse-shell .clean-url-input {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.browse-shell .clean-url-input::placeholder {
+  color: #7d8798;
+}
+
+.browse-shell .clean-browser-btn {
+  width: 32px;
+  min-width: 32px;
+  height: 32px;
+  border: 0;
+  border-radius: 7px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #8fa0b8;
+  background: transparent;
+  line-height: 1;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.browse-shell .clean-browser-btn svg,
+.browse-shell .clean-url-status svg,
+.browse-shell .clean-profile-search svg {
+  width: 15px;
+  height: 15px;
+  display: block;
+}
+
+.browse-shell .clean-browser-btn:hover {
+  color: #eef5ff;
+  background: #141f30;
+}
+
+.browse-shell .clean-browser-btn:disabled {
+  opacity: 0.42;
+}
+
+.browse-shell .clean-go {
+  width: auto;
+  min-width: 42px;
+  padding: 0 12px;
+  color: #eaf2ff;
+  background: #111b2b;
+  border: 1px solid #2d3c55;
+}
+
+.browse-shell .clean-profile-name {
+  max-width: 128px;
+  min-width: 42px;
+  height: 32px;
+  padding: 0 11px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 7px;
+  background: #111b2b;
+  color: #bfdbfe;
+  font-size: 13px;
+  font-weight: 800;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.browse-shell .clean-profile-native {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+  width: 1px;
+  height: 1px;
+}
+
+.browse-shell .clean-profile-picker {
+  position: absolute;
+  left: 44px;
+  top: 50px;
+  width: 480px;
+  background: #111827;
+  border: 1px solid #2b3a52;
+  border-radius: 10px;
+  box-shadow: 0 24px 80px rgb(0 0 0 / 0.65);
+  overflow: hidden;
+  z-index: 100;
+}
+
+.browse-shell .clean-profile-search {
+  height: 48px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 16px;
+  color: #7d8ba1;
+  font-size: 15px;
+  border-bottom: 1px solid #243145;
+}
+
+.browse-shell .clean-profile-list {
+  display: grid;
+  max-height: 240px;
+  overflow: auto;
+}
+
+.browse-shell .clean-profile-option {
+  height: 40px;
+  border: 0;
+  background: transparent;
+  color: #e5e7eb;
+  padding: 0 16px;
+  text-align: left;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.browse-shell .clean-profile-option:hover,
+.browse-shell .clean-profile-option:first-child {
+  background: #1c2738;
+}
