@@ -22,7 +22,8 @@
       "app.js",
       "main.js",
       "preload.js",
-      "package.json"
+      "package.json",
+      "src/**"
     ],
     "win": {
       "target": "nsis"
