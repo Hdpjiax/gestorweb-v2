@@ -2,10 +2,8 @@ const { app, BrowserWindow } = require("electron");
 const path = require("path");
 const { registerIpc } = require("./src/main/ipc");
 const { readJson, stateFile, sessionFor } = require("./src/main/utils");
-const proxyPartitions = require("./src/main/proxy-partitions");
+const proxySessions = require("./src/main/proxy-partitions");
 
-// ── Test isolation: redirect userData to a temp dir when running IPC tests ──────
-// Must be called BEFORE app.whenReady() — after that, setPath() is a no-op.
 if (process.env.GW_TEST_USERDATA) {
   app.setPath("userData", process.env.GW_TEST_USERDATA);
 }
@@ -50,23 +48,28 @@ function createWindow() {
   });
 
   mainWindow.loadFile(path.join(__dirname, "index.html"));
-  mainWindow.webContents.openDevTools(); // DEBUG: auto-abre DevTools
+  mainWindow.webContents.openDevTools();
   mainWindow.on("closed", () => {
     mainWindow = null;
   });
 }
 
-// ── Global cert hook — must be registered before app.whenReady() ────────────
-// CertVerifyProcBuiltin runs on Chromium's network thread and can race with
-// setCertificateVerifyProc on the first TLS handshake. This app-level handler
-// fires synchronously on the main process and is guaranteed to be evaluated
-// before Chromium rejects any certificate, eliminating the race entirely.
-// We only bypass verification for partitions that have an active proxy (MITM
-// proxies use a self-signed CA). All other sessions keep the default OS chain.
+// ── Hook global de certificados ───────────────────────────────────────────────
+// Debe registrarse ANTES de app.whenReady().
+//
+// CertVerifyProcBuiltin corre en el hilo de red de Chromium y puede ganarle
+// la carrera a setCertificateVerifyProc en el primer handshake TLS.
+// Este hook del proceso main se evalúa de forma síncrona y está garantizado
+// a dispararse antes de que Chromium rechace cualquier certificado.
+//
+// Solo bypaseamos la verificación para sesiones que tienen un proxy MITM activo
+// (proxies residenciales, Bright Data, etc. que usan su propia CA).
+// La comparación es por identidad de objeto Session — Session.partition
+// NO existe en la API de Electron, por lo que comparar strings de partición
+// siempre devuelve undefined y nunca funcionaría.
 app.on("certificate-error", (event, webContents, _url, _error, _certificate, callback) => {
   try {
-    const partition = webContents?.session?.partition ?? "";
-    if (proxyPartitions.has(partition)) {
+    if (proxySessions.has(webContents.session)) {
       event.preventDefault();
       return callback(true);
     }
