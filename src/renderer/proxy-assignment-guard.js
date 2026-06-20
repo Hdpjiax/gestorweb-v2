@@ -15,19 +15,27 @@ function freeHealthyProxy(exceptProfileId = null) {
   return state.proxies.find((proxy) => proxy.healthy && !used.has(proxy.id)) || null;
 }
 
-function validateProxyForProfile(profileId, proxyId) {
-  const profile = profileById(profileId);
-  if (!profile) return { ok: false, error: "Perfil no encontrado." };
+function validateFreeProxy(proxyId, exceptProfileId = null) {
   if (!proxyId) return { ok: false, error: "Selecciona un proxy libre." };
 
   const proxy = proxyById(proxyId);
   if (!proxy) return { ok: false, error: "Proxy no encontrado." };
   if (!proxy.healthy) return { ok: false, error: "Ese proxy no tiene test real OK. Ejecuta test real antes de asignarlo." };
 
-  const usedBy = state.profiles.find((item) => item.id !== profileId && item.proxy_id === proxyId);
+  const usedBy = state.profiles.find((item) => item.id !== exceptProfileId && item.proxy_id === proxyId);
   if (usedBy) return { ok: false, error: `Ese proxy ya esta asignado a ${usedBy.name || "otro perfil"}.` };
 
-  return { ok: true, profile, proxy };
+  return { ok: true, proxy };
+}
+
+function validateProxyForProfile(profileId, proxyId) {
+  const profile = profileById(profileId);
+  if (!profile) return { ok: false, error: "Perfil no encontrado." };
+
+  const result = validateFreeProxy(proxyId, profileId);
+  if (!result.ok) return result;
+
+  return { ...result, profile };
 }
 
 function assignProxyById(profileId, proxyId) {
@@ -81,7 +89,7 @@ function guardNewProfileSubmit(event) {
   const proxyId = String(new FormData(form).get("proxy_id") || "");
   if (!proxyId) return;
 
-  const result = validateProxyForProfile(null, proxyId);
+  const result = validateFreeProxy(proxyId);
   if (result.ok) return;
 
   event.preventDefault();
