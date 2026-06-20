@@ -122,6 +122,7 @@
     welcome: false,
     proxyAdding: false,
     proxyBulk: false,
+    selectedProxyIds: new Set(),
     scheduleAdding: false,
     command: false,
     commandQuery: "",
@@ -710,27 +711,40 @@
   }
 
   function renderProxiesView() {
+    const selectedCount = ui.selectedProxyIds.size;
+    const testedDead = state.proxies.filter((p) => !p.healthy && p.last_error && p.last_error !== "sin test").length;
+    const allSelected = state.proxies.length > 0 && selectedCount === state.proxies.length;
     return `
       <section class="section stack">
-        <div class="between"><div class="muted">${state.proxies.length} proxies en el pool</div><div class="flex"><button class="btn btn-ghost" data-action="health-check">health check</button><button class="btn btn-ghost" data-action="toggle-proxy-bulk">bulk import</button><button class="btn btn-primary" data-action="toggle-proxy-add">+ anadir proxy</button></div></div>
+        <div class="between">
+          <div class="muted">${state.proxies.length} proxies en el pool${selectedCount ? ` · ${selectedCount} seleccionados` : ""}</div>
+          <div class="flex" style="flex-wrap:wrap">
+            <button class="btn btn-ghost" data-action="health-check">test real</button>
+            <button class="btn btn-ghost btn-danger" data-action="remove-dead-proxies" ${testedDead ? "" : "disabled"}>borrar caidos</button>
+            <button class="btn btn-ghost btn-danger" data-action="remove-selected-proxies" ${selectedCount ? "" : "disabled"}>borrar seleccionados</button>
+            <button class="btn btn-ghost btn-danger" data-action="remove-all-proxies" ${state.proxies.length ? "" : "disabled"}>borrar todos</button>
+            <button class="btn btn-ghost" data-action="toggle-proxy-bulk">bulk import</button>
+            <button class="btn btn-primary" data-action="toggle-proxy-add">+ anadir proxy</button>
+          </div>
+        </div>
         ${ui.proxyBulk ? renderProxyBulk() : ""}
         ${ui.proxyAdding ? renderProxyAdd() : ""}
-        <div class="table-head proxy-grid"><div>Endpoint</div><div>Esquema</div><div>Latencia</div><div>Estado</div><div>En uso</div><div></div></div>
+        <div class="table-head proxy-grid"><div><input type="checkbox" data-action="toggle-all-proxies" ${allSelected ? "checked" : ""} /></div><div>Endpoint</div><div>Esquema</div><div>Latencia</div><div>Estado</div><div>En uso</div><div></div></div>
         <div class="stack-sm">${state.proxies.length ? state.proxies.map(renderProxyRow).join("") : `<div class="empty"><div>No hay proxies. Anade uno.</div></div>`}</div>
       </section>
     `;
   }
 
   function renderProxyBulk() {
-    return `<form id="proxyBulkForm" class="metric stack"><div class="grid-2"><select class="select" name="scheme"><option>http</option><option>https</option><option>socks5</option></select></div><textarea class="textarea mono" name="bulk" placeholder="Un proxy por linea. Formatos:\nscheme://user:pass@host:port\nhost:port\nhost:port:user:pass\nuser:pass@host:port"></textarea><div class="between"><button class="btn btn-ghost" type="button" data-action="toggle-proxy-bulk">cancelar</button><button class="btn btn-primary" type="submit">importar</button></div></form>`;
+    return `<form id="proxyBulkForm" class="metric stack"><div class="grid-2"><select class="select" name="scheme"><option>http</option><option>https</option><option>socks5</option><option>socks4</option></select></div><textarea class="textarea mono" name="bulk" placeholder="Pega JSON, CSV o texto. Formatos validos:\nhost:port\nhost:port:user:pass\nuser:pass@host:port\nscheme://user:pass@host:port\n0a4f...__cr.us;state.illinois:pass@gw.dataimpulse.com:10022\n\nCSV: host,port,username,password,scheme,label\nJSON: [{\"host\":\"1.2.3.4\",\"port\":8080,\"username\":\"u\",\"password\":\"p\"}]"></textarea><div class="between"><span class="small-note">Solo se agregan proxies validos. Duplicados e invalidos se omiten.</span><div class="flex"><button class="btn btn-ghost" type="button" data-action="toggle-proxy-bulk">cancelar</button><button class="btn btn-primary" type="submit">importar</button></div></div></form>`;
   }
 
   function renderProxyAdd() {
-    return `<form id="proxyAddForm" class="metric stack"><div class="grid-3"><div><label class="label">esquema</label><select class="select" name="scheme"><option>http</option><option>https</option><option>socks5</option></select></div><div><label class="label">host</label><input class="input" name="host" required placeholder="1.2.3.4" /></div><div><label class="label">puerto</label><input class="input" name="port" required placeholder="8080" /></div></div><div class="grid-3"><div><label class="label">user</label><input class="input" name="username" /></div><div><label class="label">pass</label><input class="input" name="password" type="password" /></div><div><label class="label">label</label><input class="input" name="label" /></div></div><div class="between"><button class="btn btn-ghost" type="button" data-action="toggle-proxy-add">x</button><button class="btn btn-primary" type="submit">guardar</button></div></form>`;
+    return `<form id="proxyAddForm" class="metric stack"><div class="grid-3"><div><label class="label">esquema</label><select class="select" name="scheme"><option>http</option><option>https</option><option>socks5</option><option>socks4</option></select></div><div><label class="label">host</label><input class="input" name="host" required placeholder="1.2.3.4" /></div><div><label class="label">puerto</label><input class="input" name="port" required placeholder="8080" /></div></div><div class="grid-3"><div><label class="label">user</label><input class="input" name="username" /></div><div><label class="label">pass</label><input class="input" name="password" type="password" /></div><div><label class="label">label</label><input class="input" name="label" /></div></div><div class="between"><button class="btn btn-ghost" type="button" data-action="toggle-proxy-add">x</button><button class="btn btn-primary" type="submit">guardar</button></div></form>`;
   }
 
   function renderProxyRow(p) {
-    return `<div class="row-grid proxy-grid"><div class="mono">${p.label ? `<span class="dim">${esc(p.label)}</span> ` : ""}${esc(p.host)}:${esc(p.port)}</div><div class="muted">${esc(p.scheme)}</div><div class="mono muted">${p.latency_ms != null ? `${p.latency_ms}ms` : "-"}</div><div><span class="pill ${p.healthy ? "live" : "dim"}"><span class="dot"></span>${p.healthy ? "ok" : "caido"}</span></div><div class="muted">${p.in_use ? "asignado" : "libre"}</div><button class="icon-btn" data-action="remove-proxy-row" data-id="${p.id}">x</button></div>`;
+    return `<div class="row-grid proxy-grid"><input type="checkbox" data-action="toggle-proxy-selected" data-id="${p.id}" ${ui.selectedProxyIds.has(p.id) ? "checked" : ""} /><div class="mono">${p.label ? `<span class="dim">${esc(p.label)}</span> ` : ""}${esc(p.host)}:${esc(p.port)}</div><div class="muted">${esc(p.scheme)}</div><div class="mono muted">${p.latency_ms != null ? `${p.latency_ms}ms` : "-"}</div><div><span class="pill ${p.healthy ? "live" : "dim"}"><span class="dot"></span>${p.healthy ? "ok" : p.last_error === "sin test" ? "sin test" : "caido"}</span></div><div class="muted">${p.in_use ? "asignado" : "libre"}</div><button class="icon-btn" data-action="remove-proxy-row" data-id="${p.id}">x</button></div>`;
   }
 
   function renderSchedulesView() {
@@ -1009,6 +1023,11 @@
       "toggle-proxy-add": () => { ui.proxyAdding = !ui.proxyAdding; rerender(); },
       "toggle-proxy-bulk": () => { ui.proxyBulk = !ui.proxyBulk; rerender(); },
       "health-check": () => healthCheck(),
+      "toggle-proxy-selected": () => toggleProxySelected(id),
+      "toggle-all-proxies": () => toggleAllProxies(),
+      "remove-selected-proxies": () => removeSelectedProxies(),
+      "remove-all-proxies": () => removeAllProxies(),
+      "remove-dead-proxies": () => removeDeadProxies(),
       "remove-proxy-row": () => removeProxy(id),
       "toggle-schedule-add": () => { ui.scheduleAdding = !ui.scheduleAdding; rerender(); },
       "toggle-schedule": () => update((s) => { const item = s.schedules.find((x) => x.id === id); if (item) item.enabled = !item.enabled; }),
@@ -1327,67 +1346,282 @@
   function addProxy(event) {
     event.preventDefault();
     const data = new FormData(event.currentTarget);
-    update((s) => {
-      s.proxies.unshift({
-        id: uid("proxy"),
-        scheme: data.get("scheme"),
-        host: String(data.get("host") || "").trim(),
-        port: parseInt(data.get("port"), 10),
-        username: String(data.get("username") || "").trim() || null,
-        password: String(data.get("password") || "").trim() || null,
-        label: String(data.get("label") || "").trim() || null,
-        healthy: false,
-        latency_ms: null,
-        last_error: "sin test"
-      });
-      logEvent("proxy_added", null, data.get("host"));
+    const parsed = normalizeProxy({
+      scheme: data.get("scheme"),
+      host: String(data.get("host") || "").trim(),
+      port: data.get("port"),
+      username: String(data.get("username") || "").trim() || null,
+      password: String(data.get("password") || "").trim() || null,
+      label: String(data.get("label") || "").trim() || null
     });
+    if (!parsed) return alert("Proxy invalido. Usa host:port o completa host/puerto correctamente.");
     ui.proxyAdding = false;
+    update((s) => {
+      s.proxies.unshift({ id: uid("proxy"), healthy: false, latency_ms: null, last_error: "sin test", ...parsed });
+      logEvent("proxy_added", null, parsed.host);
+    });
   }
 
   function bulkImportProxies(event) {
     event.preventDefault();
     const data = new FormData(event.currentTarget);
     const scheme = data.get("scheme") || "http";
-    const lines = String(data.get("bulk") || "").split(/\r?\n/).map((x) => x.trim()).filter(Boolean);
+    const parsed = parseProxyBulk(String(data.get("bulk") || ""), scheme);
     let added = 0;
+    let duplicates = 0;
+    ui.proxyBulk = false;
+    ui.selectedProxyIds.clear();
     update((s) => {
-      for (const line of lines) {
-        const parsed = parseProxyLine(line, scheme);
-        if (!parsed) continue;
-        s.proxies.unshift({ id: uid("proxy"), healthy: false, latency_ms: null, last_error: "sin test", ...parsed });
+      const existing = new Set(s.proxies.map(proxyKey));
+      for (const item of parsed.proxies) {
+        const key = proxyKey(item);
+        if (existing.has(key)) {
+          duplicates++;
+          continue;
+        }
+        existing.add(key);
+        s.proxies.unshift({ id: uid("proxy"), healthy: false, latency_ms: null, last_error: "sin test", ...item });
         added++;
       }
-      logEvent("proxy_bulk_import", null, `${added} agregados`);
+      logEvent("proxy_bulk_import", null, `${added} agregados desde ${parsed.format}`);
     });
-    ui.proxyBulk = false;
-    alert(`${added} agregados, ${Math.max(0, lines.length - added)} errores`);
+    alert(`${added} agregados. ${parsed.invalid + duplicates} omitidos (${parsed.invalid} invalidos, ${duplicates} duplicados). Formato detectado: ${parsed.format}`);
   }
 
   function parseProxyLine(line, defaultScheme) {
+    const text = String(line || "").trim().replace(/^['"]|['"]$/g, "");
+    if (!text) return null;
     try {
-      if (line.includes("://")) {
-        const u = new URL(line);
-        return { scheme: u.protocol.replace(":", ""), host: u.hostname, port: parseInt(u.port, 10), username: u.username || null, password: u.password || null, label: null };
+      if (text.includes("://")) {
+        const u = new URL(text);
+        return normalizeProxy({
+          scheme: u.protocol.replace(":", ""),
+          host: u.hostname,
+          port: u.port,
+          username: u.username ? decodeURIComponent(u.username) : null,
+          password: u.password ? decodeURIComponent(u.password) : null,
+          label: proxyGeoLabel(u.username ? decodeURIComponent(u.username) : "")
+        }, defaultScheme);
       }
-      if (line.includes("@")) {
-        const [auth, hostPort] = line.split("@");
-        const [host, port] = hostPort.split(":");
-        if (auth.includes(";")) {
-          const [userPart, password] = auth.split(":");
-          const [username, geo] = userPart.includes("__") ? userPart.split("__") : [userPart, null];
-          return { scheme: defaultScheme, host, port: parseInt(port, 10), username, password, label: geo ? `${geo} / ${password ? "con pass" : ""}` : null };
-        }
-        const [username, password] = auth.split(":");
-        return { scheme: defaultScheme, host, port: parseInt(port, 10), username, password, label: null };
+      if (text.includes("@")) {
+        const at = text.lastIndexOf("@");
+        const auth = text.slice(0, at);
+        const hostPort = parseHostPort(text.slice(at + 1));
+        if (!hostPort) return null;
+        const sep = auth.lastIndexOf(":");
+        if (sep <= 0) return null;
+        const username = auth.slice(0, sep);
+        const password = auth.slice(sep + 1);
+        return normalizeProxy({ ...hostPort, scheme: defaultScheme, username, password, label: proxyGeoLabel(username) }, defaultScheme);
       }
-      const parts = line.split(":");
-      if (parts.length === 2) return { scheme: defaultScheme, host: parts[0], port: parseInt(parts[1], 10), username: null, password: null, label: null };
-      if (parts.length === 4) return { scheme: defaultScheme, host: parts[0], port: parseInt(parts[1], 10), username: parts[2], password: parts[3], label: null };
-    } catch {
-      return null;
-    }
+      const parts = text.split(":");
+      if (parts.length === 2) return normalizeProxy({ scheme: defaultScheme, host: parts[0], port: parts[1] }, defaultScheme);
+      if (parts.length === 4) return normalizeProxy({ scheme: defaultScheme, host: parts[0], port: parts[1], username: parts[2], password: parts[3] }, defaultScheme);
+    } catch {}
     return null;
+  }
+
+  function parseProxyBulk(raw, defaultScheme) {
+    const text = String(raw || "").trim();
+    if (!text) return { proxies: [], invalid: 0, format: "vacio" };
+    if (/^[\[{]/.test(text)) return parseProxyJson(text, defaultScheme);
+    if (looksLikeCsv(text)) return parseProxyCsv(text, defaultScheme);
+    return parseProxyText(text, defaultScheme);
+  }
+
+  function parseProxyText(text, defaultScheme) {
+    const lines = text.split(/\r?\n/).flatMap((line) => line.trim().includes(" ") ? line.trim().split(/\s+/) : [line.trim()]).filter(Boolean);
+    const proxies = [];
+    let invalid = 0;
+    for (const line of lines) {
+      const parsed = parseProxyLine(line, defaultScheme);
+      if (parsed) proxies.push(parsed); else invalid++;
+    }
+    return { proxies, invalid, format: "text" };
+  }
+
+  function parseProxyJson(text, defaultScheme) {
+    try {
+      const payload = JSON.parse(text);
+      const list = Array.isArray(payload) ? payload : Array.isArray(payload.proxies) ? payload.proxies : Array.isArray(payload.data) ? payload.data : [payload];
+      const proxies = [];
+      let invalid = 0;
+      for (const item of list) {
+        const parsed = typeof item === "string" ? parseProxyLine(item, defaultScheme) : parseProxyObject(item, defaultScheme);
+        if (parsed) proxies.push(parsed); else invalid++;
+      }
+      return { proxies, invalid, format: "json" };
+    } catch {
+      return { proxies: [], invalid: 1, format: "json" };
+    }
+  }
+
+  function parseProxyCsv(text, defaultScheme) {
+    const delimiter = detectCsvDelimiter(text);
+    const rows = text.split(/\r?\n/).map((line) => parseCsvLine(line, delimiter)).filter((row) => row.some((cell) => cell.trim()));
+    if (!rows.length) return { proxies: [], invalid: 0, format: "csv" };
+    const first = rows[0].map((cell) => cell.trim().toLowerCase());
+    const hasHeader = first.some((cell) => ["host", "ip", "server", "proxy", "endpoint", "port", "username", "user", "password", "pass", "scheme", "protocol"].includes(cell));
+    const headers = hasHeader ? first : [];
+    const dataRows = hasHeader ? rows.slice(1) : rows;
+    const proxies = [];
+    let invalid = 0;
+    for (const row of dataRows) {
+      const parsed = hasHeader ? parseProxyCsvObject(headers, row, defaultScheme) : parseProxyCsvRow(row, defaultScheme);
+      if (parsed) proxies.push(parsed); else invalid++;
+    }
+    return { proxies, invalid, format: "csv" };
+  }
+
+  function parseProxyObject(item, defaultScheme) {
+    if (!item || typeof item !== "object") return null;
+    const proxyText = item.proxy || item.endpoint || item.url || item.line;
+    if (proxyText) return parseProxyLine(proxyText, item.scheme || item.protocol || defaultScheme);
+    return normalizeProxy({
+      scheme: item.scheme || item.protocol || item.type || defaultScheme,
+      host: item.host || item.ip || item.server || item.address,
+      port: item.port,
+      username: item.username || item.user || item.login || null,
+      password: item.password || item.pass || null,
+      label: item.label || item.name || item.geo || item.country || item.state || null
+    }, defaultScheme);
+  }
+
+  function parseProxyCsvObject(headers, row, defaultScheme) {
+    const get = (...names) => {
+      const index = headers.findIndex((h) => names.includes(h));
+      return index >= 0 ? row[index] : "";
+    };
+    const proxyText = get("proxy", "endpoint", "url", "line");
+    if (proxyText) return parseProxyLine(proxyText, get("scheme", "protocol", "type") || defaultScheme);
+    return normalizeProxy({
+      scheme: get("scheme", "protocol", "type") || defaultScheme,
+      host: get("host", "ip", "server", "address"),
+      port: get("port"),
+      username: get("username", "user", "login") || null,
+      password: get("password", "pass") || null,
+      label: get("label", "name", "geo", "country", "state") || null
+    }, defaultScheme);
+  }
+
+  function parseProxyCsvRow(row, defaultScheme) {
+    if (row.length === 1) return parseProxyLine(row[0], defaultScheme);
+    if (row.length >= 4) return normalizeProxy({ scheme: defaultScheme, host: row[0], port: row[1], username: row[2], password: row[3], label: row[4] || null }, defaultScheme);
+    if (row.length >= 2) return normalizeProxy({ scheme: defaultScheme, host: row[0], port: row[1] }, defaultScheme);
+    return null;
+  }
+
+  function normalizeProxy(item, defaultScheme = "http") {
+    const scheme = String(item.scheme || defaultScheme || "http").toLowerCase().replace(/:$/, "");
+    const host = String(item.host || "").trim().replace(/^\[|\]$/g, "");
+    const port = parseInt(item.port, 10);
+    if (!["http", "https", "socks4", "socks5"].includes(scheme)) return null;
+    if (!isValidHost(host) || !Number.isInteger(port) || port < 1 || port > 65535) return null;
+    return {
+      scheme,
+      host,
+      port,
+      username: String(item.username || "").trim() || null,
+      password: String(item.password || "").trim() || null,
+      label: String(item.label || "").trim() || null
+    };
+  }
+
+  function parseHostPort(value) {
+    const text = String(value || "").trim();
+    const ipv6 = text.match(/^\[([^\]]+)\]:(\d+)$/);
+    if (ipv6) return { host: ipv6[1], port: ipv6[2] };
+    const idx = text.lastIndexOf(":");
+    if (idx <= 0) return null;
+    return { host: text.slice(0, idx), port: text.slice(idx + 1) };
+  }
+
+  function proxyGeoLabel(username) {
+    const marker = String(username || "").split("__")[1];
+    return marker || null;
+  }
+
+  function isValidHost(host) {
+    if (!host || host.includes("://") || /\s/.test(host)) return false;
+    if (/^\d{1,3}(\.\d{1,3}){3}$/.test(host)) return host.split(".").every((x) => Number(x) >= 0 && Number(x) <= 255);
+    if (/^[a-zA-Z0-9.-]+$/.test(host) && host.includes(".")) return true;
+    if (/^[a-fA-F0-9:]+$/.test(host) && host.includes(":")) return true;
+    return false;
+  }
+
+  function proxyKey(p) {
+    return `${p.scheme}|${String(p.host).toLowerCase()}|${p.port}|${p.username || ""}`;
+  }
+
+  function looksLikeCsv(text) {
+    const first = text.split(/\r?\n/).find((line) => line.trim()) || "";
+    if (!first) return false;
+    const lower = first.toLowerCase();
+    if (/[\t,|]/.test(first)) return true;
+    return first.includes(";") && /(host|ip|proxy|endpoint|port|user|pass|scheme|protocol)/.test(lower);
+  }
+
+  function detectCsvDelimiter(text) {
+    const first = text.split(/\r?\n/).find((line) => line.trim()) || "";
+    const candidates = ["\t", ",", "|", ";"];
+    return candidates.sort((a, b) => first.split(b).length - first.split(a).length)[0];
+  }
+
+  function parseCsvLine(line, delimiter) {
+    const out = [];
+    let current = "";
+    let quoted = false;
+    for (let i = 0; i < line.length; i++) {
+      const ch = line[i];
+      if (ch === '"' && line[i + 1] === '"') { current += '"'; i++; continue; }
+      if (ch === '"') { quoted = !quoted; continue; }
+      if (ch === delimiter && !quoted) { out.push(current.trim()); current = ""; continue; }
+      current += ch;
+    }
+    out.push(current.trim());
+    return out;
+  }
+
+  function toggleProxySelected(id) {
+    if (!id) return;
+    if (ui.selectedProxyIds.has(id)) ui.selectedProxyIds.delete(id);
+    else ui.selectedProxyIds.add(id);
+    rerender();
+  }
+
+  function toggleAllProxies() {
+    if (ui.selectedProxyIds.size === state.proxies.length) ui.selectedProxyIds.clear();
+    else ui.selectedProxyIds = new Set(state.proxies.map((p) => p.id));
+    rerender();
+  }
+
+  function removeSelectedProxies() {
+    const ids = new Set(ui.selectedProxyIds);
+    if (!ids.size) return;
+    if (!confirm(`Eliminar ${ids.size} proxies seleccionados?`)) return;
+    removeProxySet(ids, "proxy_bulk_removed", `${ids.size} seleccionados`);
+  }
+
+  function removeAllProxies() {
+    if (!state.proxies.length) return;
+    if (!confirm(`Eliminar TODOS los ${state.proxies.length} proxies? Esta accion no se puede deshacer.`)) return;
+    removeProxySet(new Set(state.proxies.map((p) => p.id)), "proxy_all_removed", `${state.proxies.length} proxies`);
+  }
+
+  function removeDeadProxies() {
+    const ids = new Set(state.proxies.filter((p) => !p.healthy && p.last_error && p.last_error !== "sin test").map((p) => p.id));
+    if (!ids.size) return alert("No hay proxies caidos con test real. Ejecuta 'test real' primero.");
+    if (!confirm(`Eliminar ${ids.size} proxies caidos?`)) return;
+    removeProxySet(ids, "proxy_dead_removed", `${ids.size} caidos`);
+  }
+
+  function removeProxySet(ids, eventKind, payload) {
+    ids.forEach((id) => ui.selectedProxyIds.delete(id));
+    update((s) => {
+      s.proxies = s.proxies.filter((p) => !ids.has(p.id));
+      s.profiles.forEach((p) => { if (ids.has(p.proxy_id)) p.proxy_id = null; });
+      logEvent(eventKind, null, payload);
+    });
   }
 
   async function healthCheck() {
@@ -1399,13 +1633,11 @@
       });
       return;
     }
-    update((s) => {
-      s.proxies = s.proxies.map((p) => ({ ...p, healthy: Math.random() > 0.18, latency_ms: Math.floor(80 + Math.random() * 900), last_error: null }));
-      logEvent("health_check", null, `${s.proxies.length} proxies`);
-    });
+    alert("El test real de proxies requiere ejecutar la app en Electron.");
   }
 
   function removeProxy(id) {
+    ui.selectedProxyIds.delete(id);
     update((s) => {
       s.proxies = s.proxies.filter((p) => p.id !== id);
       s.profiles.forEach((p) => { if (p.proxy_id === id) p.proxy_id = null; });
