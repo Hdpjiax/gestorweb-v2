@@ -17,6 +17,7 @@ module.exports = async function viewsFacadeTests() {
   assert.match(index, /renderInspectorView/);
   assert.match(index, /renderInspectorKnownTab/);
   assert.match(index, /renderProfileViewWithRow/);
+  assert.match(index, /renderSchedulesView/);
 
   assert.match(app, /\.\/views\/index\.js/);
   assert.doesNotMatch(app, /\.\/views\/shell-view\.js/);
