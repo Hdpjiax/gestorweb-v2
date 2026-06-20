@@ -12,6 +12,7 @@ const {
   addonPaths
 } = require("./utils");
 const { proxyRulesFor } = require("./proxies");
+const proxyPartitions = require("./proxy-partitions");
 
 const profileWindows = new Map();
 
@@ -27,7 +28,7 @@ function notifyProfileClosed(profileId) {
   } catch {}
 }
 
-// ─── Firefox user.js ───────────────────────────────────────────────────────────
+// ─── Firefox user.js ──────────────────────────────────────────────────────
 function writeFirefoxProfilePrefs(profile, proxy) {
   const fp = profile.fingerprint || {};
   const dir = profileDir(profile.id);
@@ -82,7 +83,7 @@ function writeFirefoxProfilePrefs(profile, proxy) {
   return dir;
 }
 
-// ─── Camoufox config ───────────────────────────────────────────────────────────
+// ─── Camoufox config ─────────────────────────────────────────────────────
 function camouConfig(profile, proxy) {
   const fp = profile.fingerprint || {};
   const width = fp.resolution?.width || 1920;
@@ -154,7 +155,7 @@ function camouConfig(profile, proxy) {
   return config;
 }
 
-// ─── Chromium window ───────────────────────────────────────────────────────────
+// ─── Chromium window ───────────────────────────────────────────────────
 async function openChromiumWindow(profile, proxy, startUrl) {
   await prepareSession(profile, proxy);
 
@@ -202,7 +203,7 @@ async function openChromiumWindow(profile, proxy, startUrl) {
   return { ok: true, mode: "chromium", id: profile.id };
 }
 
-// ─── Firefox window ────────────────────────────────────────────────────────────
+// ─── Firefox window ──────────────────────────────────────────────────────
 async function openFirefoxWindow(profile, proxy, startUrl) {
   const browserPath = findGestorBrowser();
   if (!browserPath) return openChromiumWindow(profile, proxy, startUrl);
@@ -223,7 +224,7 @@ async function openFirefoxWindow(profile, proxy, startUrl) {
   return { ok: true, mode: "firefox", pid: child.pid, id: profile.id, browserPath };
 }
 
-// ─── Dispatcher ────────────────────────────────────────────────────────────────
+// ─── Dispatcher ────────────────────────────────────────────────────────
 async function openProfileWindow(profile, proxy, startUrl) {
   if (!profile?.id) return { ok: false, error: "missing profile" };
   const existing = profileWindows.get(profile.id);
@@ -264,7 +265,7 @@ function focusProfileWindow(profileId) {
   return { ok: false };
 }
 
-// ─── Session / proxy setup ─────────────────────────────────────────────────────
+// ─── Session / proxy setup ──────────────────────────────────────────────────
 // WeakSet: registra handlers de webRequest/login UNA SOLA VEZ por sesión.
 const _sessionHandlersRegistered = new WeakSet();
 // WeakMap: credenciales de proxy activas; actualizadas en cada prepareSession.
@@ -306,7 +307,14 @@ async function prepareSession(profile, proxy) {
     console.error("[windows] setProxy error:", e.message);
   }
 
-  // 2. Certificados — DESPUES de setProxy, re-aplicado en CADA prepareSession.
+  // 2. Marcar/desmarcar partición en el Set compartido con main.js.
+  //    El handler app.on("certificate-error") consulta este Set y es la barrera
+  //    principal contra la race de CertVerifyProcBuiltin.
+  const partition = partitionFor(profile.id);
+  if (hasProxy) proxyPartitions.add(partition);
+  else proxyPartitions.delete(partition);
+
+  // 3. Certificados a nivel de sesión — capa redundante.
   //    Con proxy MITM (residencial, Bright Data, etc. con CA propia):
   //      cb(0) = aceptar cualquier cert dentro de esta sesión particionada.
   //    Sin proxy: null = verificación nativa del sistema operativo.
@@ -316,18 +324,18 @@ async function prepareSession(profile, proxy) {
     ses.setCertificateVerifyProc(null);
   }
 
-  // 3. Vaciar sockets TLS pre-existentes para que los nuevos nazcan
+  // 4. Vaciar sockets TLS pre-existentes para que los nuevos nazcan
   //    con el verifier correcto activo desde el primer handshake.
   try { ses.closeAllConnections(); } catch { /* Electron < 21 no tiene esta API */ }
 
-  // 4. Credenciales de proxy via ses.on("login").
+  // 5. Credenciales de proxy via ses.on("login").
   if (hasProxyCreds) {
     _sessionProxyCreds.set(ses, { username: proxy.username || "", password: proxy.password || "" });
   } else {
     _sessionProxyCreds.delete(ses);
   }
 
-  // 5. Handlers de webRequest — se registran UNA SOLA VEZ por sesión.
+  // 6. Handlers de webRequest — se registran UNA SOLA VEZ por sesión.
   if (!_sessionHandlersRegistered.has(ses)) {
     _sessionHandlersRegistered.add(ses);
 
