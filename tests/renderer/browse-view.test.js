@@ -38,11 +38,13 @@ module.exports = async function browseViewTests() {
   assert.match(active, /webview-frame/);
   assert.match(active, /open-external/);
 
-  assert.match(empty, /browser-empty-card/);
+  assert.match(empty, /browser-empty-screen/);
+  assert.match(empty, /browser-empty-panel/);
   assert.match(empty, /quick-open/);
   assert.match(empty, /disabled/);
 
-  assert.match(polish, /browser-empty-card/);
+  assert.match(polish, /browser-empty-screen/);
+  assert.match(polish, /browser-empty-panel/);
   assert.match(polish, /browser-toolbar-pro/);
   assert.match(index, /browser-polish\.css/);
 
