@@ -38,6 +38,7 @@ const {
   prepareStateForSave
 } = require("./state-schema");
 
+// ─── TOTP ────────────────────────────────────────────────────────────────────
 function base32ToBuffer(secret) {
   const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
   const clean = sanitizeTotpSecret(secret).replace(/=+$/g, "");
@@ -65,6 +66,77 @@ function totpCode(secret) {
   return { code, secondsLeft: step - (now % step) };
 }
 
+// ─── LICENSE ─────────────────────────────────────────────────────────────────
+// Formato de clave simple: GW-XXXX-XXXX-XXXX (16 chars hex sin guiones)
+// Formato firmado:         GW-LIC-V1:<base64(payload)>.<hmac-sha256-hex>
+//
+// Para generar una clave firmada (herramienta interna del vendedor):
+//   const SIGNING_SECRET = process.env.GW_LICENSE_SECRET;
+//   const payload = JSON.stringify({ hwid, issuedAt: Date.now(), tier: "pro" });
+//   const sig = crypto.createHmac("sha256", SIGNING_SECRET).update(payload).digest("hex");
+//   const key = "GW-LIC-V1:" + Buffer.from(payload).toString("base64") + "." + sig;
+//
+// SIGNING_SECRET debe estar en variable de entorno GW_LICENSE_SECRET.
+// Si no esta definida, solo se acepta formato firmado cuando la firma coincide;
+// si GW_LICENSE_SECRET esta vacio la app cae en modo solo-clave-simple para
+// desarrollo local (acepta GW-XXXX donde los 12 chars finales sin guiones
+// coinciden con los 12 ultimos del HWID real).
+
+const GW_SIGNING_SECRET = process.env.GW_LICENSE_SECRET || "";
+
+function verifyLicenseKey(key, hwid) {
+  const text = String(key || "").trim();
+
+  // ── Formato firmado GW-LIC-V1 ──────────────────────────────────────────────
+  if (text.startsWith("GW-LIC-V1:")) {
+    if (!GW_SIGNING_SECRET) {
+      // Sin secret configurado no podemos verificar firmas → rechazar
+      return { active: false, reason: "GW_LICENSE_SECRET no configurado en servidor" };
+    }
+    try {
+      const rest = text.slice("GW-LIC-V1:".length);
+      const dotIdx = rest.lastIndexOf(".");
+      if (dotIdx < 1) return { active: false, reason: "formato invalido" };
+      const payloadB64 = rest.slice(0, dotIdx);
+      const sig = rest.slice(dotIdx + 1);
+      const payload = JSON.parse(Buffer.from(payloadB64, "base64").toString("utf8"));
+      const expected = crypto.createHmac("sha256", GW_SIGNING_SECRET)
+        .update(Buffer.from(payloadB64, "base64").toString("utf8"))
+        .digest("hex");
+      if (!crypto.timingSafeEqual(Buffer.from(sig, "hex"), Buffer.from(expected, "hex"))) {
+        return { active: false, reason: "firma invalida" };
+      }
+      // Verificar HWID embebido en payload
+      if (payload.hwid && payload.hwid !== hwid) {
+        return { active: false, reason: `licencia emitida para otro HWID (${payload.hwid})` };
+      }
+      // Verificar expiración si viene en el payload
+      if (payload.expiresAt && Date.now() > payload.expiresAt) {
+        return { active: false, reason: "licencia expirada" };
+      }
+      return { active: true, tier: payload.tier || "pro", issuedAt: payload.issuedAt || null };
+    } catch (e) {
+      return { active: false, reason: `error al parsear licencia: ${e.message}` };
+    }
+  }
+
+  // ── Formato clave simple GW-XXXX-XXXX-XXXX ─────────────────────────────────
+  // Valida que los 12 chars hex (sin guiones) del final de la clave
+  // coincidan con los 12 ultimos del HWID del dispositivo.
+  // Esto liga la clave al hardware sin necesidad de servidor.
+  const stripped = text.replace(/-/g, "").toUpperCase();
+  if (!/^GW[A-F0-9]{12}$/.test(stripped)) {
+    return { active: false, reason: "formato de clave incorrecto (esperado GW-XXXX-XXXX-XXXX)" };
+  }
+  const keyTail = stripped.slice(-12);
+  const hwidTail = hwid.replace(/-/g, "").toUpperCase().slice(-12);
+  if (keyTail !== hwidTail) {
+    return { active: false, reason: "clave no corresponde a este HWID" };
+  }
+  return { active: true, tier: "standard" };
+}
+
+// ─── HTTP via electronNet ─────────────────────────────────────────────────────
 function requestWithNet(request, requestSession = null) {
   const safeRequest = sanitizeRepeaterRequest(request);
   return new Promise((resolve) => {
@@ -97,6 +169,7 @@ async function profileIpCheck(profileId) {
   try { return JSON.parse(result.body); } catch { return { ip: null, raw: result.body }; }
 }
 
+// ─── STATE ────────────────────────────────────────────────────────────────────
 function loadAppState() {
   const raw = readJson(stateFile(), null);
   const state = migrateState(raw || createDefaultState());
@@ -129,6 +202,7 @@ function sanitizeProfile(profile) {
   };
 }
 
+// ─── IPC HANDLERS ─────────────────────────────────────────────────────────────
 function registerIpc(mainWindowRef) {
   const getDialogWindow = () => resolveWindow(mainWindowRef);
 
@@ -208,14 +282,34 @@ function registerIpc(mainWindowRef) {
     }
     return ses.cookies.get({});
   });
+
+  // ── Licencia ────────────────────────────────────────────────────────────────
   ipcMain.handle("license:hwid", () => getHwid());
   ipcMain.handle("license:status", () => ({ hwid: getHwid(), active: !!loadAppState()?.license?.active }));
-  ipcMain.handle("license:claimByKey", (_event, key) => ({ active: /^GW-/i.test(String(key || "")), hwid: getHwid() }));
-  ipcMain.handle("license:install", (_event, text) => ({ active: !!String(text || "").trim(), hwid: getHwid() }));
+  ipcMain.handle("license:claimByKey", (_event, key) => {
+    const hwid = getHwid();
+    const result = verifyLicenseKey(key, hwid);
+    return { ...result, hwid };
+  });
+  ipcMain.handle("license:install", (_event, text) => {
+    const hwid = getHwid();
+    const result = verifyLicenseKey(text, hwid);
+    if (result.active) {
+      // Persistir licencia activa en el vault
+      try {
+        const state = loadAppState();
+        state.license = { active: true, text: String(text || "").trim(), hwid, activatedAt: Date.now(), tier: result.tier || "standard" };
+        saveAppState(state);
+      } catch {}
+    }
+    return { ...result, hwid };
+  });
   ipcMain.handle("license:ipcheck", async () => {
     const result = await repeaterSend({ method: "GET", url: "https://api.ipify.org?format=json" });
     try { return JSON.parse(result.body); } catch { return { ip: null, raw: result.body }; }
   });
+
+  // ── Perfiles / ventanas ─────────────────────────────────────────────────────
   ipcMain.handle("profiles:openWindow", (_event, profile, proxy, url) => openProfileWindow(sanitizeProfile(profile), proxy, safeProfileUrl(url)));
   ipcMain.handle("profiles:closeWindow", async (_event, profileId) => {
     const id = assertProfileId(profileId);
@@ -230,8 +324,12 @@ function registerIpc(mainWindowRef) {
   ipcMain.handle("profiles:openPath", (_event, profileId) => shell.openPath(profileDir(assertProfileId(profileId))));
   ipcMain.handle("profiles:focusWindow", (_event, profileId) => focusProfileWindow(assertProfileId(profileId)));
   ipcMain.handle("profiles:isWindowOpen", (_event, profileId) => ({ open: profileWindows.has(assertProfileId(profileId)) }));
+
+  // ── Proxies ─────────────────────────────────────────────────────────────────
   ipcMain.handle("proxies:check", (_event, proxy) => checkProxy(proxy));
   ipcMain.handle("proxies:checkAll", (_event, proxies) => Promise.all((Array.isArray(proxies) ? proxies : []).slice(0, 500).map(checkProxy)));
+
+  // ── Repeater ─────────────────────────────────────────────────────────────────
   ipcMain.handle("repeater:send", async (_event, request) => {
     try {
       return await repeaterSend(request);
@@ -239,6 +337,8 @@ function registerIpc(mainWindowRef) {
       return { status: 0, headers: {}, body: error.message || "invalid request", ms: 0 };
     }
   });
+
+  // ── Misc ────────────────────────────────────────────────────────────────────
   ipcMain.handle("security:status", () => ({
     devtoolsBlocked: app.isPackaged,
     mainSandboxed: true,

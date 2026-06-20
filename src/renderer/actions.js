@@ -53,7 +53,7 @@ function bindModalSubtitles() {
     },
     engine: {
       "Firefox / Camoufox (indetectable)": "spoofing a nivel de motor estilo Dolphin, maxima indetectabilidad, recomendado para pagos",
-      "Chromium (compatibilidad)": "motor clasico con spoof por JS en ventana Electron"
+      "Chromium (compatibilidad)": "motor clasico con spoof por JS — canvas/audio noise real aplicado via preload"
     },
     mode: {
       normal: "spoofs agresivos ON · maximo anti-fingerprint · captchas duros pueden fallar",
@@ -185,8 +185,11 @@ async function activateLicense(event) {
   event.preventDefault();
   const text = document.getElementById("licenseText").value.trim();
   if (!text) return alert("Pega una key o contenido .gw para activar esta replica.");
-  const nativeStatus = native?.license?.claimByKey ? await native.license.claimByKey(text) : { active: true };
-  if (!nativeStatus.active) return alert("Licencia invalida para este HWID.");
+  if (!native?.license?.claimByKey) return alert("Activacion real solo disponible en Electron.");
+  const nativeStatus = await native.license.claimByKey(text);
+  if (!nativeStatus.active) {
+    return alert(`Licencia invalida para este HWID (${nativeStatus.hwid || "desconocido"}).\nVerifica que la key fue generada para este dispositivo.`);
+  }
   ui.welcome = true;
   update((s) => {
     s.license = { active: true, text, shortId: shortId(12), hwid: nativeStatus.hwid || null, activatedAt: Date.now() };
@@ -317,6 +320,7 @@ function cloneProfile(id) {
     copy.warmup = 0;
     copy.fingerprint.canvas = `gw-${shortId(10).toLowerCase()}`;
     copy.fingerprint.audio = `gw-${shortId(10).toLowerCase()}`;
+    copy.fingerprint.noiseSeed = Math.floor(Math.random() * 1e9);
     s.profiles.unshift(copy);
     s.selectedId = copy.id;
     logEvent("created", copy.id, "clonado");
@@ -727,16 +731,24 @@ async function browserGo() {
 
 async function sendRepeater(event) {
   event.preventDefault();
+  if (!native?.repeater?.send) {
+    ui.repeaterOutput = JSON.stringify({ error: "Repeater real solo disponible en Electron. Abre la app con 'npm start'." }, null, 2);
+    rerender();
+    return;
+  }
   const data = new FormData(event.currentTarget);
   const method = data.get("method");
   const url = data.get("url") || "https://example.com";
-  const headers = Object.fromEntries(String(data.get("headers") || "").split(/\r?\n/).map((line) => line.trim()).filter(Boolean).map((line) => {
-    const index = line.indexOf(":");
-    return index === -1 ? [line, ""] : [line.slice(0, index).trim(), line.slice(index + 1).trim()];
-  }));
-  const response = native?.repeater?.send
-    ? await native.repeater.send({ method, url, headers, body: data.get("body") || "" })
-    : { status: Math.random() > 0.15 ? 200 : 403, headers: {}, body: "simulated", ms: 0 };
+  const headers = Object.fromEntries(
+    String(data.get("headers") || "").split(/\r?\n/)
+      .map((line) => line.trim())
+      .filter(Boolean)
+      .map((line) => {
+        const index = line.indexOf(":");
+        return index === -1 ? [line, ""] : [line.slice(0, index).trim(), line.slice(index + 1).trim()];
+      })
+  );
+  const response = await native.repeater.send({ method, url, headers, body: data.get("body") || "" });
   ui.repeaterOutput = JSON.stringify(response, null, 2);
   update((s) => {
     s.netEntries.unshift({ id: uid("net"), method, url, status: response.status, ts: Date.now() });
@@ -745,7 +757,7 @@ async function sendRepeater(event) {
 }
 
 async function detectTor() {
-  const result = native?.tor?.detect ? await native.tor.detect() : { healthy: true, latency_ms: 0 };
+  const result = native?.tor?.detect ? await native.tor.detect() : { healthy: false, last_error: "Electron no disponible" };
   update((s) => {
     s.settings.torReady = !!result.healthy;
     logEvent(result.healthy ? "tor_detected" : "tor_missing", null, result.healthy ? `127.0.0.1:9050 ${result.latency_ms || 0}ms` : (result.last_error || "no detectado"));
