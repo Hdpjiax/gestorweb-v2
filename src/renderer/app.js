@@ -1,30 +1,25 @@
-import { state, ui, load, render, setState, normalize, save, setRenderFn, setBindFn, native, defaults } from "./state.js";
-import { renderShell } from "./views/index.js";
-import { bind, initKeyboard, startScheduler } from "./actions.js";
+import { load, setState, normalize, defaults, setRenderFn, setBindFn, render, save, native } from "./state.js";
 import { clone } from "./helpers.js";
+import { bind, startScheduler, initKeyboard, closeProfile } from "./actions.js";
+import { renderApp } from "./views/index.js";
 
-setRenderFn(renderShell);
-setBindFn(bind);
-initKeyboard();
-startScheduler();
-
-async function syncDeviceId() {
-  const key = ["gestor-web-rebuild", "hwid"].join(":");
-  const api = native && native.license;
-  if (!api || !api.hwid || localStorage.getItem(key)) return;
-  localStorage.setItem(key, await api.hwid());
-}
-
-async function bootstrap() {
-  try {
-    setState(normalize(await load()));
-    await syncDeviceId();
-  } catch (error) {
-    console.error(error);
-    setState(normalize(clone(defaults)));
-  }
-  ui.welcome = !!state.license && !state.onboardingSeen;
+async function init() {
+  const stored = await load();
+  setState(normalize({ ...clone(defaults), ...stored }));
+  setRenderFn(renderApp);
+  setBindFn(bind);
   render();
+  startScheduler();
+  initKeyboard();
+
+  // Escucha el evento push de main cuando una ventana de perfil se cierra
+  // (usuario cierra la ventana externa con la X, alt+f4, etc.).
+  // Ejecuta exactamente la misma limpieza que el botón "cerrar perfil".
+  if (native?.on) {
+    native.on("profiles:windowClosed", ({ id }) => {
+      closeProfile(id).catch(() => {});
+    });
+  }
 }
 
-bootstrap();
+init();

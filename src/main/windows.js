@@ -27,7 +27,6 @@ function setMainWindowRef(ref) {
 }
 
 // Notifica al renderer principal que un perfil cerró su ventana/proceso.
-// El renderer escucha 'profiles:windowClosed' y actualiza el estado de UI.
 function notifyProfileClosed(profileId) {
   try {
     const win = typeof _mainWindowRef === "function" ? _mainWindowRef() : _mainWindowRef;
@@ -166,17 +165,37 @@ function camouConfig(profile, proxy) {
 
 function injectCursorAndSpoof(win, profile) {
   win.webContents.on("did-finish-load", () => {
+    // Sin margin-left/top: el transform ya posiciona el centro del dot
+    // en (clientX - half, clientY - half) restando el radio en el propio translate.
     win.webContents.insertCSS(`
-      #gw-cursor-dot { position: fixed; z-index: 2147483647; width: 10px; height: 10px; margin-left: -5px; margin-top: -5px; border-radius: 999px; background: #ef4444; pointer-events: none; box-shadow: 0 0 0 3px rgba(239,68,68,.25), 0 0 18px rgba(239,68,68,.65); transform: translate(-100px,-100px); }
+      #gw-cursor-dot {
+        position: fixed;
+        z-index: 2147483647;
+        width: 10px;
+        height: 10px;
+        border-radius: 999px;
+        background: #ef4444;
+        pointer-events: none;
+        box-shadow: 0 0 0 3px rgba(239,68,68,.30), 0 0 14px rgba(239,68,68,.70);
+        transform: translate(-9999px, -9999px);
+        will-change: transform;
+      }
     `).catch(() => {});
+
     win.webContents.executeJavaScript(`
       (() => {
-        if (!document.getElementById('gw-cursor-dot')) {
-          const dot = document.createElement('div');
+        let dot = document.getElementById('gw-cursor-dot');
+        if (!dot) {
+          dot = document.createElement('div');
           dot.id = 'gw-cursor-dot';
-          document.documentElement.appendChild(dot);
-          window.addEventListener('mousemove', (e) => { dot.style.transform = 'translate(' + e.clientX + 'px,' + e.clientY + 'px)'; }, true);
+          // Adjuntar al body cuando esté listo, o al documentElement
+          (document.body || document.documentElement).appendChild(dot);
         }
+        // Restar la mitad del tamaño (5px) directamente en el translate
+        // para que el centro del dot quede exactamente bajo el cursor.
+        window.addEventListener('mousemove', (e) => {
+          dot.style.transform = 'translate(' + (e.clientX - 5) + 'px,' + (e.clientY - 5) + 'px)';
+        }, { passive: true, capture: true });
       })();
     `).catch(() => {});
   });
@@ -265,6 +284,11 @@ function focusProfileWindow(profileId) {
   return { ok: false };
 }
 
+// Mapa para rastrear si una sesión ya tiene handlers registrados.
+// Evita duplicar onBeforeRequest / onBeforeSendHeaders / onAuthRequired
+// cuando prepareSession se llama múltiples veces para el mismo perfil.
+const _sessionHandlersRegistered = new WeakSet();
+
 async function prepareSession(profile, proxy) {
   if (!profile?.id) return { ok: false, error: "missing profile id" };
   const ses = sessionFor(profile.id);
@@ -279,73 +303,105 @@ async function prepareSession(profile, proxy) {
 
   const proxyRules = proxyRulesFor(profile, proxy);
   const hasProxy = !!(proxy?.host && proxy?.port) || !!profile.tor_mode;
-  const hasProxyCreds = proxy && (proxy.username || proxy.password);
+  const hasProxyCreds = !!(proxy?.username || proxy?.password);
 
-  // ── Cert verification ────────────────────────────────────────────────────
-  // Muchos proxies residenciales/datacenter realizan intercepción TLS con su
-  // propia CA. Electron rechaza estos certs con ERR_CERT_AUTHORITY_INVALID.
-  // Cuando hay proxy activo en una sesión de perfil (partición aislada, no
-  // la sesión global), desactivamos la verificación de cert para esa sesión.
-  // Sin proxy, restauramos la verificación por defecto.
+  // ── Verificación de certificados ─────────────────────────────────────────
+  // Proxies residenciales/datacenter hacen intercepción TLS con CA propia.
+  // Desactivamos la verificación SOLO en la sesión particionada del perfil
+  // (persist:profile-X), no en la sesión por defecto de la app.
+  // Cuando no hay proxy, restauramos el comportamiento nativo (null).
   if (hasProxy) {
-    ses.setCertificateVerifyProc((request, callback) => callback(0)); // 0 = OK
+    ses.setCertificateVerifyProc((_req, cb) => cb(0));
   } else {
-    ses.setCertificateVerifyProc(null); // null = restaurar comportamiento por defecto
+    ses.setCertificateVerifyProc(null);
   }
 
+  // ── Proxy ─────────────────────────────────────────────────────────────────
+  // setProxy siempre se re-aplica (puede cambiar entre llamadas).
+  // onAuthRequired también se re-aplica: null limpia el handler previo.
   try {
-    if (hasProxyCreds) {
-      const cleanRules = `${proxy.scheme || "http"}://${proxy.host}:${proxy.port}`;
+    if (hasProxy) {
+      // Construir regla limpia: solo scheme://host:port sin credenciales
+      // (las credenciales van en onAuthRequired, no en la URL de proxy).
+      let cleanRules;
+      if (profile.tor_mode) {
+        cleanRules = "socks5://127.0.0.1:9050";
+      } else {
+        const scheme = (proxy.scheme || "http").replace(/^socks$/, "socks5");
+        cleanRules = `${scheme}://${proxy.host}:${proxy.port}`;
+      }
       await ses.setProxy({ proxyRules: cleanRules, proxyBypassRules: "<-loopback>" });
-      ses.webRequest.onAuthRequired((details, callback) => {
-        if (details.isProxy === false) return callback({});
-        callback({ authCredentials: { username: String(proxy.username || ""), password: String(proxy.password || "") } });
-      });
-    } else if (proxyRules) {
-      await ses.setProxy({ proxyRules, proxyBypassRules: "<-loopback>" });
+
+      // Credenciales de proxy — null primero para limpiar handler anterior
+      ses.webRequest.onAuthRequired(null);
+      if (hasProxyCreds) {
+        ses.webRequest.onAuthRequired((details, callback) => {
+          // Solo responder a autenticación de proxy, no a basic-auth de sitios
+          if (!details.isProxy) return callback({});
+          callback({
+            authCredentials: {
+              username: String(proxy.username || ""),
+              password: String(proxy.password || "")
+            }
+          });
+        });
+      }
     } else {
       await ses.setProxy({ proxyRules: "direct://", proxyBypassRules: "<-loopback>" });
+      ses.webRequest.onAuthRequired(null);
     }
-  } catch (e) { console.error("setProxy error:", e); }
+  } catch (e) {
+    console.error("[windows] setProxy error:", e.message);
+  }
 
-  const { TRACKER_HOSTS } = require("./utils");
-  ses.webRequest.onBeforeRequest((details, callback) => {
-    try {
-      const url = new URL(details.url);
-      if (profile.block_trackers && TRACKER_HOSTS.some((host) => details.url.includes(host) || url.hostname.includes(host))) {
-        callback({ cancel: true });
-        return;
-      }
-      if (profile.strip_tracking_params) {
-        const before = url.toString();
-        ["utm_source", "utm_medium", "utm_campaign", "utm_term", "utm_content", "fbclid", "gclid", "msclkid"].forEach((key) => url.searchParams.delete(key));
-        const after = url.toString();
-        if (after !== before) {
-          callback({ redirectURL: after });
+  // ── Handlers de request — registrar solo UNA VEZ por sesión ──────────────
+  // onBeforeRequest y onBeforeSendHeaders no tienen API de "remove" en Electron;
+  // si se llaman múltiples veces se encadenan. Usamos WeakSet para garantizar
+  // que solo se registren la primera vez que se prepara la sesión.
+  if (!_sessionHandlersRegistered.has(ses)) {
+    _sessionHandlersRegistered.add(ses);
+
+    ses.webRequest.onBeforeRequest((details, callback) => {
+      try {
+        const url = new URL(details.url);
+        if (profile.block_trackers && TRACKER_HOSTS.some((host) =>
+          details.url.includes(host) || url.hostname.includes(host)
+        )) {
+          callback({ cancel: true });
           return;
         }
-      }
-    } catch {}
-    callback({});
-  });
+        if (profile.strip_tracking_params) {
+          const before = url.toString();
+          ["utm_source", "utm_medium", "utm_campaign", "utm_term", "utm_content",
+           "fbclid", "gclid", "msclkid"].forEach((key) => url.searchParams.delete(key));
+          const after = url.toString();
+          if (after !== before) { callback({ redirectURL: after }); return; }
+        }
+      } catch {}
+      callback({});
+    });
 
-  ses.webRequest.onBeforeSendHeaders((details, callback) => {
-    const headers = { ...details.requestHeaders };
-    const fp = profile.fingerprint || {};
-    if (fp.userAgent) headers["User-Agent"] = fp.userAgent;
-    if (fp.locale) headers["Accept-Language"] = `${fp.locale},${String(fp.locale).split("-")[0]};q=0.9,en;q=0.7`;
-    if (profile.sanitize_headers) {
-      Object.keys(headers).forEach((key) => {
-        if (key.toLowerCase().startsWith("sec-ch-ua")) delete headers[key];
-      });
-    }
-    if (profile.strict_referer) {
-      Object.keys(headers).forEach((key) => {
-        if (key.toLowerCase() === "referer") delete headers[key];
-      });
-    }
-    callback({ requestHeaders: headers });
-  });
+    ses.webRequest.onBeforeSendHeaders((details, callback) => {
+      const headers = { ...details.requestHeaders };
+      const fp = profile.fingerprint || {};
+      if (fp.userAgent) headers["User-Agent"] = fp.userAgent;
+      if (fp.locale) {
+        headers["Accept-Language"] =
+          `${fp.locale},${String(fp.locale).split("-")[0]};q=0.9,en;q=0.7`;
+      }
+      if (profile.sanitize_headers) {
+        Object.keys(headers).forEach((key) => {
+          if (key.toLowerCase().startsWith("sec-ch-ua")) delete headers[key];
+        });
+      }
+      if (profile.strict_referer) {
+        Object.keys(headers).forEach((key) => {
+          if (key.toLowerCase() === "referer") delete headers[key];
+        });
+      }
+      callback({ requestHeaders: headers });
+    });
+  }
 
   return { ok: true, partition: partitionFor(profile.id), proxyRules, preload };
 }

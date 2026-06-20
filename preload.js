@@ -2,6 +2,12 @@ const { contextBridge, ipcRenderer } = require("electron");
 
 const invoke = (channel, ...args) => ipcRenderer.invoke(channel, ...args);
 
+// Canales permitidos para escuchar eventos push desde main → renderer.
+// Solo se permite suscribirse a canales explícitamente whitelisted.
+const ALLOWED_LISTEN_CHANNELS = [
+  "profiles:windowClosed"
+];
+
 contextBridge.exposeInMainWorld("api", Object.freeze({
   app: Object.freeze({
     loadState: () => invoke("state:load"),
@@ -56,5 +62,17 @@ contextBridge.exposeInMainWorld("api", Object.freeze({
   vault: Object.freeze({
     exportFile: (state) => invoke("vault:exportFile", state),
     importFile: () => invoke("vault:importFile")
-  })
+  }),
+  // Listener seguro para eventos push main → renderer.
+  // Uso: window.api.on('profiles:windowClosed', ({ id }) => { ... })
+  // Devuelve una función de cleanup: const off = api.on(...); off();
+  on: (channel, callback) => {
+    if (!ALLOWED_LISTEN_CHANNELS.includes(channel)) {
+      console.warn(`[preload] canal no permitido: ${channel}`);
+      return () => {};
+    }
+    const wrapped = (_event, ...args) => callback(...args);
+    ipcRenderer.on(channel, wrapped);
+    return () => ipcRenderer.removeListener(channel, wrapped);
+  }
 }));
