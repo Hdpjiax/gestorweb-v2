@@ -21,3 +21,6 @@ export { renderWelcomeModal } from "./welcome-modal-view.js";
 export { renderProxiesView, renderProxyRow, renderProxyBulk, renderProxyAdd } from "./proxies-view.js";
 export { renderProfileRow, toggleButton } from "./profile-row-view.js";
 export { renderInspectorActions } from "./inspector-actions-view.js";
+export { renderNetworkView } from "./network-view.js";
+export { renderCommandPalette } from "./command-palette-view.js";
+export { renderCookieEditor } from "./cookie-editor-view.js";
