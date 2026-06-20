@@ -45,7 +45,7 @@
     lock: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>`,
     globe: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>`,
     cpu: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2" ry="2"/><rect x="9" y="9" width="6" height="6"/><line x1="9" y1="1" x2="9" y2="4"/><line x1="15" y1="1" x2="15" y2="4"/><line x1="9" y1="20" x2="9" y2="23"/><line x1="15" y1="20" x2="15" y2="23"/><line x1="20" y1="9" x2="23" y2="9"/><line x1="20" y1="14" x2="23" y2="14"/><line x1="1" y1="9" x2="4" y2="9"/><line x1="1" y1="14" x2="4" y2="14"/></svg>`,
-    fingerprint: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12C2 6.5 6.5 2 12 2a10 10 0 0 1 8 4"/><path d="M5 19.5C5.5 18 6 15 6 12c0-.7.12-1.37.34-2"/><path d="M17.29 21.02c.12-.6.43-2.3.5-3.02"/><path d="M12 10a2 2 0 0 0-2 2c0 1.02-.1 2.51-.26 4"/><path d="M8.65 22c.21-.66.45-1.32.57-2"/><path d="M14 13.12c0 2.38 0 6.38-1 8.88"/><path d="M2 16h.01"/><path d="M21.8 16c.2-2 .131-5.354 0-6"/><path d="M9 6.8a6 6 0 0 1 9 5.2c0 .47 0 1.17-.02 2"/></svg>`,
+    fingerprint: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 7.5C8.5 4.5 12 3 12 3s3.5 1.5 5.5 4.5"/><path d="M12 3v1"/><path d="M4 12c0-1.5.5-3 1.5-4.5"/><path d="M20 12c0-1.5-.5-3-1.5-4.5"/><path d="M5 17c0-2.5 1.5-5 3-7"/><path d="M19 17c0-2.5-1.5-5-3-7"/><path d="M7 20c0-3 1.5-6 2.5-8"/><path d="M17 20c0-3-1.5-6-2.5-8"/><path d="M9 21c0-3 .5-5 1.5-9"/><path d="M15 21c0-3-.5-5-1.5-9"/><path d="M10.5 22c0-3 .5-6 1.5-11"/><path d="M13.5 22c0-3-.5-6-1.5-11"/></svg>`,
     audio: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>`,
     play: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>`,
     stop: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/></svg>`,
@@ -190,14 +190,19 @@
   }
 
   function update(fn) {
+    const sy = window.scrollY;
     fn(state);
     state = normalize(state);
     save();
-    render();
+    root.innerHTML = state.license?.active ? renderShell() : renderLicense();
+    bind();
+    window.scrollTo(0, sy);
   }
 
   function rerender() {
+    const sy = window.scrollY;
     render();
+    window.scrollTo(0, sy);
   }
 
   function shortId(size = 12) {
@@ -516,7 +521,7 @@
           </div>
           <button class="btn btn-ghost" data-action="refresh-fingerprint" data-id="${profile.id}">${ICONS.refresh} recalcular</button>
         </div>
-        <div class="check-list">${checks.map((c) => `<div class="check-row"><span class="check-icon ${c.status === "ok" ? "ok" : c.status === "warn" ? "warn" : "fail"}">${c.status === "ok" ? ICONS.check : c.status === "warn" ? ICONS.warning : ICONS.close}</span><span>${esc(c.label)}</span><span class="mono ${c.status}">${esc(c.value)}</span></div>`).join("")}</div>
+        <div class="check-list">${checks.map((c) => `<div class="check-row"><span class="check-icon ${c.status === "ok" ? "ok" : c.status === "warn" ? "warn" : "fail"}">${c.status === "ok" ? ICONS.check : c.status === "warn" ? ICONS.warning : ICONS.close}</span><span>${c.icon} ${esc(c.label)}</span><span class="mono ${c.status}">${esc(c.value)}</span></div>`).join("")}</div>
         <details class="raw-data"><summary>${ICONS.database} datos crudos del fingerprint</summary><pre class="small-note mono">${esc(JSON.stringify(fp, null, 2))}</pre></details>
       </div>
     `;
@@ -524,25 +529,25 @@
 
   function buildChecks(profile, fp, isLive) {
     return [
-      [ICONS.fingerprint + " Canvas hash", profile.gw_engine || profile.harden_all ? "ok" : "warn", profile.gw_engine || profile.harden_all ? "noise inyectado" : "sin ruido"],
-      [ICONS.audio + " Audio hash", profile.gw_engine || profile.harden_all ? "ok" : "warn", profile.gw_engine || profile.harden_all ? "noise inyectado" : "sin ruido"],
-      [ICONS.globe + " User Agent", fp.userAgent ? "ok" : "fail", fp.userAgent ? "unico" : "fallback"],
-      [ICONS.cpu + " WebGL renderer", fp.webgl ? "ok" : "warn", fp.webgl ? "spoofed" : "default"],
-      [ICONS.dns + " Timezone", fp.timezone ? "ok" : "warn", city(fp.timezone)],
-      [ICONS.shield + " Resolucion", fp.resolution ? "ok" : "warn", `${fp.resolution?.width || 1280}x${fp.resolution?.height || 720}`],
-      [profile.tor_mode ? ICONS.lock + " Tor SOCKS5" : ICONS.wifi + " Proxy", profile.tor_mode || profile.proxy_id ? "ok" : "warn", profile.tor_mode ? "tor 127.0.0.1:9050" : profile.proxy_id ? "asignado" : "sin proxy"],
-      [ICONS.cpu + " WebRTC leak", profile.webrtc_block ? "ok" : "warn", profile.webrtc_block ? "bloqueado" : "expuesto"],
-      [ICONS.shield + " Bloqueo trackers", profile.block_trackers ? "ok" : "warn", profile.block_trackers ? "~80 dominios" : "off"],
-      [ICONS.globe + " Client hints", profile.sanitize_headers ? "ok" : "warn", profile.sanitize_headers ? "limpios" : "expuestos"],
-      [ICONS.eye + " No-referrer", profile.strict_referer ? "ok" : "warn", profile.strict_referer ? "activado" : "off"],
-      [ICONS.lock + " Force HTTPS", profile.force_https ? "ok" : "warn", profile.force_https ? "activado" : "off"],
-      [ICONS.dns + " DNS over HTTPS", profile.doh_enabled ? "ok" : "warn", profile.doh_enabled ? "cloudflare" : "off"],
-      [ICONS.zap + " Spoof extremo", profile.harden_all ? "ok" : "warn", profile.harden_all ? "activado" : "off"],
-      [ICONS.cpu + " Solo en memoria", profile.in_memory ? "ok" : "warn", profile.in_memory ? "RAM only" : "disco"],
-      [ICONS.refresh + " Auto-wipe", profile.auto_wipe_close ? "ok" : "warn", profile.auto_wipe_close ? "al cerrar" : "off"],
-      [ICONS.play + " Sesion", isLive ? "ok" : "warn", isLive ? "aislada" : "inactiva"],
-      [ICONS.cpu + " Compat mode", !profile.compat_mode ? "ok" : "warn", !profile.compat_mode ? "spoofs full" : "reducido"]
-    ].map(([label, status, value]) => ({ label: label.replace(/<\/?svg[^>]*>/g, "").trim(), status, value }));
+      ["Canvas hash", profile.gw_engine || profile.harden_all ? "ok" : "warn", profile.gw_engine || profile.harden_all ? "noise inyectado" : "sin ruido", ICONS.fingerprint],
+      ["Audio hash", profile.gw_engine || profile.harden_all ? "ok" : "warn", profile.gw_engine || profile.harden_all ? "noise inyectado" : "sin ruido", ICONS.audio],
+      ["User Agent", fp.userAgent ? "ok" : "fail", fp.userAgent ? "unico" : "fallback", ICONS.globe],
+      ["WebGL renderer", fp.webgl ? "ok" : "warn", fp.webgl ? "spoofed" : "default", ICONS.cpu],
+      ["Timezone", fp.timezone ? "ok" : "warn", city(fp.timezone), ICONS.dns],
+      ["Resolucion", fp.resolution ? "ok" : "warn", `${fp.resolution?.width || 1280}x${fp.resolution?.height || 720}`, ICONS.shield],
+      [profile.tor_mode ? "Tor SOCKS5" : "Proxy", profile.tor_mode || profile.proxy_id ? "ok" : "warn", profile.tor_mode ? "tor 127.0.0.1:9050" : profile.proxy_id ? "asignado" : "sin proxy", profile.tor_mode ? ICONS.lock : ICONS.wifi],
+      ["WebRTC leak", profile.webrtc_block ? "ok" : "warn", profile.webrtc_block ? "bloqueado" : "expuesto", ICONS.cpu],
+      ["Bloqueo trackers", profile.block_trackers ? "ok" : "warn", profile.block_trackers ? "~80 dominios" : "off", ICONS.shield],
+      ["Client hints", profile.sanitize_headers ? "ok" : "warn", profile.sanitize_headers ? "limpios" : "expuestos", ICONS.globe],
+      ["No-referrer", profile.strict_referer ? "ok" : "warn", profile.strict_referer ? "activado" : "off", ICONS.eye],
+      ["Force HTTPS", profile.force_https ? "ok" : "warn", profile.force_https ? "activado" : "off", ICONS.lock],
+      ["DNS over HTTPS", profile.doh_enabled ? "ok" : "warn", profile.doh_enabled ? "cloudflare" : "off", ICONS.dns],
+      ["Spoof extremo", profile.harden_all ? "ok" : "warn", profile.harden_all ? "activado" : "off", ICONS.zap],
+      ["Solo en memoria", profile.in_memory ? "ok" : "warn", profile.in_memory ? "RAM only" : "disco", ICONS.cpu],
+      ["Auto-wipe", profile.auto_wipe_close ? "ok" : "warn", profile.auto_wipe_close ? "al cerrar" : "off", ICONS.refresh],
+      ["Sesion", isLive ? "ok" : "warn", isLive ? "aislada" : "inactiva", ICONS.play],
+      ["Compat mode", !profile.compat_mode ? "ok" : "warn", !profile.compat_mode ? "spoofs full" : "reducido", ICONS.cpu]
+    ].map(([label, status, value, icon]) => ({ label, status, value, icon }));
   }
 
   function city(tz) {
@@ -873,6 +878,10 @@
     if (commandInput) {
       commandInput.focus();
       commandInput.oninput = () => { ui.commandQuery = commandInput.value; rerender(); };
+    }
+    if (ui.newProfile) {
+      const nameInput = document.querySelector("#newProfileForm input[name=name]");
+      if (nameInput) nameInput.focus();
     }
     bindWebviews();
     bindModalSubtitles();
@@ -1363,8 +1372,13 @@
       }
       if (line.includes("@")) {
         const [auth, hostPort] = line.split("@");
-        const [username, password] = auth.split(":");
         const [host, port] = hostPort.split(":");
+        if (auth.includes(";")) {
+          const [userPart, password] = auth.split(":");
+          const [username, geo] = userPart.includes("__") ? userPart.split("__") : [userPart, null];
+          return { scheme: defaultScheme, host, port: parseInt(port, 10), username, password, label: geo ? `${geo} / ${password ? "con pass" : ""}` : null };
+        }
+        const [username, password] = auth.split(":");
         return { scheme: defaultScheme, host, port: parseInt(port, 10), username, password, label: null };
       }
       const parts = line.split(":");
