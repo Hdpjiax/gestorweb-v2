@@ -1,0 +1,87 @@
+/* Last-mile inspector fixes: compact score card and centered on/off pills. */
+.inspector .privacy-flag .flag-state,
+.inspector .privacy-header .pill,
+.inspector .privacy-header .tag,
+.inspector .privacy-header small {
+  width: 38px !important;
+  min-width: 38px !important;
+  height: 22px !important;
+  min-height: 22px !important;
+  padding: 0 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  text-align: center !important;
+  line-height: 22px !important;
+  font-size: 0 !important;
+  font-weight: 600 !important;
+  letter-spacing: 0 !important;
+}
+
+.inspector .privacy-flag .flag-state::after {
+  display: block !important;
+  width: 100% !important;
+  text-align: center !important;
+  font-size: 11.5px !important;
+  line-height: 22px !important;
+  font-weight: 600 !important;
+}
+
+.inspector .privacy-flag.on .flag-state::after {
+  content: "on" !important;
+}
+
+.inspector .privacy-flag:not(.on) .flag-state::after {
+  content: "off" !important;
+}
+
+.inspector .inspector-score,
+.inspector-score {
+  margin-top: 28px !important;
+  padding: 12px 14px 11px !important;
+  min-height: 78px !important;
+  max-height: 82px !important;
+  gap: 8px !important;
+  overflow: hidden !important;
+}
+
+.inspector .inspector-score::before,
+.inspector-score::before {
+  top: -27px !important;
+  font-size: 11px !important;
+  line-height: 1 !important;
+}
+
+.inspector .score-labels,
+.score-labels {
+  min-height: 24px !important;
+  align-items: center !important;
+}
+
+.inspector .score-labels span:first-child,
+.score-labels span:first-child {
+  font-size: 16px !important;
+  line-height: 1 !important;
+  font-weight: 700 !important;
+}
+
+.inspector .score-labels span:last-child,
+.inspector .score-labels .mono,
+.score-labels span:last-child,
+.score-labels .mono {
+  font-size: 19px !important;
+  line-height: 1 !important;
+  font-weight: 700 !important;
+}
+
+.inspector .score-bar,
+.score-bar {
+  height: 6px !important;
+  min-height: 6px !important;
+  max-height: 6px !important;
+}
+
+.inspector .score-fill,
+.score-fill {
+  height: 100% !important;
+}
