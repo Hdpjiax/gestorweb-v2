@@ -20,7 +20,7 @@ const {
   prepareSession
 } = require("./windows");
 
-const { proxyRulesFor, checkProxy } = require("./proxies");
+const { checkProxy } = require("./proxies");
 
 function base32ToBuffer(secret) {
   const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
@@ -70,7 +70,14 @@ async function repeaterSend(request) {
   });
 }
 
-function registerIpc(mainWindow) {
+function resolveWindow(mainWindowRef) {
+  if (typeof mainWindowRef === "function") return mainWindowRef();
+  return mainWindowRef || null;
+}
+
+function registerIpc(mainWindowRef) {
+  const getDialogWindow = () => resolveWindow(mainWindowRef);
+
   ipcMain.handle("state:load", () => readJson(stateFile(), null));
   ipcMain.handle("state:save", (_event, state) => {
     writeJson(stateFile(), state || {});
@@ -158,13 +165,13 @@ function registerIpc(mainWindow) {
   ipcMain.handle("tor:detect", () => checkProxy({ host: "127.0.0.1", port: 9050, scheme: "socks5" }));
   ipcMain.handle("totp:code", (_event, secret) => totpCode(secret));
   ipcMain.handle("vault:exportFile", async (_event, state) => {
-    const result = await dialog.showSaveDialog(mainWindow, { defaultPath: "gestor-web-vault.json", filters: [{ name: "JSON", extensions: ["json"] }] });
+    const result = await dialog.showSaveDialog(getDialogWindow(), { defaultPath: "gestor-web-vault.json", filters: [{ name: "JSON", extensions: ["json"] }] });
     if (result.canceled || !result.filePath) return { canceled: true };
     writeJson(result.filePath, state || {});
     return { canceled: false, filePath: result.filePath };
   });
   ipcMain.handle("vault:importFile", async () => {
-    const result = await dialog.showOpenDialog(mainWindow, { filters: [{ name: "JSON", extensions: ["json"] }], properties: ["openFile"] });
+    const result = await dialog.showOpenDialog(getDialogWindow(), { filters: [{ name: "JSON", extensions: ["json"] }], properties: ["openFile"] });
     if (result.canceled || !result.filePaths[0]) return { canceled: true };
     return { canceled: false, state: readJson(result.filePaths[0], null), filePath: result.filePaths[0] };
   });
