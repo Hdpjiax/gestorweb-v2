@@ -6,6 +6,15 @@ import "./browser-soft-fonts.js";
 
 const DEFAULT_SEARCH_HOME = "https://duckduckgo.com/";
 
+function setBrowserProfile(profileId) {
+  ui.browserProfileId = profileId || "";
+  ui.browserIp = null;
+  ui.browserIpProfileId = null;
+  ui.browserIpStatus = ui.browserProfileId ? "pendiente" : "sin perfil";
+  if (ui.browserProfileId && !ui.browserUrl) ui.browserUrl = DEFAULT_SEARCH_HOME;
+  rerender();
+}
+
 function openDefaultBrowserTab() {
   ui.browserUrl = DEFAULT_SEARCH_HOME;
   const go = document.querySelector('[data-action="browser-go"]');
@@ -15,18 +24,21 @@ function openDefaultBrowserTab() {
 function installBrowserProfileGuard() {
   document.addEventListener("change", (event) => {
     if (event.target?.id !== "browserProfile") return;
-    ui.browserProfileId = event.target.value;
-    ui.browserIp = null;
-    ui.browserIpProfileId = null;
-    ui.browserIpStatus = ui.browserProfileId ? "pendiente" : "sin perfil";
-    if (ui.browserProfileId && !ui.browserUrl) ui.browserUrl = DEFAULT_SEARCH_HOME;
-    rerender();
+    setBrowserProfile(event.target.value);
   }, true);
 
   document.addEventListener("click", (event) => {
     const target = event.target?.closest?.("[data-action]");
     if (!target) return;
     const action = target.dataset.action;
+
+    if (action === "select-browser-profile") {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      setBrowserProfile(target.dataset.id || "");
+      return;
+    }
+
     if ((action === "browser-new-tab" || action === "browser-go" || action === "quick-open") && !ui.browserProfileId) {
       event.preventDefault();
       event.stopImmediatePropagation();
