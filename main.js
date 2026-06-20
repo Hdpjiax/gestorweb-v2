@@ -37,13 +37,12 @@ function createWindow() {
       sandbox: true,
       webSecurity: true,
       allowRunningInsecureContent: false,
-      devTools: true,
+      devTools: !app.isPackaged,
       webviewTag: true
     }
   });
 
   mainWindow.loadFile(path.join(__dirname, "index.html"));
-  mainWindow.webContents.openDevTools(); // DEBUG: auto-abre DevTools
   mainWindow.on("closed", () => {
     mainWindow = null;
   });
