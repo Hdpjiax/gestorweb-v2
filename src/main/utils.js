@@ -128,6 +128,7 @@ function writeFingerprintPreload(profile) {
     webrtcBlock: !!profile.webrtc_block,
     compatMode: !!profile.compat_mode
   });
+
   const code = `(() => {
   const fp = ${payload};
   const define = (target, key, value) => {
@@ -171,24 +172,72 @@ function writeFingerprintPreload(profile) {
     }
   } catch {}
   if (!fp.compatMode) {
+    // ── Seeded xorshift32 PRNG ────────────────────────────────────────────
+    // Produces a deterministic sequence per profile (stable across renders)
+    // while being unique across profiles. Magnitude is sub-visual (~0.004 alpha).
+    function makeRng(seed) {
+      let s = (seed >>> 0) || 1;
+      return function () {
+        s ^= s << 13; s ^= s >>> 17; s ^= s << 5;
+        return (s >>> 0) / 4294967296;
+      };
+    }
+    // ── Canvas noise (toDataURL + getImageData) ───────────────────────────
+    // Paints 4-6 semi-transparent pixels at seeded positions before export.
+    // getImageData is also patched so raw reads get the same mutation.
     try {
-      const toDataURL = HTMLCanvasElement.prototype.toDataURL;
-      HTMLCanvasElement.prototype.toDataURL = function (...args) {
-        const ctx = this.getContext('2d');
-        if (ctx) {
-          const x = Math.abs(fp.seed % Math.max(1, this.width || 1));
-          const y = Math.abs((fp.seed >> 8) % Math.max(1, this.height || 1));
-          ctx.fillStyle = 'rgba(' + (fp.seed % 255) + ',0,0,0.004)';
+      const _toDataURL = HTMLCanvasElement.prototype.toDataURL;
+      const _toBlob    = HTMLCanvasElement.prototype.toBlob;
+      function applyCanvasNoise(canvas) {
+        const ctx = canvas.getContext('2d');
+        if (!ctx || canvas.width < 2 || canvas.height < 2) return;
+        const rng   = makeRng(fp.seed ^ (canvas.width * 7 + canvas.height * 13));
+        const count = 4 + Math.floor(rng() * 3); // 4-6 pixels
+        for (let i = 0; i < count; i++) {
+          const x = Math.floor(rng() * canvas.width);
+          const y = Math.floor(rng() * canvas.height);
+          const r = Math.floor(rng() * 8);
+          const g = Math.floor(rng() * 8);
+          const b = Math.floor(rng() * 8);
+          ctx.fillStyle = 'rgba(' + r + ',' + g + ',' + b + ',0.004)';
           ctx.fillRect(x, y, 1, 1);
         }
-        return toDataURL.apply(this, args);
+      }
+      HTMLCanvasElement.prototype.toDataURL = function (...args) {
+        applyCanvasNoise(this);
+        return _toDataURL.apply(this, args);
+      };
+      HTMLCanvasElement.prototype.toBlob = function (cb, ...args) {
+        applyCanvasNoise(this);
+        return _toBlob.call(this, cb, ...args);
+      };
+      const _getImageData = CanvasRenderingContext2D.prototype.getImageData;
+      CanvasRenderingContext2D.prototype.getImageData = function (...args) {
+        const imgData = _getImageData.apply(this, args);
+        const rng = makeRng(fp.seed ^ (imgData.width * 3 + imgData.height * 5));
+        const count = 4 + Math.floor(rng() * 3);
+        for (let i = 0; i < count; i++) {
+          const idx = Math.floor(rng() * (imgData.data.length / 4)) * 4;
+          imgData.data[idx]     = (imgData.data[idx]     + Math.floor(rng() * 4)) & 0xff;
+          imgData.data[idx + 1] = (imgData.data[idx + 1] + Math.floor(rng() * 4)) & 0xff;
+          imgData.data[idx + 2] = (imgData.data[idx + 2] + Math.floor(rng() * 4)) & 0xff;
+        }
+        return imgData;
       };
     } catch {}
+    // ── Audio noise (full-array micro-dither) ─────────────────────────────
+    // Applies ±1e-8 dither to every sample — below human hearing threshold
+    // but enough to change the AudioBuffer hash that fingerprinters read.
     try {
-      const getChannelData = AudioBuffer.prototype.getChannelData;
+      const _getChannelData = AudioBuffer.prototype.getChannelData;
       AudioBuffer.prototype.getChannelData = function (...args) {
-        const data = getChannelData.apply(this, args);
-        if (data && data.length) data[0] = data[0] + ((fp.seed % 97) / 1e9);
+        const data = _getChannelData.apply(this, args);
+        if (data && data.length > 0) {
+          const rng = makeRng(fp.seed ^ (this.sampleRate | 0));
+          for (let i = 0; i < data.length; i++) {
+            data[i] += (rng() - 0.5) * 2e-8;
+          }
+        }
         return data;
       };
     } catch {}
@@ -205,6 +254,7 @@ function writeFingerprintPreload(profile) {
     } catch {}
   }
 })();`;
+
   fs.writeFileSync(file, code, "utf8");
   return file;
 }
