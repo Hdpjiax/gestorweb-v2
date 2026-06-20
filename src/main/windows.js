@@ -27,6 +27,7 @@ function notifyProfileClosed(profileId) {
   } catch {}
 }
 
+// ─── Firefox user.js ───────────────────────────────────────────────────────────
 function writeFirefoxProfilePrefs(profile, proxy) {
   const fp = profile.fingerprint || {};
   const dir = profileDir(profile.id);
@@ -81,6 +82,7 @@ function writeFirefoxProfilePrefs(profile, proxy) {
   return dir;
 }
 
+// ─── Camoufox config ───────────────────────────────────────────────────────────
 function camouConfig(profile, proxy) {
   const fp = profile.fingerprint || {};
   const width = fp.resolution?.width || 1920;
@@ -152,6 +154,7 @@ function camouConfig(profile, proxy) {
   return config;
 }
 
+// ─── Chromium window ───────────────────────────────────────────────────────────
 async function openChromiumWindow(profile, proxy, startUrl) {
   await prepareSession(profile, proxy);
 
@@ -179,12 +182,16 @@ async function openChromiumWindow(profile, proxy, startUrl) {
 
   profileWindows.set(profile.id, { type: "electron", win });
 
+  // Errores esperados al abrir con proxy MITM:
+  //   -3   ERR_ABORTED               — proxy negociando, reintentar
+  //   -202 ERR_CERT_AUTHORITY_INVALID — cert del proxy aun no activo, reintentar
+  const RETRIABLE = new Set([-3, -202]);
   try {
     await win.loadURL(startUrl);
   } catch (err) {
-    if (err?.errno === -3) {
-      await new Promise((resolve) => setTimeout(resolve, 600));
-      try { await win.loadURL(startUrl); } catch {}
+    if (RETRIABLE.has(err?.errno)) {
+      await new Promise((r) => setTimeout(r, 800));
+      try { await win.loadURL(startUrl); } catch { /* silencioso */ }
     } else {
       throw err;
     }
@@ -193,6 +200,7 @@ async function openChromiumWindow(profile, proxy, startUrl) {
   return { ok: true, mode: "chromium", id: profile.id };
 }
 
+// ─── Firefox window ────────────────────────────────────────────────────────────
 async function openFirefoxWindow(profile, proxy, startUrl) {
   const browserPath = findGestorBrowser();
   if (!browserPath) return openChromiumWindow(profile, proxy, startUrl);
@@ -213,6 +221,7 @@ async function openFirefoxWindow(profile, proxy, startUrl) {
   return { ok: true, mode: "firefox", pid: child.pid, id: profile.id, browserPath };
 }
 
+// ─── Dispatcher ────────────────────────────────────────────────────────────────
 async function openProfileWindow(profile, proxy, startUrl) {
   if (!profile?.id) return { ok: false, error: "missing profile" };
   const existing = profileWindows.get(profile.id);
@@ -253,6 +262,7 @@ function focusProfileWindow(profileId) {
   return { ok: false };
 }
 
+// ─── Session / proxy setup ─────────────────────────────────────────────────────
 const _sessionHandlersRegistered = new WeakSet();
 const _sessionProxyCreds = new WeakMap();
 const _sessionRuntimeState = new WeakMap();
@@ -271,10 +281,7 @@ async function prepareSession(profile, proxy) {
   const hasProxy = !!(proxy?.host && proxy?.port) || !!profile.tor_mode;
   const hasProxyCreds = !!(proxy?.username || proxy?.password);
 
-  try {
-    ses.setCertificateVerifyProc(null);
-  } catch {}
-
+  // 1. Proxy — PRIMERO
   try {
     if (hasProxy) {
       let cleanRules;
@@ -292,12 +299,24 @@ async function prepareSession(profile, proxy) {
     console.error("[windows] setProxy error:", e.message);
   }
 
+  // 2. Certificados — DESPUES de setProxy, re-aplicado en cada prepareSession
+  if (hasProxy) {
+    ses.setCertificateVerifyProc((_req, cb) => cb(0));
+  } else {
+    ses.setCertificateVerifyProc(null);
+  }
+
+  // 3. Vaciar sockets TLS pre-existentes
+  try { ses.closeAllConnections(); } catch { /* Electron < 21 */ }
+
+  // 4. Credenciales de proxy
   if (hasProxyCreds) {
     _sessionProxyCreds.set(ses, { username: proxy.username || "", password: proxy.password || "" });
   } else {
     _sessionProxyCreds.delete(ses);
   }
 
+  // 5. Handlers — una sola vez por sesión
   if (!_sessionHandlersRegistered.has(ses)) {
     _sessionHandlersRegistered.add(ses);
 
@@ -319,7 +338,7 @@ async function prepareSession(profile, proxy) {
         if (activeProfile.strip_tracking_params) {
           const before = url.toString();
           ["utm_source", "utm_medium", "utm_campaign", "utm_term", "utm_content",
-           "fbclid", "gclid", "msclkid"].forEach((key) => url.searchParams.delete(key));
+           "fbclid", "gclid", "msclkid"].forEach((k) => url.searchParams.delete(k));
           const after = url.toString();
           if (after !== before) { callback({ redirectURL: after }); return; }
         }
@@ -329,16 +348,16 @@ async function prepareSession(profile, proxy) {
 
     ses.webRequest.onBeforeSendHeaders((details, callback) => {
       const runtime = _sessionRuntimeState.get(ses) || {};
-      const activeProfile = runtime.profile || profile;
       const activeFp = runtime.fp || fp;
+      const activeProfile = runtime.profile || profile;
       const headers = { ...details.requestHeaders };
       if (activeFp.userAgent) headers["User-Agent"] = activeFp.userAgent;
       if (activeFp.locale) headers["Accept-Language"] = `${activeFp.locale},${String(activeFp.locale).split("-")[0]};q=0.9,en;q=0.7`;
       if (activeProfile.sanitize_headers) {
-        Object.keys(headers).forEach((key) => { if (key.toLowerCase().startsWith("sec-ch-ua")) delete headers[key]; });
+        Object.keys(headers).forEach((k) => { if (k.toLowerCase().startsWith("sec-ch-ua")) delete headers[k]; });
       }
       if (activeProfile.strict_referer) {
-        Object.keys(headers).forEach((key) => { if (key.toLowerCase() === "referer") delete headers[key]; });
+        Object.keys(headers).forEach((k) => { if (k.toLowerCase() === "referer") delete headers[k]; });
       }
       callback({ requestHeaders: headers });
     });
