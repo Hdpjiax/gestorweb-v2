@@ -14,7 +14,10 @@ module.exports = async function browserShellSizeTests() {
   assert.match(shell, /viewClass/);
   assert.match(shell, /browse-shell/);
   assert.match(size, /\.browse-shell/);
-  assert.match(size, /row-reverse/);
+  assert.match(size, /flex-direction: row/);
+  assert.doesNotMatch(size, /row-reverse/);
+  assert.match(size, /browser-toolbar-reference/);
+  assert.match(size, /browser-profile-popover/);
   assert.match(size, /\.browse-shell \.browser-stage/);
   assert.match(size, /position: relative/);
   assert.match(size, /\.browser-stage > \.webview-shell/);
