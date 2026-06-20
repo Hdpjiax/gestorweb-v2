@@ -4,6 +4,10 @@ const { registerIpc } = require("./src/main/ipc");
 
 let mainWindow = null;
 
+function getMainWindow() {
+  return mainWindow && !mainWindow.isDestroyed() ? mainWindow : null;
+}
+
 function createWindow() {
   mainWindow = new BrowserWindow({
     width: 1440,
@@ -28,7 +32,7 @@ function createWindow() {
 }
 
 app.whenReady().then(() => {
-  registerIpc(mainWindow);
+  registerIpc(getMainWindow);
   createWindow();
   app.on("activate", () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
