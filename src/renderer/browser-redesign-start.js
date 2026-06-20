@@ -4,6 +4,7 @@ import { installUxPolish } from "./ux-polish.js";
 import { installBrowserNativeFix } from "./browser-native-fix.js";
 import { installBrowserToolbarActions } from "./browser-toolbar-actions.js";
 import { installProfileInspectorPolish } from "./profile-inspector-polish.js";
+import { installProxyAssignmentGuard } from "./proxy-assignment-guard.js";
 import "./browser-soft-fonts.js";
 
 const DEFAULT_SEARCH_HOME = "https://duckduckgo.com/";
@@ -71,4 +72,5 @@ installUxPolish();
 installBrowserNativeFix();
 installBrowserToolbarActions();
 installProfileInspectorPolish();
+installProxyAssignmentGuard();
 installBrowserProfileGuard();
