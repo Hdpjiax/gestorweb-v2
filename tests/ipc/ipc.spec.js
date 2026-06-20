@@ -20,11 +20,15 @@ let electronApp;
 let tmpDataDir;
 
 test.beforeAll(async () => {
+  // Directorio temporal fresco por cada run — vault completamente limpio
   tmpDataDir = fs.mkdtempSync(path.join(os.tmpdir(), 'gw-ipc-test-'));
+
   electronApp = await electron.launch({
     args: [path.join(__dirname, '../../main.js')],
     env: {
       ...process.env,
+      // main.js llama app.setPath('userData', ...) con este valor
+      // ANTES de app.whenReady(), así todo el vault queda aislado
       GW_TEST_USERDATA: tmpDataDir,
       GW_LICENSE_SECRET: ''
     }
@@ -95,10 +99,10 @@ test('license:hwid devuelve string con formato GW-XXXX-XXXX-XXXX', async () => {
   expect(hwid).toMatch(/^GW-[A-F0-9]{4}-[A-F0-9]{4}-[A-F0-9]{4}$/);
 });
 
-// Este test debe correr ANTES de license:install para ver vault limpio
 test('license:status devuelve hwid y active:false en vault limpio', async () => {
   const status = await ipc('license:status');
   expect(status.hwid).toMatch(/^GW-/);
+  // Vault es el tmpDataDir fresco — nunca tuvo licencia
   expect(status.active).toBe(false);
 });
 
@@ -115,12 +119,7 @@ test('license:claimByKey rechaza clave GW-LIC-V1 sin GW_LICENSE_SECRET configura
   expect(result.reason).toMatch(/GW_LICENSE_SECRET/i);
 });
 
-// license:install muta el vault — guardamos el estado antes y lo restauramos
-// después para que los tests siguientes vean el vault original.
 test('license:install con clave válida GW-XXXX activa la licencia en el vault', async () => {
-  // Snapshot del estado actual
-  const snapshot = await ipc('state:load');
-
   const hwid = await ipc('license:hwid');
   const tail = hwid.replace(/-/g, '').toUpperCase().slice(-12);
   const validKey = `GW-${tail.slice(0,4)}-${tail.slice(4,8)}-${tail.slice(8,12)}`;
@@ -132,9 +131,6 @@ test('license:install con clave válida GW-XXXX activa la licencia en el vault',
   // Verificar que se persistió en vault
   const status = await ipc('license:status');
   expect(status.active).toBe(true);
-
-  // Restaurar vault al estado anterior para no contaminar tests siguientes
-  await ipc('state:save', { ...snapshot, license: undefined });
 });
 
 // ── TOTP ──────────────────────────────────────────────────────────────────────
@@ -172,7 +168,6 @@ test('proxies:checkAll trunca a 500 proxies máximo', async () => {
 });
 
 // ── Repeater ──────────────────────────────────────────────────────────────────
-// example.com es de IANA — siempre disponible, siempre 200
 test('repeater:send a URL real devuelve status 200 y ms > 0', async () => {
   const result = await ipc('repeater:send', { method: 'GET', url: 'https://example.com' });
   expect(result.status).toBe(200);
@@ -180,9 +175,6 @@ test('repeater:send a URL real devuelve status 200 y ms > 0', async () => {
   expect(result.ms).toBeGreaterThan(0);
 }, { timeout: 15_000 });
 
-// El repeater usa la sesión global de Electron (no una sesión de perfil).
-// El bloqueo de trackers solo aplica a sesiones de perfil, no al repeater.
-// Este test verifica la forma de la respuesta, no el bloqueo.
 test('repeater:send devuelve objeto con status, headers, body y ms', async () => {
   const result = await ipc('repeater:send', { method: 'GET', url: 'https://example.com' });
   expect(typeof result.status).toBe('number');
