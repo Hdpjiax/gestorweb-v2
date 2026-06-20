@@ -157,9 +157,11 @@ function camouConfig(profile, proxy) {
 // ─── Chromium window ──────────────────────────────────────────────────────────
 async function openChromiumWindow(profile, proxy, startUrl) {
   await prepareSession(profile, proxy);
+
   const fp = profile.fingerprint || {};
   const width = fp.resolution?.width || 1280;
   const height = fp.resolution?.height || 800;
+
   const win = new BrowserWindow({
     width,
     height,
@@ -172,12 +174,30 @@ async function openChromiumWindow(profile, proxy, startUrl) {
       sandbox: true
     }
   });
-  await win.loadURL(startUrl);
+
   win.on("closed", () => {
     profileWindows.delete(profile.id);
     notifyProfileClosed(profile.id);
   });
+
   profileWindows.set(profile.id, { type: "electron", win });
+
+  // loadURL puede lanzar ERR_ABORTED (-3) cuando el proxy intercepta
+  // el primer request (handshake TLS / redirect de auth).
+  // Lo capturamos y reintentamos una vez tras un tick para dar tiempo
+  // al proceso de red de aplicar la sesión completamente.
+  try {
+    await win.loadURL(startUrl);
+  } catch (err) {
+    if (err?.errno === -3) {
+      // ERR_ABORTED: proxy aún negociando — esperar y reintentar
+      await new Promise((r) => setTimeout(r, 600));
+      try { await win.loadURL(startUrl); } catch { /* silencioso */ }
+    } else {
+      throw err;
+    }
+  }
+
   return { ok: true, mode: "chromium", id: profile.id };
 }
 
@@ -244,9 +264,9 @@ function focusProfileWindow(profileId) {
 }
 
 // ─── Session / proxy setup ────────────────────────────────────────────────────
-// WeakSet: registra handlers de webRequest solo una vez por sesión particionada.
+// WeakSet: registra handlers de webRequest/login una sola vez por sesión.
 const _sessionHandlersRegistered = new WeakSet();
-// WeakMap: almacena las credenciales de proxy activas por sesión.
+// WeakMap: credenciales de proxy activas; actualizadas en cada prepareSession.
 const _sessionProxyCreds = new WeakMap();
 
 async function prepareSession(profile, proxy) {
@@ -255,7 +275,7 @@ async function prepareSession(profile, proxy) {
   const fp = profile.fingerprint || {};
   const preload = writeFingerprintPreload(profile);
 
-  // User-Agent y preload
+  // User-Agent y preload de fingerprint
   try { ses.setUserAgent(fp.userAgent || "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:135.0) Gecko/20100101 Firefox/135.0", fp.locale || "es-MX"); } catch {}
   try { if (typeof ses.setPreloads === "function") ses.setPreloads([preload]); } catch {}
 
@@ -263,14 +283,14 @@ async function prepareSession(profile, proxy) {
   const hasProxyCreds = !!(proxy?.username || proxy?.password);
 
   // 1. Certificados — ANTES de setProxy para que aplique al handshake TLS
-  //    del proxy mismo. Solo en la sesión particionada del perfil.
+  //    del tunel del proxy. Aplica solo a la sesion particionada del perfil.
   if (hasProxy) {
     ses.setCertificateVerifyProc((_req, cb) => cb(0));
   } else {
     ses.setCertificateVerifyProc(null);
   }
 
-  // 2. Proxy — setProxy es async y siempre se re-aplica (puede cambiar entre llamadas).
+  // 2. Proxy — siempre re-aplicado (puede cambiar entre llamadas).
   try {
     if (hasProxy) {
       let cleanRules;
@@ -288,9 +308,9 @@ async function prepareSession(profile, proxy) {
     console.error("[windows] setProxy error:", e.message);
   }
 
-  // 3. Credenciales de proxy — se guardan en WeakMap y se leen en el listener
-  //    'login' del Session, que es la API correcta en Electron (no webRequest).
-  //    El listener se registra solo la primera vez; las creds se actualizan vía WeakMap.
+  // 3. Credenciales de proxy via ses.login (API correcta en Electron).
+  //    El listener se registra una sola vez; las creds se leen del WeakMap
+  //    para que funcionen aunque cambien entre llamadas a prepareSession.
   if (hasProxyCreds) {
     _sessionProxyCreds.set(ses, { username: proxy.username || "", password: proxy.password || "" });
   } else {
@@ -300,7 +320,7 @@ async function prepareSession(profile, proxy) {
   if (!_sessionHandlersRegistered.has(ses)) {
     _sessionHandlersRegistered.add(ses);
 
-    // Credenciales de proxy: se responde solo cuando authInfo.isProxy === true.
+    // Autenticacion de proxy — solo cuando authInfo.isProxy === true.
     ses.on("login", (_event, _webContents, authInfo, callback) => {
       if (!authInfo.isProxy) return callback("", "");
       const creds = _sessionProxyCreds.get(ses);

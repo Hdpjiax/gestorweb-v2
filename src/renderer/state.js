@@ -119,6 +119,9 @@ export function update(fn) {
   window.scrollTo(0, sy);
 }
 
+// rerender: reconstruye el DOM Y re-enlaza los handlers.
+// IMPORTANTE: ambas operaciones deben ocurrir juntas para que
+// elementos nuevos (modales, forms) tengan sus listeners activos.
 export function rerender() {
   const sy = window.scrollY;
   render();
