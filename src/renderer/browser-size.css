@@ -1,30 +1,39 @@
 .browse-shell {
-  height: calc(100vh - 40px);
+  height: 100vh;
   min-height: 0;
+  overflow: hidden;
 }
 
 .browse-shell .workspace {
+  height: 100vh;
   min-height: 0;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
 .browse-shell .content {
-  flex: 1 1 auto;
+  flex: 1 1 0;
   min-height: 0;
-  padding: 0;
-  overflow: hidden;
+  padding: 0 !important;
+  overflow: hidden !important;
+  display: flex;
+  flex-direction: column;
 }
 
 .browse-shell .browser-pro {
-  height: 100%;
+  flex: 1 1 0;
   min-height: 0;
+  height: auto;
   display: flex;
   flex-direction: column;
   background: #000;
+  overflow: hidden;
 }
 
 .browse-shell .browser-tabs {
   flex: 0 0 34px;
+  min-height: 34px;
   display: flex;
   flex-direction: row-reverse;
   justify-content: flex-start;
@@ -41,23 +50,44 @@
 
 .browse-shell .browser-toolbar-pro {
   flex: 0 0 48px;
+  min-height: 48px;
 }
 
 .browse-shell .browser-stage {
-  flex: 1 1 auto;
+  position: relative;
+  flex: 1 1 0;
   min-height: 0;
-  height: 100%;
   width: 100%;
+  height: auto;
+  padding: 0 !important;
   overflow: hidden;
+  display: block !important;
+  background: #000;
 }
 
-.browse-shell .webview-shell,
-.browse-shell .webview-frame {
-  display: block;
+.browse-shell .browser-stage > .webview-shell {
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
   min-height: 0;
   border: 0;
   border-radius: 0;
   overflow: hidden;
+  background: #000;
+}
+
+.browse-shell .webview-frame {
+  display: inline-flex;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  border: 0;
+  border-radius: 0;
+}
+
+.browse-shell .browser-stage > .browser-empty-screen {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
 }
