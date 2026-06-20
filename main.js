@@ -291,13 +291,13 @@ function writeFirefoxProfilePrefs(profile, proxy) {
   return dir;
 }
 
-function camouConfig(profile) {
+function camouConfig(profile, proxy) {
   const fp = profile.fingerprint || {};
   const width = fp.resolution?.width || 1920;
   const height = fp.resolution?.height || 1080;
   const locale = fp.locale || "es-MX";
   const region = locale.includes("-") ? locale.split("-")[1] : "MX";
-  return {
+  const config = {
     addons: addonPaths(),
     "navigator.userAgent": fp.userAgent || "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:135.0) Gecko/20100101 Firefox/135.0",
     "headers.User-Agent": fp.userAgent || "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:135.0) Gecko/20100101 Firefox/135.0",
@@ -331,7 +331,7 @@ function camouConfig(profile) {
     humanize: true,
     "humanize:maxTime": profile.compat_mode ? 0.6 : 1.2,
     "humanize:minTime": 0.08,
-    showcursor: true,
+    mostrursor: true,
     "webGl:vendor": "Google Inc. (NVIDIA)",
     "webGl:renderer": fp.webgl || "ANGLE (NVIDIA, NVIDIA GeForce GTX 980 Direct3D11 vs_5_0 ps_5_0), or similar",
     "AudioContext:sampleRate": 48000,
@@ -344,6 +344,22 @@ function camouConfig(profile) {
     memorysaver: !!profile.in_memory,
     debug: false
   };
+  if (proxy?.host && proxy?.port) {
+    const scheme = proxy.scheme || "http";
+    config.proxy = {
+      mode: "manual",
+      proxyDNS: true,
+      proxyType: scheme.startsWith("socks") ? "socks" : "http",
+      proxyAddr: proxy.host,
+      proxyPort: proxy.port,
+      proxyUsername: proxy.username || "",
+      proxyPassword: proxy.password || ""
+    };
+  }
+  if (profile.tor_mode) {
+    config.proxy = { mode: "socks5", proxyAddr: "127.0.0.1", proxyPort: 9050, proxyDNS: true };
+  }
+  return config;
 }
 
 function injectCursorAndSpoof(win, profile) {
@@ -395,7 +411,7 @@ async function openFirefoxWindow(profile, proxy, startUrl) {
   const env = {
     ...process.env,
     MOZ_NO_REMOTE: "1",
-    CAMOU_CONFIG_1: JSON.stringify(camouConfig(profile))
+    CAMOU_CONFIG_1: JSON.stringify(camouConfig(profile, proxy))
   };
   if (proxyRulesFor(profile, proxy)) env.GW_PROXY = proxyRulesFor(profile, proxy);
   const args = ["-no-remote", "-profile", dir, startUrl];
@@ -444,7 +460,12 @@ function proxyRulesFor(profile, proxy) {
   if (profile?.tor_mode) return "socks5://127.0.0.1:9050";
   if (!proxy) return "";
   const scheme = proxy.scheme || "http";
-  return `${scheme}://${proxy.host}:${proxy.port}`;
+  const host = proxy.host;
+  const port = proxy.port;
+  if (proxy.username || proxy.password) {
+    return `${scheme}://${encodeURIComponent(proxy.username || "")}:${encodeURIComponent(proxy.password || "")}@${host}:${port}`;
+  }
+  return `${scheme}://${host}:${port}`;
 }
 
 async function prepareSession(profile, proxy) {
