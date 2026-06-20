@@ -17,7 +17,7 @@ module.exports = async function browseViewTests() {
   const facade = read("src/renderer/views/index.js");
   const polish = read("src/renderer/browser-polish.css");
   const size = read("src/renderer/browser-size.css");
-  const toolbarFinal = read("src/renderer/browser-toolbar-final.css");
+  const cleanToolbar = read("src/renderer/browser-clean-toolbar.css");
   const toolbarActions = read("src/renderer/browser-toolbar-actions.js");
   const start = read("src/renderer/browser-redesign-start.js");
   const index = read("index.html");
@@ -34,10 +34,11 @@ module.exports = async function browseViewTests() {
   assert.match(tabs, /close-browser-tab/);
   assert.match(tabs, /browser-tab-plus/);
 
+  assert.match(toolbar, /clean-browser-toolbar/);
   assert.match(toolbar, /browser-go/);
   assert.match(toolbar, /browserProfile/);
   assert.match(toolbar, /browserUrl/);
-  assert.match(toolbar, /browser-profile-popover/);
+  assert.match(toolbar, /clean-profile-picker/);
   assert.match(toolbar, /select-browser-profile/);
   assert.match(toolbar, /browser-toggle-muted/);
   assert.match(toolbar, /browser-open-devtools/);
@@ -45,7 +46,11 @@ module.exports = async function browseViewTests() {
   assert.match(toolbar, /browser-refresh-all/);
   assert.doesNotMatch(toolbar, /browser-back/);
   assert.doesNotMatch(toolbar, /browser-forward/);
-  assert.doesNotMatch(toolbar, /needs-profile/);
+  assert.doesNotMatch(toolbar, /browser-toolbar-reference/);
+
+  assert.match(cleanToolbar, /clean-browser-toolbar/);
+  assert.match(cleanToolbar, /browser-toolbar-reference/);
+  assert.match(cleanToolbar, /display: none !important/);
 
   assert.match(toolbarActions, /installBrowserToolbarActions/);
   assert.match(toolbarActions, /browser-toggle-muted/);
@@ -63,13 +68,10 @@ module.exports = async function browseViewTests() {
 
   assert.match(polish, /browser-empty-screen/);
   assert.match(polish, /browser-empty-panel/);
-  assert.match(polish, /browser-toolbar-pro/);
   assert.match(size, /flex-direction: row/);
-  assert.match(toolbarFinal, /browser-toolbar-reference/);
-  assert.match(toolbarFinal, /browser-profile-floating/);
   assert.match(index, /browser-polish\.css/);
   assert.match(index, /browser-size\.css/);
-  assert.match(index, /browser-toolbar-final\.css/);
+  assert.match(index, /browser-clean-toolbar\.css/);
 
   assert.match(start, /DEFAULT_SEARCH_HOME/);
   assert.match(start, /duckduckgo\.com/);
