@@ -22,6 +22,7 @@ export function renderBrowserActive(tab) {
       <p class="small-note">Abre con Electron para usar webview real y particiones persistentes por perfil.</p>
       <div class="flex right" style="justify-content:center;margin-top:18px">
         <button class="btn btn-primary" data-action="open-external" data-url="${attr(tab.url)}">abrir externo</button>
+        <button class="btn btn-ghost" data-action="open-detection" data-id="${profile?.id || ""}" data-kind="creepjs">test deteccion</button>
       </div>
       <div class="small-note" style="margin-top:18px">Perfil: ${esc(profile?.name || "sin perfil")}</div>
     </div>
