@@ -255,7 +255,7 @@ function registerIpc(mainWindowRef) {
     const result = await dialog.showSaveDialog(getDialogWindow(), { defaultPath: "gestor-web-vault.json", filters: [{ name: "JSON", extensions: ["json"] }] });
     if (result.canceled || !result.filePath) return { canceled: true };
     writeJson(result.filePath, exportState);
-    return { canceled: false, filePath };
+    return { canceled: false, filePath: result.filePath };
   });
   ipcMain.handle("vault:importFile", async () => {
     const result = await dialog.showOpenDialog(getDialogWindow(), { filters: [{ name: "JSON", extensions: ["json"] }], properties: ["openFile"] });
