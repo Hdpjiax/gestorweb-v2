@@ -1,4 +1,5 @@
 @import url("./profile-panel-exact.css");
+@import url("./profile-privacy-exact.css");
 
 .app-shell .workspace {
   height: 100vh;
