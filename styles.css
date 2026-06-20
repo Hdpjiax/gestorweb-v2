@@ -165,6 +165,9 @@ button:disabled {
 .nav-btn svg, .icon-btn svg, .icon-btn-sm svg {
   display: block;
 }
+
+.nav-btn,
+.icon-btn {
   width: 40px;
   height: 40px;
   border: 0;

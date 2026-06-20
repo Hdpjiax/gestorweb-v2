@@ -127,6 +127,7 @@
     commandQuery: "",
     inspectorTab: "fp",
     cookieProfileId: null,
+    cookieSearch: "",
     browserProfileId: "",
     browserUrl: "",
     repeaterOutput: ""
@@ -839,8 +840,10 @@
 
   function renderCookieEditor(profileId) {
     const profile = profileById(profileId);
-    const cookies = profile?.cookies || [];
-    return `<div class="modal-backdrop"><div class="modal-card wide"><div class="modal-head between"><div><div class="title">Cookies</div><div class="subtitle">${cookies.length} cookies</div></div><button class="icon-btn" data-action="close-cookies">x</button></div><div class="modal-body stack"><div class="between"><button class="btn btn-ghost" data-action="add-cookie" data-id="${profileId}">agregar cookie demo</button><button class="btn btn-ghost btn-danger" data-action="clear-cookies" data-id="${profileId}">limpiar</button></div><table style="width:100%;border-collapse:collapse" class="mono small-note"><thead><tr><th>Dominio</th><th>Nombre</th><th>Valor</th><th>Expira</th></tr></thead><tbody>${cookies.length ? cookies.map((c) => `<tr><td>${esc(c.domain)}</td><td>${esc(c.name)}</td><td>${esc(c.value)}</td><td>${esc(c.expires)}</td></tr>`).join("") : `<tr><td colspan="4" style="text-align:center;padding:32px">sin cookies</td></tr>`}</tbody></table><textarea class="textarea mono" readonly>${esc(JSON.stringify(cookies, null, 2))}</textarea></div></div></div>`;
+    const allCookies = profile?.cookies || [];
+    const q = (ui.cookieSearch || "").toLowerCase();
+    const cookies = q ? allCookies.filter((c) => `${c.domain || ""}${c.name || ""}${c.value || ""}`.toLowerCase().includes(q)) : allCookies;
+    return `<div class="modal-backdrop"><div class="modal-card wide" style="max-width:900px"><div class="modal-head between"><div><div class="title">Editor de Cookies</div><div class="subtitle">${cookies.length}${q !== "" ? ` de ${allCookies.length}` : ""} cookies · ${esc(profile?.name || "")}</div></div><button class="icon-btn" data-action="close-cookies">x</button></div><div class="modal-body stack"><div class="flex" style="gap:8px;flex-wrap:wrap;margin-bottom:12px"><input class="input" placeholder="buscar cookies..." value="${attr(ui.cookieSearch || "")}" data-action="set-cookie-search" style="flex:1;min-width:200px"/><button class="btn btn-ghost" data-action="import-cookies" data-id="${profileId}">importar JSON</button><button class="btn btn-ghost" data-action="save-cookies" data-id="${profileId}">guardar</button><button class="btn btn-ghost btn-danger" data-action="clear-cookies" data-id="${profileId}">limpiar todo</button></div>${cookies.length ? `<div style="max-height:400px;overflow:auto;border:1px solid var(--bg-border);border-radius:8px"><table style="width:100%;border-collapse:collapse" class="mono small-note"><thead><tr style="position:sticky;top:0;background:var(--bg-panel)"><th style="text-align:left;padding:8px;border-bottom:1px solid var(--bg-border)">Dominio</th><th style="text-align:left;padding:8px;border-bottom:1px solid var(--bg-border)">Nombre</th><th style="text-align:left;padding:8px;border-bottom:1px solid var(--bg-border)">Valor</th><th style="text-align:left;padding:8px;border-bottom:1px solid var(--bg-border);width:100px">Expira</th><th style="width:40px"></th></tr></thead><tbody>${cookies.map((c) => `<tr style="border-bottom:1px solid var(--bg-border)"><td style="padding:6px 8px">${esc(c.domain)}</td><td style="padding:6px 8px">${esc(c.name)}</td><td style="padding:6px 8px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(c.value)}</td><td style="padding:6px 8px;color:var(--muted)">${esc(c.expires || "session")}</td><td style="padding:6px 8px;text-align:center"><button class="btn btn-ghost btn-danger" style="padding:2px 6px;font-size:11px" data-action="delete-cookie" data-id="${profileId}" data-domain="${attr(c.domain)}" data-name="${attr(c.name)}">x</button></td></tr>`).join("")}</tbody></table></div>` : `<div style="text-align:center;padding:40px;color:var(--muted)">${q ? "sin resultados" : "sin cookies"}</div>`}<details style="margin-top:12px"><summary style="cursor:pointer;color:var(--muted);font-size:12px">ver JSON</summary><textarea class="textarea mono" style="margin-top:8px;height:160px;font-size:11px">${esc(JSON.stringify(allCookies, null, 2))}</textarea></details></div></div></div>`;
   }
 
   function bind() {
@@ -980,9 +983,16 @@
       "refresh-fingerprint": () => update((s) => { profileById(id).fingerprint.noiseSeed = Math.floor(Math.random() * 1e9); }),
       "open-detection": () => openDetection(id, target.dataset.kind),
       "open-cookies": () => openCookies(id),
-      "close-cookies": () => { ui.cookieProfileId = null; rerender(); },
+      "close-cookies": () => { ui.cookieProfileId = null; ui.cookieSearch = ""; rerender(); },
       "add-cookie": () => addCookie(id),
       "clear-cookies": () => clearCookies(id),
+      "delete-cookie": () => deleteCookie(id, { domain: target.dataset.domain, name: target.dataset.name }),
+      "save-cookies": () => saveCookies(id),
+      "import-cookies": () => {
+        const text = prompt("Pega las cookies en formato JSON array:");
+        if (text) importCookies(id, text);
+      },
+      "set-cookie-search": () => { ui.cookieSearch = target.value; rerender(); },
       "copy-totp": () => copyTotp(id),
       "add-macro": () => addMacro(id),
       "warmup": () => warmup(id),
@@ -1270,15 +1280,12 @@
   }
 
   function openProfilePath(id) {
-    const profile = profileById(id);
-    if (!profile) return;
-    const url = profile.url || "https://duckduckgo.com/";
-    if (native?.app?.openExternal) {
-      native.app.openExternal(url);
-    } else {
-      window.open(url, "_blank", "noopener");
+    if (native?.profiles?.openPath) {
+      native.profiles.openPath(id);
+    } else if (native?.app?.openExternal) {
+      native.app.openExternal(`file://${profileById(id)?.fingerprint?.profileDir || ""}`);
     }
-    logEvent("opened", id, `path: ${url}`);
+    logEvent("opened", id, "profile path");
   }
 
   function toggleProfileFlag(id, key) {
@@ -1446,6 +1453,7 @@
   }
 
   async function openCookies(id) {
+    ui.cookieSearch = "";
     if (native?.cookies?.get) {
       const cookies = await native.cookies.get(id);
       const profile = profileById(id);
@@ -1475,6 +1483,47 @@
       if (p) p.cookies = [];
       logEvent("cookies_cleared", id);
     });
+  }
+
+  async function deleteCookie(profileId, cookie) {
+    if (native?.cookies?.delete) {
+      const updated = await native.cookies.delete(profileId, cookie);
+      update(() => {
+        const p = profileById(profileId);
+        if (p) p.cookies = updated;
+      });
+    } else {
+      update(() => {
+        const p = profileById(profileId);
+        if (p) p.cookies = (p.cookies || []).filter((c) => !(c.domain === cookie.domain && c.name === cookie.name));
+      });
+    }
+  }
+
+  async function saveCookies(profileId) {
+    const p = profileById(profileId);
+    if (!p?.cookies) return;
+    if (native?.cookies?.set) {
+      const updated = await native.cookies.set(profileId, p.cookies);
+      p.cookies = updated;
+    }
+    save();
+    logEvent("cookies_saved", profileId, `${p.cookies.length} cookies`);
+  }
+
+  async function importCookies(profileId, text) {
+    try {
+      const arr = JSON.parse(text);
+      if (!Array.isArray(arr)) return;
+      const cleaned = arr.map((c) => ({ domain: c.domain || "", name: c.name || `gw_${shortId(4)}`, value: String(c.value || ""), path: c.path || "/", expires: c.expires || "session", secure: c.secure !== false }));
+      if (native?.cookies?.set) {
+        const updated = await native.cookies.set(profileId, cleaned);
+        update(() => { const p = profileById(profileId); if (p) p.cookies = updated; });
+      } else {
+        update(() => { const p = profileById(profileId); if (p) p.cookies = cleaned; });
+      }
+      logEvent("cookies_imported", profileId, `${cleaned.length} cookies`);
+    } catch {}
   }
 
   function activeWebview() {

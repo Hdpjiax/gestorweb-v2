@@ -18,6 +18,7 @@ contextBridge.exposeInMainWorld("api", {
   cookies: {
     get: (profileId) => invoke("cookies:get", profileId),
     set: (profileId, cookies) => invoke("cookies:set", profileId, cookies),
+    delete: (profileId, cookie) => invoke("cookies:delete", profileId, cookie),
     clear: (profileId) => invoke("cookies:clear", profileId)
   },
   license: {
@@ -31,7 +32,8 @@ contextBridge.exposeInMainWorld("api", {
     openWindow: (profile, proxy, url) => invoke("profiles:openWindow", profile, proxy, url),
     closeWindow: (profileId) => invoke("profiles:closeWindow", profileId),
     focusWindow: (profileId) => invoke("profiles:focusWindow", profileId),
-    isWindowOpen: (profileId) => invoke("profiles:isWindowOpen", profileId)
+    isWindowOpen: (profileId) => invoke("profiles:isWindowOpen", profileId),
+    openPath: (profileId) => invoke("profiles:openPath", profileId)
   },
   proxies: {
     check: (proxy) => invoke("proxies:check", proxy),

@@ -195,13 +195,37 @@ function writeFingerprintPreload(profile) {
 }
 
 function findGestorBrowser() {
-  const candidates = [
-    path.resolve(__dirname, "../Gestor Web-1.3.0-Setup/resources/gestor-browser/GestorWeb.exe"),
-    path.resolve(__dirname, "../Gestor Web-1.3.0-Setup/resources/gestor-browser/firefox.exe"),
-    path.resolve(process.resourcesPath || "", "gestor-browser/GestorWeb.exe"),
-    path.resolve(process.resourcesPath || "", "gestor-browser/firefox.exe")
-  ];
-  return candidates.find((candidate) => fs.existsSync(candidate)) || null;
+  const searchPaths = [];
+  if (app.isPackaged && process.resourcesPath) {
+    searchPaths.push(
+      path.join(process.resourcesPath, "gestor-browser", "GestorWeb.exe"),
+      path.join(process.resourcesPath, "gestor-browser", "firefox.exe"),
+      path.join(process.resourcesPath, "gestor-browser", "Camoufox.exe"),
+      path.join(process.resourcesPath, "..", "gestor-browser", "GestorWeb.exe"),
+      path.join(process.resourcesPath, "..", "gestor-browser", "Camoufox.exe"),
+      path.join(path.dirname(process.execPath), "resources", "gestor-browser", "GestorWeb.exe"),
+      path.join(path.dirname(process.execPath), "resources", "gestor-browser", "Camoufox.exe")
+    );
+  } else {
+    const base = app.getAppPath().replace(/[/\\]resources[/\\]app\.asar.*/, "");
+    searchPaths.push(
+      path.join(base, "gestor-browser", "GestorWeb.exe"),
+      path.join(base, "gestor-browser", "Camoufox.exe"),
+      path.join(base, "Gestor Web-1.3.0-Setup", "resources", "gestor-browser", "GestorWeb.exe"),
+      path.join(base, "Gestor Web-1.3.0-Setup", "resources", "gestor-browser", "Camoufox.exe"),
+      path.join(__dirname, "..", "gestor-browser", "GestorWeb.exe"),
+      path.join(__dirname, "..", "gestor-browser", "Camoufox.exe"),
+      path.join(__dirname, "..", "Gestor Web-1.3.0-Setup", "resources", "gestor-browser", "GestorWeb.exe"),
+      path.join(__dirname, "..", "Gestor Web-1.3.0-Setup", "resources", "gestor-browser", "Camoufox.exe")
+    );
+  }
+  const found = searchPaths.find((p) => fs.existsSync(p));
+  if (!found && app.isPackaged) {
+    try { fs.mkdirSync(path.join(dataDir(), "logs"), { recursive: true }); } catch {}
+    const logFile = path.join(dataDir(), "logs", "browser-find.log");
+    fs.writeFileSync(logFile, `findGestorBrowser search paths:\n${searchPaths.join("\n")}\n`, "utf8");
+  }
+  return found || null;
 }
 
 function addonPaths() {
@@ -615,9 +639,24 @@ function registerIpc() {
     await sessionFor(profileId).clearStorageData({ storages: ["cookies"] });
     return [];
   });
+  ipcMain.handle("cookies:delete", async (_event, profileId, cookie) => {
+    const ses = sessionFor(profileId);
+    if (cookie?.url && cookie?.name) {
+      await ses.cookies.delete({ url: cookie.url, name: cookie.name });
+    } else if (cookie?.domain && cookie?.name) {
+      const url = `https://${String(cookie.domain).replace(/^\./, "")}/`;
+      await ses.cookies.delete({ url, name: cookie.name });
+    }
+    return ses.cookies.get({});
+  });
   ipcMain.handle("cookies:set", async (_event, profileId, cookies) => {
     const ses = sessionFor(profileId);
     for (const cookie of cookies || []) {
+      if (cookie._delete) {
+        const url = cookie.url || `https://${String(cookie.domain || "").replace(/^\./, "")}/`;
+        await ses.cookies.delete({ url, name: cookie.name });
+        continue;
+      }
       const domain = String(cookie.domain || "").replace(/^\./, "");
       if (!cookie.name || !domain) continue;
       const details = {
@@ -644,7 +683,16 @@ function registerIpc() {
     try { return JSON.parse(result.body); } catch { return { ip: null, raw: result.body }; }
   });
   ipcMain.handle("profiles:openWindow", (_event, profile, proxy, url) => openProfileWindow(profile, proxy, url));
-  ipcMain.handle("profiles:closeWindow", (_event, profileId) => closeProfileWindow(profileId));
+  ipcMain.handle("profiles:closeWindow", async (_event, profileId) => {
+    const state = readJson(stateFile(), {});
+    const profile = state.profiles?.find((p) => String(p.id) === String(profileId));
+    if (profile?.auto_wipe_close) {
+      await sessionFor(profileId).clearStorageData({ storages: ["cookies", "cachestorage", "indexeddb", "localStorage", "sessionStorage"] });
+      await sessionFor(profileId).cookies.set({ url: "https://gestor.invalid/", name: "gw_wipe", value: "1", expirationDate: 1 });
+    }
+    return closeProfileWindow(profileId);
+  });
+  ipcMain.handle("profiles:openPath", (_event, profileId) => shell.openPath(profileDir(profileId)));
   ipcMain.handle("profiles:focusWindow", (_event, profileId) => focusProfileWindow(profileId));
   ipcMain.handle("profiles:isWindowOpen", (_event, profileId) => ({ open: profileWindows.has(profileId) }));
   ipcMain.handle("proxies:check", (_event, proxy) => checkProxy(proxy));
