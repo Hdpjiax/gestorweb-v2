@@ -8,9 +8,17 @@ setBindFn(bind);
 initKeyboard();
 startScheduler();
 
+async function syncDeviceId() {
+  const key = ["gestor-web-rebuild", "hwid"].join(":");
+  const api = native && native.license;
+  if (!api || !api.hwid || localStorage.getItem(key)) return;
+  localStorage.setItem(key, await api.hwid());
+}
+
 async function bootstrap() {
   try {
     setState(normalize(await load()));
+    await syncDeviceId();
   } catch (error) {
     console.error(error);
     setState(normalize(clone(defaults)));
