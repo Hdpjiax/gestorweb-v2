@@ -1,0 +1,61 @@
+.browse-shell .browser-toolbar-reference {
+  gap: 7px;
+}
+
+.browse-shell .browser-chrome-btn,
+.browse-shell .browser-go-icon,
+.browse-shell .browser-profile-badge {
+  width: 32px;
+  min-width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 0;
+  border-radius: 7px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #8fa0b8;
+  background: transparent;
+  line-height: 1;
+}
+
+.browse-shell .browser-chrome-btn svg,
+.browse-shell .browser-go-icon svg,
+.browse-shell .browser-profile-popover svg,
+.browse-shell .browser-url-lock svg {
+  width: 15px;
+  height: 15px;
+  display: block;
+}
+
+.browse-shell .browser-chrome-btn:hover,
+.browse-shell .browser-go-icon:hover {
+  color: #eef5ff;
+  background: #141f30;
+}
+
+.browse-shell .browser-go-icon:disabled {
+  opacity: 0.42;
+}
+
+.browse-shell .browser-profile-badge {
+  width: auto;
+  min-width: 42px;
+  padding: 0 10px;
+  background: #111b2b;
+  color: #bfdbfe;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.browse-shell .browser-profile-badge + .browser-chrome-btn,
+.browse-shell .browser-go-icon + .browser-chrome-btn + .browser-chrome-btn + .browser-chrome-btn + .browser-chrome-btn + .browser-profile-badge + .browser-chrome-btn {
+  display: none;
+}
+
+.browse-shell .browser-url-lock {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 16px;
+}
