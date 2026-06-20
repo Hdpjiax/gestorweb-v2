@@ -27,7 +27,7 @@ function notifyProfileClosed(profileId) {
   } catch {}
 }
 
-// ─── Firefox user.js ──────────────────────────────────────────────────────────
+// ─── Firefox user.js ───────────────────────────────────────────────────────────
 function writeFirefoxProfilePrefs(profile, proxy) {
   const fp = profile.fingerprint || {};
   const dir = profileDir(profile.id);
@@ -82,7 +82,7 @@ function writeFirefoxProfilePrefs(profile, proxy) {
   return dir;
 }
 
-// ─── Camoufox config ──────────────────────────────────────────────────────────
+// ─── Camoufox config ───────────────────────────────────────────────────────────
 function camouConfig(profile, proxy) {
   const fp = profile.fingerprint || {};
   const width = fp.resolution?.width || 1920;
@@ -154,7 +154,7 @@ function camouConfig(profile, proxy) {
   return config;
 }
 
-// ─── Chromium window ──────────────────────────────────────────────────────────
+// ─── Chromium window ───────────────────────────────────────────────────────────
 async function openChromiumWindow(profile, proxy, startUrl) {
   await prepareSession(profile, proxy);
 
@@ -182,11 +182,17 @@ async function openChromiumWindow(profile, proxy, startUrl) {
 
   profileWindows.set(profile.id, { type: "electron", win });
 
+  // Errores esperados al abrir con proxy MITM:
+  //   -3   ERR_ABORTED               — proxy negociando, reintentar
+  //   -202 ERR_CERT_AUTHORITY_INVALID — cert del proxy aun no activo, reintentar
+  // Esperamos 800ms para que el verifier custom se afiance y reintentamos una vez.
+  // Si falla de nuevo, silencioso: la ventana ya esta abierta y el usuario navega.
+  const RETRIABLE = new Set([-3, -202]);
   try {
     await win.loadURL(startUrl);
   } catch (err) {
-    if (err?.errno === -3) {
-      await new Promise((r) => setTimeout(r, 600));
+    if (RETRIABLE.has(err?.errno)) {
+      await new Promise((r) => setTimeout(r, 800));
       try { await win.loadURL(startUrl); } catch { /* silencioso */ }
     } else {
       throw err;
@@ -196,7 +202,7 @@ async function openChromiumWindow(profile, proxy, startUrl) {
   return { ok: true, mode: "chromium", id: profile.id };
 }
 
-// ─── Firefox window ───────────────────────────────────────────────────────────
+// ─── Firefox window ────────────────────────────────────────────────────────────
 async function openFirefoxWindow(profile, proxy, startUrl) {
   const browserPath = findGestorBrowser();
   if (!browserPath) return openChromiumWindow(profile, proxy, startUrl);
@@ -217,7 +223,7 @@ async function openFirefoxWindow(profile, proxy, startUrl) {
   return { ok: true, mode: "firefox", pid: child.pid, id: profile.id, browserPath };
 }
 
-// ─── Dispatcher ───────────────────────────────────────────────────────────────
+// ─── Dispatcher ────────────────────────────────────────────────────────────────
 async function openProfileWindow(profile, proxy, startUrl) {
   if (!profile?.id) return { ok: false, error: "missing profile" };
   const existing = profileWindows.get(profile.id);
@@ -258,17 +264,22 @@ function focusProfileWindow(profileId) {
   return { ok: false };
 }
 
-// ─── Session / proxy setup ────────────────────────────────────────────────────
-// WeakSet: registra handlers de webRequest/login una sola vez por sesión.
+// ─── Session / proxy setup ─────────────────────────────────────────────────────
+// WeakSet: registra handlers de webRequest/login UNA SOLA VEZ por sesión.
 const _sessionHandlersRegistered = new WeakSet();
 // WeakMap: credenciales de proxy activas; actualizadas en cada prepareSession.
 const _sessionProxyCreds = new WeakMap();
+// WeakMap: estado runtime (profile + fp activos) para los handlers.
+const _sessionRuntimeState = new WeakMap();
 
 async function prepareSession(profile, proxy) {
   if (!profile?.id) return { ok: false, error: "missing profile id" };
   const ses = sessionFor(profile.id);
   const fp = profile.fingerprint || {};
   const preload = writeFingerprintPreload(profile);
+
+  // Actualizar estado runtime (leido por los handlers de webRequest)
+  _sessionRuntimeState.set(ses, { profile, fp });
 
   // User-Agent y preload de fingerprint
   try { ses.setUserAgent(fp.userAgent || "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:135.0) Gecko/20100101 Firefox/135.0", fp.locale || "es-MX"); } catch {}
@@ -277,18 +288,7 @@ async function prepareSession(profile, proxy) {
   const hasProxy = !!(proxy?.host && proxy?.port) || !!profile.tor_mode;
   const hasProxyCreds = !!(proxy?.username || proxy?.password);
 
-  // 1. Certificados — se re-aplica en CADA llamada a prepareSession (no solo
-  //    la primera) para que cambios de proxy (sin proxy → con proxy y viceversa)
-  //    siempre queden reflejados en el verificador activo de la sesión.
-  //    Con proxy MITM: aceptamos cualquier cert dentro de la sesión particionada.
-  //    Sin proxy: restauramos la verificación nativa (null = comportamiento por defecto).
-  if (hasProxy) {
-    ses.setCertificateVerifyProc((_req, cb) => cb(0));
-  } else {
-    ses.setCertificateVerifyProc(null);
-  }
-
-  // 2. Proxy — siempre re-aplicado (puede cambiar entre llamadas).
+  // 1. Proxy — PRIMERO, para que el verifier sepa a qué tunel aplica.
   try {
     if (hasProxy) {
       let cleanRules;
@@ -299,10 +299,6 @@ async function prepareSession(profile, proxy) {
         cleanRules = `${scheme}://${proxy.host}:${proxy.port}`;
       }
       await ses.setProxy({ proxyRules: cleanRules, proxyBypassRules: "<-loopback>" });
-      // Cerrar conexiones TLS abiertas antes del cambio de proxy/verifier.
-      // Sin esto, sockets pre-existentes siguen usando el verifier antiguo
-      // y producen CertVerifyProcBuiltin errors para los primeros requests.
-      try { ses.closeAllConnections(); } catch { /* API no disponible en versiones viejas */ }
     } else {
       await ses.setProxy({ proxyRules: "direct://", proxyBypassRules: "<-loopback>" });
     }
@@ -310,19 +306,31 @@ async function prepareSession(profile, proxy) {
     console.error("[windows] setProxy error:", e.message);
   }
 
-  // 3. Credenciales de proxy via ses.login (API correcta en Electron).
-  //    El listener se registra una sola vez; las creds se leen del WeakMap
-  //    para que funcionen aunque cambien entre llamadas a prepareSession.
+  // 2. Certificados — DESPUES de setProxy, re-aplicado en CADA prepareSession.
+  //    Con proxy MITM (residencial, Bright Data, etc. con CA propia):
+  //      cb(0) = aceptar cualquier cert dentro de esta sesión particionada.
+  //    Sin proxy: null = verificación nativa del sistema operativo.
+  if (hasProxy) {
+    ses.setCertificateVerifyProc((_req, cb) => cb(0));
+  } else {
+    ses.setCertificateVerifyProc(null);
+  }
+
+  // 3. Vaciar sockets TLS pre-existentes para que los nuevos nazcan
+  //    con el verifier correcto activo desde el primer handshake.
+  try { ses.closeAllConnections(); } catch { /* Electron < 21 no tiene esta API */ }
+
+  // 4. Credenciales de proxy via ses.on("login").
   if (hasProxyCreds) {
     _sessionProxyCreds.set(ses, { username: proxy.username || "", password: proxy.password || "" });
   } else {
     _sessionProxyCreds.delete(ses);
   }
 
+  // 5. Handlers de webRequest — se registran UNA SOLA VEZ por sesión.
   if (!_sessionHandlersRegistered.has(ses)) {
     _sessionHandlersRegistered.add(ses);
 
-    // Autenticacion de proxy — solo cuando authInfo.isProxy === true.
     ses.on("login", (_event, _webContents, authInfo, callback) => {
       if (!authInfo.isProxy) return callback("", "");
       const creds = _sessionProxyCreds.get(ses);
@@ -330,14 +338,15 @@ async function prepareSession(profile, proxy) {
       else callback("", "");
     });
 
-    // Bloqueo de trackers y limpieza de UTMs
     ses.webRequest.onBeforeRequest((details, callback) => {
       try {
+        const runtime = _sessionRuntimeState.get(ses) || {};
+        const activeProfile = runtime.profile || profile;
         const url = new URL(details.url);
-        if (profile.block_trackers && TRACKER_HOSTS.some((host) =>
+        if (activeProfile.block_trackers && TRACKER_HOSTS.some((host) =>
           details.url.includes(host) || url.hostname.includes(host)
         )) { callback({ cancel: true }); return; }
-        if (profile.strip_tracking_params) {
+        if (activeProfile.strip_tracking_params) {
           const before = url.toString();
           ["utm_source", "utm_medium", "utm_campaign", "utm_term", "utm_content",
            "fbclid", "gclid", "msclkid"].forEach((k) => url.searchParams.delete(k));
@@ -348,15 +357,17 @@ async function prepareSession(profile, proxy) {
       callback({});
     });
 
-    // Headers de fingerprint
     ses.webRequest.onBeforeSendHeaders((details, callback) => {
+      const runtime = _sessionRuntimeState.get(ses) || {};
+      const activeFp = runtime.fp || fp;
+      const activeProfile = runtime.profile || profile;
       const headers = { ...details.requestHeaders };
-      if (fp.userAgent) headers["User-Agent"] = fp.userAgent;
-      if (fp.locale) headers["Accept-Language"] = `${fp.locale},${String(fp.locale).split("-")[0]};q=0.9,en;q=0.7`;
-      if (profile.sanitize_headers) {
+      if (activeFp.userAgent) headers["User-Agent"] = activeFp.userAgent;
+      if (activeFp.locale) headers["Accept-Language"] = `${activeFp.locale},${String(activeFp.locale).split("-")[0]};q=0.9,en;q=0.7`;
+      if (activeProfile.sanitize_headers) {
         Object.keys(headers).forEach((k) => { if (k.toLowerCase().startsWith("sec-ch-ua")) delete headers[k]; });
       }
-      if (profile.strict_referer) {
+      if (activeProfile.strict_referer) {
         Object.keys(headers).forEach((k) => { if (k.toLowerCase() === "referer") delete headers[k]; });
       }
       callback({ requestHeaders: headers });
