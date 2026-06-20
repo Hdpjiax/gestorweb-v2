@@ -13,3 +13,6 @@ export { renderMonitorView } from "./monitor-view.js";
 export { renderBrowserEmpty } from "./browser-empty-view.js";
 export { renderBrowserActive } from "./browser-active-view.js";
 export { renderSettingsView } from "./settings-view.js";
+export { renderInspectorFingerprintTab } from "./inspector-fingerprint-tab.js";
+export { renderInspectorPrivacyTab } from "./inspector-privacy-tab.js";
+export { renderInspectorAuthTab } from "./inspector-auth-tab.js";
