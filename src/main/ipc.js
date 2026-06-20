@@ -25,6 +25,7 @@ const {
   MAX_STATE_BYTES,
   assertJsonSize,
   assertProfileId,
+  isPlainObject,
   safeExternalUrl,
   safeHttpUrl,
   sanitizeCookies,
@@ -90,6 +91,15 @@ function safeProfileUrl(url) {
   return url ? safeHttpUrl(url) : null;
 }
 
+function sanitizeProfile(profile) {
+  if (!isPlainObject(profile)) throw new Error("invalid profile");
+  return {
+    ...profile,
+    id: assertProfileId(profile.id),
+    url: safeProfileUrl(profile.url) || ""
+  };
+}
+
 function registerIpc(mainWindowRef) {
   const getDialogWindow = () => resolveWindow(mainWindowRef);
 
@@ -112,7 +122,7 @@ function registerIpc(mainWindowRef) {
     await shell.openExternal(safeUrl);
     return { ok: true };
   });
-  ipcMain.handle("browse:prepareSession", (_event, profile, proxy) => prepareSession(profile, proxy));
+  ipcMain.handle("browse:prepareSession", (_event, profile, proxy) => prepareSession(sanitizeProfile(profile), proxy));
   ipcMain.handle("browse:freshenMemory", async (_event, profileId) => {
     const id = assertProfileId(profileId);
     await sessionFor(id).clearStorageData({ storages: ["appcache", "shadercache", "serviceworkers", "cachestorage"] });
@@ -168,7 +178,7 @@ function registerIpc(mainWindowRef) {
     const result = await repeaterSend({ method: "GET", url: "https://api.ipify.org?format=json" });
     try { return JSON.parse(result.body); } catch { return { ip: null, raw: result.body }; }
   });
-  ipcMain.handle("profiles:openWindow", (_event, profile, proxy, url) => openProfileWindow(profile, proxy, safeProfileUrl(url)));
+  ipcMain.handle("profiles:openWindow", (_event, profile, proxy, url) => openProfileWindow(sanitizeProfile(profile), proxy, safeProfileUrl(url)));
   ipcMain.handle("profiles:closeWindow", async (_event, profileId) => {
     const id = assertProfileId(profileId);
     const state = readJson(stateFile(), {});
