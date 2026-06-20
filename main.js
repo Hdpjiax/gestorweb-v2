@@ -1,11 +1,25 @@
 const { app, BrowserWindow } = require("electron");
 const path = require("path");
 const { registerIpc } = require("./src/main/ipc");
+const { readJson, stateFile, sessionFor } = require("./src/main/utils");
 
 let mainWindow = null;
 
 function getMainWindow() {
   return mainWindow && !mainWindow.isDestroyed() ? mainWindow : null;
+}
+
+async function clearBrowserSessionsOnExit() {
+  const stored = readJson(stateFile(), null);
+  const profiles = Array.isArray(stored?.profiles) ? stored.profiles : [];
+  await Promise.all(profiles.map(async (profile) => {
+    if (!profile?.id) return;
+    try {
+      await sessionFor(profile.id).clearStorageData({
+        storages: ["cookies", "cachestorage", "indexeddb", "localStorage", "sessionStorage", "serviceworkers"]
+      });
+    } catch {}
+  }));
 }
 
 function createWindow() {
@@ -40,6 +54,13 @@ app.whenReady().then(() => {
   app.on("activate", () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
   });
+});
+
+app.on("before-quit", (event) => {
+  if (app.__browserSessionsCleared) return;
+  app.__browserSessionsCleared = true;
+  event.preventDefault();
+  clearBrowserSessionsOnExit().finally(() => app.quit());
 });
 
 app.on("window-all-closed", () => {
