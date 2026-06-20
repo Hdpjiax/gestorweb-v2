@@ -1,17 +1,29 @@
-.content:has(.browser-pro) {
+.browse-shell {
+  height: calc(100vh - 40px);
+  min-height: 0;
+}
+
+.browse-shell .workspace {
+  min-height: 0;
+  overflow: hidden;
+}
+
+.browse-shell .content {
+  flex: 1 1 auto;
+  min-height: 0;
   padding: 0;
   overflow: hidden;
 }
 
-.browser-pro {
-  height: calc(100vh - 140px);
-  min-height: calc(100vh - 140px);
+.browse-shell .browser-pro {
+  height: 100%;
+  min-height: 0;
   display: flex;
   flex-direction: column;
   background: #000;
 }
 
-.browser-pro .browser-tabs {
+.browse-shell .browser-tabs {
   flex: 0 0 34px;
   display: flex;
   flex-direction: row-reverse;
@@ -23,24 +35,25 @@
   padding-left: 12px;
 }
 
-.browser-pro .browser-tab-wrap {
+.browse-shell .browser-tab-wrap {
   flex: 0 0 auto;
 }
 
-.browser-pro .browser-toolbar-pro {
+.browse-shell .browser-toolbar-pro {
   flex: 0 0 48px;
 }
 
-.browser-pro .browser-stage {
+.browse-shell .browser-stage {
   flex: 1 1 auto;
   min-height: 0;
-  height: auto;
+  height: 100%;
   width: 100%;
   overflow: hidden;
 }
 
-.browser-pro .webview-shell,
-.browser-pro .webview-frame {
+.browse-shell .webview-shell,
+.browse-shell .webview-frame {
+  display: block;
   width: 100%;
   height: 100%;
   min-height: 0;
