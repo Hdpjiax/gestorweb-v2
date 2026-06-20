@@ -1,6 +1,6 @@
 import { clone, shortId, esc, attr } from "./helpers.js";
 
-const STORAGE_KEY = "gestor-web-rebuild:v1";
+const STORAGE_KEY = "gestor-web-rebuild:v2";
 export const root = document.getElementById("app");
 export const native = window.api || null;
 
@@ -25,6 +25,7 @@ export const ui = {
 };
 
 export const defaults = {
+  schema_version: 2,
   license: null,
   onboardingSeen: false,
   view: "all",
@@ -38,7 +39,8 @@ export const defaults = {
   browserTabs: [],
   activeTabId: null,
   netEntries: [],
-  settings: { theme: "midnight", chromiumReady: false, torReady: false, vaultToken: shortId(24) }
+  settings: { theme: "midnight", chromiumReady: false, torReady: false, vaultToken: shortId(24) },
+  meta: { createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() }
 };
 
 export let state = normalize(clone(defaults));
@@ -48,6 +50,7 @@ export function setState(next) {
 }
 
 export function normalize(next) {
+  next.schema_version ||= 2;
   next.filters ||= { search: "", group: "", proxyState: "all" };
   next.profiles ||= [];
   next.proxies ||= [];
@@ -55,7 +58,10 @@ export function normalize(next) {
   next.events ||= [];
   next.liveIds ||= [];
   next.browserTabs ||= [];
+  next.netEntries ||= [];
   next.settings ||= clone(defaults.settings);
+  next.meta ||= clone(defaults.meta);
+  next.meta.updatedAt = new Date().toISOString();
   if (next.profiles.length && !next.selectedId) next.selectedId = next.profiles[0].id;
   if (next.selectedId && !next.profiles.some((p) => p.id === next.selectedId)) next.selectedId = next.profiles[0]?.id || null;
   next.proxies = next.proxies.map((proxy) => ({ ...proxy, in_use: next.profiles.some((p) => p.proxy_id === proxy.id) }));
@@ -70,11 +76,11 @@ export function save() {
 export async function load() {
   if (native?.app?.loadState) {
     const stored = await native.app.loadState();
-    if (stored) return { ...clone(defaults), ...stored };
+    if (stored) return normalize({ ...clone(defaults), ...stored });
   }
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? { ...clone(defaults), ...JSON.parse(raw) } : clone(defaults);
+    const raw = localStorage.getItem(STORAGE_KEY) || localStorage.getItem("gestor-web-rebuild:v1");
+    return raw ? normalize({ ...clone(defaults), ...JSON.parse(raw), liveIds: [] }) : clone(defaults);
   } catch {
     return clone(defaults);
   }
