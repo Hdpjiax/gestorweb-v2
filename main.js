@@ -3,6 +3,12 @@ const path = require("path");
 const { registerIpc } = require("./src/main/ipc");
 const { readJson, stateFile, sessionFor } = require("./src/main/utils");
 
+// ── Test isolation: redirect userData to a temp dir when running IPC tests ──────
+// Must be called BEFORE app.whenReady() — after that, setPath() is a no-op.
+if (process.env.GW_TEST_USERDATA) {
+  app.setPath("userData", process.env.GW_TEST_USERDATA);
+}
+
 let mainWindow = null;
 
 function getMainWindow() {
