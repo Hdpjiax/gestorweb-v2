@@ -11,6 +11,7 @@ export const ui = {
   proxyAdding: false,
   proxyBulk: false,
   proxyTesting: false,
+  testingProxyIds: new Set(),
   selectedProxyIds: new Set(),
   scheduleAdding: false,
   command: false,

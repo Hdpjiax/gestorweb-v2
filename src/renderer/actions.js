@@ -470,21 +470,42 @@ function removeProxySet(ids, eventKind, payload) {
 }
 
 async function healthCheck() {
-  if (native?.proxies?.checkAll) {
-    ui.proxyTesting = true;
-    rerender();
-    try {
-      const checked = await native.proxies.checkAll(state.proxies);
+  if (!native?.proxies?.check) return alert("El test real de proxies requiere ejecutar la app en Electron.");
+  const proxies = state.proxies.map((proxy) => clone(proxy));
+  if (!proxies.length) return alert("No hay proxies para testear.");
+
+  ui.proxyTesting = true;
+  ui.testingProxyIds = new Set(proxies.map((proxy) => proxy.id));
+  rerender();
+
+  let next = 0;
+  const concurrency = Math.min(5, proxies.length);
+  const runNext = async () => {
+    while (next < proxies.length) {
+      const proxy = proxies[next++];
+      let checked;
+      try {
+        checked = await native.proxies.check(proxy);
+      } catch (error) {
+        checked = { ...proxy, healthy: false, latency_ms: null, last_error: error?.message || "test fallido" };
+      }
       update((s) => {
-        s.proxies = checked;
-        logEvent("health_check", null, `${s.proxies.length} proxies`);
+        const index = s.proxies.findIndex((item) => item.id === proxy.id);
+        if (index >= 0) s.proxies[index] = { ...s.proxies[index], ...checked, id: proxy.id };
+        ui.testingProxyIds.delete(proxy.id);
       });
-    } finally {
-      ui.proxyTesting = false;
     }
-    return;
+  };
+
+  try {
+    await Promise.all(Array.from({ length: concurrency }, runNext));
+  } finally {
+    ui.proxyTesting = false;
+    ui.testingProxyIds.clear();
+    update(() => {
+      logEvent("health_check", null, `${proxies.length} proxies`);
+    });
   }
-  alert("El test real de proxies requiere ejecutar la app en Electron.");
 }
 
 function removeProxy(id) {

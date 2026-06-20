@@ -403,12 +403,17 @@ button:disabled {
 .pill.danger { color: var(--danger); background: rgb(248 113 113 / 0.12); }
 .pill.dim { color: var(--dim); background: var(--bg-base); }
 .pill.accent { color: var(--accent); background: rgb(124 92 255 / 0.15); }
+.pill.testing { color: var(--warn); background: rgb(245 158 11 / 0.13); }
 
 .dot {
   width: 7px;
   height: 7px;
   border-radius: 999px;
   background: currentColor;
+}
+
+.testing-dot {
+  animation: testing-pulse 0.85s ease-in-out infinite;
 }
 
 .muted { color: var(--muted); }
