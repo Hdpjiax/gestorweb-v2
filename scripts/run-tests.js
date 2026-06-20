@@ -5,7 +5,8 @@ const tests = [
   ["main/state-schema", "../tests/main/state-schema.test.js"],
   ["renderer/helpers", "../tests/renderer/helpers.test.js"],
   ["renderer/proxy-parser", "../tests/renderer/proxy-parser.test.js"],
-  ["renderer/ux-polish", "../tests/renderer/ux-polish.test.js"]
+  ["renderer/ux-polish", "../tests/renderer/ux-polish.test.js"],
+  ["renderer/inspector-score", "../tests/renderer/inspector-score.test.js"]
 ];
 
 async function run() {
