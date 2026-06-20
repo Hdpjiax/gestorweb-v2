@@ -3,6 +3,7 @@ import { installRendererUrlGuard } from "./url-guard.js";
 import { installUxPolish } from "./ux-polish.js";
 import { installBrowserNativeFix } from "./browser-native-fix.js";
 import { installBrowserToolbarActions } from "./browser-toolbar-actions.js";
+import { installProfileInspectorPolish } from "./profile-inspector-polish.js";
 import "./browser-soft-fonts.js";
 
 const DEFAULT_SEARCH_HOME = "https://duckduckgo.com/";
@@ -69,4 +70,5 @@ installRendererUrlGuard();
 installUxPolish();
 installBrowserNativeFix();
 installBrowserToolbarActions();
+installProfileInspectorPolish();
 installBrowserProfileGuard();
