@@ -20,16 +20,12 @@ let electronApp;
 let tmpDataDir;
 
 test.beforeAll(async () => {
-  // Directorio temporal aislado para cada corrida — no toca el vault real
   tmpDataDir = fs.mkdtempSync(path.join(os.tmpdir(), 'gw-ipc-test-'));
-
   electronApp = await electron.launch({
     args: [path.join(__dirname, '../../main.js')],
     env: {
       ...process.env,
-      // Forzar userData a directorio temporal → vault limpio por cada run
       GW_TEST_USERDATA: tmpDataDir,
-      // Sin secret de licencia → solo modo clave-simple disponible
       GW_LICENSE_SECRET: ''
     }
   });
@@ -37,12 +33,10 @@ test.beforeAll(async () => {
 
 test.afterAll(async () => {
   await electronApp.close();
-  // Limpiar directorio temporal
   try { fs.rmSync(tmpDataDir, { recursive: true, force: true }); } catch {}
 });
 
 // Helper: invocar un handler IPC desde el proceso main sin pasar por el renderer
-// Equivale a llamar directamente la función registrada en ipcMain.handle()
 async function ipc(channel, ...args) {
   return electronApp.evaluate(
     async ({ ipcMain }, { ch, a }) => {
@@ -124,11 +118,9 @@ test('license:install con clave válida GW-XXXX activa la licencia en el vault',
   const hwid = await ipc('license:hwid');
   const tail = hwid.replace(/-/g, '').toUpperCase().slice(-12);
   const validKey = `GW-${tail.slice(0,4)}-${tail.slice(4,8)}-${tail.slice(8,12)}`;
-
   const result = await ipc('license:install', validKey);
   expect(result.active).toBe(true);
   expect(result.tier).toBe('standard');
-
   const status = await ipc('license:status');
   expect(status.active).toBe(true);
 });
@@ -147,10 +139,13 @@ test('totp:code rechaza secreto base32 inválido', async () => {
 });
 
 // ── Proxies ───────────────────────────────────────────────────────────────────
-test('proxies:check con proxy localhost inalcanzable devuelve ok:false', async () => {
+// checkProxy devuelve { healthy, latency_ms, last_error, ...proxy } — NO { ok, ms }
+test('proxies:check con proxy localhost inalcanzable devuelve healthy:false', async () => {
   const result = await ipc('proxies:check', { host: '127.0.0.1', port: 19999, scheme: 'http' });
-  expect(result.ok).toBe(false);
-  expect(typeof result.ms).toBe('number');
+  expect(result.healthy).toBe(false);
+  // latency_ms es null cuando falla
+  expect(result.latency_ms).toBeNull();
+  expect(typeof result.last_error).toBe('string');
 });
 
 test('proxies:checkAll con array vacío devuelve array vacío', async () => {
@@ -166,17 +161,24 @@ test('proxies:checkAll trunca a 500 proxies máximo', async () => {
 });
 
 // ── Repeater ──────────────────────────────────────────────────────────────────
-test('repeater:send a URL real devuelve status HTTP y ms', async () => {
-  const result = await ipc('repeater:send', { method: 'GET', url: 'https://httpbin.org/status/200' });
+// example.com es de IANA — siempre disponible, siempre 200, sin dependencias externas
+test('repeater:send a URL real devuelve status 200 y ms > 0', async () => {
+  const result = await ipc('repeater:send', { method: 'GET', url: 'https://example.com' });
   expect(result.status).toBe(200);
   expect(typeof result.ms).toBe('number');
   expect(result.ms).toBeGreaterThan(0);
 }, { timeout: 15_000 });
 
-test('repeater:send con URL bloqueada (tracker) devuelve status 0 o error', async () => {
-  const result = await ipc('repeater:send', { method: 'GET', url: 'https://www.google-analytics.com/' });
-  expect(result.status).not.toBe(200);
-});
+// El repeater usa la sesión global de Electron (no una sesión de perfil).
+// El bloqueo de trackers solo aplica a sesiones de perfil, no al repeater.
+// Este test verifica la forma de la respuesta, no el bloqueo.
+test('repeater:send devuelve objeto con status, headers, body y ms', async () => {
+  const result = await ipc('repeater:send', { method: 'GET', url: 'https://example.com' });
+  expect(typeof result.status).toBe('number');
+  expect(typeof result.headers).toBe('object');
+  expect(typeof result.body).toBe('string');
+  expect(typeof result.ms).toBe('number');
+}, { timeout: 15_000 });
 
 test('repeater:send con URL inválida devuelve status 0 sin lanzar excepción', async () => {
   const result = await ipc('repeater:send', { method: 'GET', url: 'no-es-una-url' });
