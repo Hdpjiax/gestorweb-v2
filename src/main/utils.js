@@ -44,18 +44,38 @@ function stateFile() {
   return path.join(dataDir(), "state.json");
 }
 
+function backupFile(file) {
+  return `${file}.bak`;
+}
+
+function readJsonFile(file) {
+  return JSON.parse(fs.readFileSync(file, "utf8"));
+}
+
 function readJson(file, fallback) {
   try {
-    return JSON.parse(fs.readFileSync(file, "utf8"));
+    return readJsonFile(file);
   } catch {
-    return fallback;
+    try {
+      return readJsonFile(backupFile(file));
+    } catch {
+      return fallback;
+    }
   }
 }
 
 function writeJson(file, value) {
   fs.mkdirSync(path.dirname(file), { recursive: true });
-  const tmp = `${file}.tmp`;
-  fs.writeFileSync(tmp, JSON.stringify(value, null, 2), "utf8");
+  const tmp = `${file}.tmp-${process.pid}-${Date.now()}`;
+  const serialized = JSON.stringify(value, null, 2);
+  fs.writeFileSync(tmp, serialized, "utf8");
+
+  if (fs.existsSync(file)) {
+    try {
+      fs.copyFileSync(file, backupFile(file));
+    } catch {}
+  }
+
   fs.renameSync(tmp, file);
 }
 
@@ -236,6 +256,7 @@ module.exports = {
   profilesDir,
   profileDir,
   stateFile,
+  backupFile,
   readJson,
   writeJson,
   getHwid,
