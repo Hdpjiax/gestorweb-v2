@@ -9,8 +9,7 @@
  *   npm install
  *   npm run test:ipc
  */
-const { test, expect } = require('@playwright/test');
-const { _electron: electron } = require('playwright');
+const { test, expect, _electron: electron } = require('@playwright/test');
 const path = require('path');
 const os = require('os');
 const fs = require('fs');
@@ -47,11 +46,8 @@ test.afterAll(async () => {
 async function ipc(channel, ...args) {
   return electronApp.evaluate(
     async ({ ipcMain }, { ch, a }) => {
-      // ipcMain.emit() no funciona para handle() — usamos el listener interno
-      // _invokeHandlers es la API privada de Electron para tests E2E
       const handler = ipcMain._invokeHandlers?.get(ch);
       if (!handler) throw new Error(`No handler registered for channel: ${ch}`);
-      // El primer argumento de un handler es el event object; pasamos uno mínimo
       const fakeEvent = { sender: null, senderFrame: null };
       return handler(fakeEvent, ...a);
     },
@@ -77,19 +73,15 @@ test('state:load devuelve estado con schema_version', async () => {
 });
 
 test('state:save persiste y state:load lo recupera', async () => {
-  // Cargar estado actual
   const before = await ipc('state:load');
-  // Agregar un campo de test
   const modified = { ...before, _ipc_test_marker: 'gw-test-42' };
   const saveResult = await ipc('state:save', modified);
   expect(saveResult.ok).toBe(true);
-  // Volver a cargar y verificar que persiste
   const after = await ipc('state:load');
   expect(after._ipc_test_marker).toBe('gw-test-42');
 });
 
 test('state:save rechaza payload mayor a MAX_STATE_BYTES', async () => {
-  // Intentar guardar un objeto enorme (>5MB)
   const huge = { _junk: 'x'.repeat(6 * 1024 * 1024) };
   await expect(ipc('state:save', huge)).rejects.toThrow();
 });
@@ -112,7 +104,6 @@ test('license:hwid devuelve string con formato GW-XXXX-XXXX-XXXX', async () => {
 test('license:status devuelve hwid y active:false en vault limpio', async () => {
   const status = await ipc('license:status');
   expect(status.hwid).toMatch(/^GW-/);
-  // Vault limpio → sin licencia activada
   expect(status.active).toBe(false);
 });
 
@@ -126,12 +117,10 @@ test('license:claimByKey rechaza clave GW-LIC-V1 sin GW_LICENSE_SECRET configura
   const fakeKey = 'GW-LIC-V1:' + Buffer.from('{"tier":"pro"}').toString('base64') + '.aabbccdd';
   const result = await ipc('license:claimByKey', fakeKey);
   expect(result.active).toBe(false);
-  // Debe mencionar que el secret no está configurado
   expect(result.reason).toMatch(/GW_LICENSE_SECRET/i);
 });
 
 test('license:install con clave válida GW-XXXX activa la licencia en el vault', async () => {
-  // Construir una clave simple válida: GW + 12 últimos chars del HWID real
   const hwid = await ipc('license:hwid');
   const tail = hwid.replace(/-/g, '').toUpperCase().slice(-12);
   const validKey = `GW-${tail.slice(0,4)}-${tail.slice(4,8)}-${tail.slice(8,12)}`;
@@ -140,14 +129,12 @@ test('license:install con clave válida GW-XXXX activa la licencia en el vault',
   expect(result.active).toBe(true);
   expect(result.tier).toBe('standard');
 
-  // Verificar que se persistió en vault
   const status = await ipc('license:status');
   expect(status.active).toBe(true);
 });
 
 // ── TOTP ──────────────────────────────────────────────────────────────────────
 test('totp:code devuelve código de 6 dígitos y secondsLeft válido', async () => {
-  // Secreto base32 de prueba (estático)
   const secret = 'JBSWY3DPEHPK3PXP';
   const result = await ipc('totp:code', secret);
   expect(result.code).toMatch(/^\d{6}$/);
@@ -161,7 +148,6 @@ test('totp:code rechaza secreto base32 inválido', async () => {
 
 // ── Proxies ───────────────────────────────────────────────────────────────────
 test('proxies:check con proxy localhost inalcanzable devuelve ok:false', async () => {
-  // Puerto 19999 casi seguro que nadie escucha
   const result = await ipc('proxies:check', { host: '127.0.0.1', port: 19999, scheme: 'http' });
   expect(result.ok).toBe(false);
   expect(typeof result.ms).toBe('number');
@@ -185,12 +171,10 @@ test('repeater:send a URL real devuelve status HTTP y ms', async () => {
   expect(result.status).toBe(200);
   expect(typeof result.ms).toBe('number');
   expect(result.ms).toBeGreaterThan(0);
-}, { timeout: 15_000 }); // Red puede ser lenta
+}, { timeout: 15_000 });
 
 test('repeater:send con URL bloqueada (tracker) devuelve status 0 o error', async () => {
-  // google-analytics.com está en TRACKER_HOSTS → debe ser bloqueado por la sesión
   const result = await ipc('repeater:send', { method: 'GET', url: 'https://www.google-analytics.com/' });
-  // Puede devolver status 0 (bloqueado/error de red) — lo importante es que no devuelve 200
   expect(result.status).not.toBe(200);
 });
 
@@ -202,7 +186,6 @@ test('repeater:send con URL inválida devuelve status 0 sin lanzar excepción', 
 
 // ── Cookies ───────────────────────────────────────────────────────────────────
 test('cookies:get en perfil nuevo devuelve array vacío', async () => {
-  // profileId 9999 nunca ha sido usado en tests → sin cookies
   const cookies = await ipc('cookies:get', 9999);
   expect(Array.isArray(cookies)).toBe(true);
 });
@@ -224,7 +207,7 @@ test('cookies:set guarda cookie y cookies:get la recupera', async () => {
 });
 
 test('cookies:clear vacía las cookies del perfil', async () => {
-  const pid = 8001; // mismo perfil del test anterior
+  const pid = 8001;
   const result = await ipc('cookies:clear', pid);
   expect(Array.isArray(result)).toBe(true);
   expect(result.length).toBe(0);
@@ -250,8 +233,6 @@ test('app:openExternal rechaza URL con protocolo no permitido', async () => {
 });
 
 test('app:openExternal acepta URL https válida', async () => {
-  // openExternal realmente abre el navegador — en CI/test esto puede fallar
-  // Solo verificamos que no lanza y devuelve ok:true
   const result = await ipc('app:openExternal', 'https://example.com');
   expect(result.ok).toBe(true);
 });
