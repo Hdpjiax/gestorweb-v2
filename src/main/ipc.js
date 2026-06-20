@@ -11,7 +11,7 @@ const {
   profileDir,
   dataDir
 } = require("./utils");
-const { profileWindows } = require("./windows");
+const { profileWindows, setMainWindowRef } = require("./windows");
 
 const {
   openProfileWindow,
@@ -67,30 +67,13 @@ function totpCode(secret) {
 }
 
 // ─── LICENSE ─────────────────────────────────────────────────────────────────
-// Formato de clave simple: GW-XXXX-XXXX-XXXX (16 chars hex sin guiones)
-// Formato firmado:         GW-LIC-V1:<base64(payload)>.<hmac-sha256-hex>
-//
-// Para generar una clave firmada (herramienta interna del vendedor):
-//   const SIGNING_SECRET = process.env.GW_LICENSE_SECRET;
-//   const payload = JSON.stringify({ hwid, issuedAt: Date.now(), tier: "pro" });
-//   const sig = crypto.createHmac("sha256", SIGNING_SECRET).update(payload).digest("hex");
-//   const key = "GW-LIC-V1:" + Buffer.from(payload).toString("base64") + "." + sig;
-//
-// SIGNING_SECRET debe estar en variable de entorno GW_LICENSE_SECRET.
-// Si no esta definida, solo se acepta formato firmado cuando la firma coincide;
-// si GW_LICENSE_SECRET esta vacio la app cae en modo solo-clave-simple para
-// desarrollo local (acepta GW-XXXX donde los 12 chars finales sin guiones
-// coinciden con los 12 ultimos del HWID real).
-
 const GW_SIGNING_SECRET = process.env.GW_LICENSE_SECRET || "";
 
 function verifyLicenseKey(key, hwid) {
   const text = String(key || "").trim();
 
-  // ── Formato firmado GW-LIC-V1 ──────────────────────────────────────────────
   if (text.startsWith("GW-LIC-V1:")) {
     if (!GW_SIGNING_SECRET) {
-      // Sin secret configurado no podemos verificar firmas → rechazar
       return { active: false, reason: "GW_LICENSE_SECRET no configurado en servidor" };
     }
     try {
@@ -106,11 +89,9 @@ function verifyLicenseKey(key, hwid) {
       if (!crypto.timingSafeEqual(Buffer.from(sig, "hex"), Buffer.from(expected, "hex"))) {
         return { active: false, reason: "firma invalida" };
       }
-      // Verificar HWID embebido en payload
       if (payload.hwid && payload.hwid !== hwid) {
         return { active: false, reason: `licencia emitida para otro HWID (${payload.hwid})` };
       }
-      // Verificar expiración si viene en el payload
       if (payload.expiresAt && Date.now() > payload.expiresAt) {
         return { active: false, reason: "licencia expirada" };
       }
@@ -120,10 +101,6 @@ function verifyLicenseKey(key, hwid) {
     }
   }
 
-  // ── Formato clave simple GW-XXXX-XXXX-XXXX ─────────────────────────────────
-  // Valida que los 12 chars hex (sin guiones) del final de la clave
-  // coincidan con los 12 ultimos del HWID del dispositivo.
-  // Esto liga la clave al hardware sin necesidad de servidor.
   const stripped = text.replace(/-/g, "").toUpperCase();
   if (!/^GW[A-F0-9]{12}$/.test(stripped)) {
     return { active: false, reason: "formato de clave incorrecto (esperado GW-XXXX-XXXX-XXXX)" };
@@ -205,6 +182,10 @@ function sanitizeProfile(profile) {
 // ─── IPC HANDLERS ─────────────────────────────────────────────────────────────
 function registerIpc(mainWindowRef) {
   const getDialogWindow = () => resolveWindow(mainWindowRef);
+
+  // Inyectar referencia de ventana principal en windows.js para que pueda
+  // enviar 'profiles:windowClosed' al renderer cuando un perfil cierra.
+  setMainWindowRef(mainWindowRef);
 
   ipcMain.handle("state:load", () => loadAppState());
   ipcMain.handle("state:save", (_event, state) => {
@@ -295,7 +276,6 @@ function registerIpc(mainWindowRef) {
     const hwid = getHwid();
     const result = verifyLicenseKey(text, hwid);
     if (result.active) {
-      // Persistir licencia activa en el vault
       try {
         const state = loadAppState();
         state.license = { active: true, text: String(text || "").trim(), hwid, activatedAt: Date.now(), tier: result.tier || "standard" };

@@ -19,6 +19,24 @@ const { proxyRulesFor } = require("./proxies");
 
 const profileWindows = new Map();
 
+// Referencia a la ventana principal — se inyecta desde ipc.js antes de abrir
+// cualquier perfil para poder enviar eventos al renderer.
+let _mainWindowRef = null;
+function setMainWindowRef(ref) {
+  _mainWindowRef = ref;
+}
+
+// Notifica al renderer principal que un perfil cerró su ventana/proceso.
+// El renderer escucha 'profiles:windowClosed' y actualiza el estado de UI.
+function notifyProfileClosed(profileId) {
+  try {
+    const win = typeof _mainWindowRef === "function" ? _mainWindowRef() : _mainWindowRef;
+    if (win && !win.isDestroyed() && win.webContents) {
+      win.webContents.send("profiles:windowClosed", { id: profileId });
+    }
+  } catch {}
+}
+
 function writeFirefoxProfilePrefs(profile, proxy) {
   const fp = profile.fingerprint || {};
   const dir = profileDir(profile.id);
@@ -183,7 +201,10 @@ async function openChromiumWindow(profile, proxy, startUrl) {
   });
   injectCursorAndSpoof(win, profile);
   await win.loadURL(startUrl);
-  win.on("closed", () => profileWindows.delete(profile.id));
+  win.on("closed", () => {
+    profileWindows.delete(profile.id);
+    notifyProfileClosed(profile.id);
+  });
   profileWindows.set(profile.id, { type: "electron", win });
   return { ok: true, mode: "chromium", id: profile.id };
 }
@@ -200,7 +221,10 @@ async function openFirefoxWindow(profile, proxy, startUrl) {
   if (proxyRulesFor(profile, proxy)) env.GW_PROXY = proxyRulesFor(profile, proxy);
   const args = ["-no-remote", "-profile", dir, startUrl];
   const child = spawn(browserPath, args, { cwd: path.dirname(browserPath), env, detached: false, stdio: "ignore" });
-  child.on("exit", () => profileWindows.delete(profile.id));
+  child.on("exit", () => {
+    profileWindows.delete(profile.id);
+    notifyProfileClosed(profile.id);
+  });
   profileWindows.set(profile.id, { type: "firefox", child });
   return { ok: true, mode: "firefox", pid: child.pid, id: profile.id, browserPath };
 }
@@ -222,6 +246,7 @@ function closeProfileWindow(profileId) {
   if (item.type === "electron" && !item.win.isDestroyed()) item.win.close();
   if (item.type === "firefox" && item.child && !item.child.killed) item.child.kill();
   profileWindows.delete(profileId);
+  notifyProfileClosed(profileId);
   return { ok: true, closed: true };
 }
 
@@ -251,8 +276,23 @@ async function prepareSession(profile, proxy) {
   try {
     if (typeof ses.setPreloads === "function") ses.setPreloads([preload]);
   } catch {}
+
   const proxyRules = proxyRulesFor(profile, proxy);
+  const hasProxy = !!(proxy?.host && proxy?.port) || !!profile.tor_mode;
   const hasProxyCreds = proxy && (proxy.username || proxy.password);
+
+  // ── Cert verification ────────────────────────────────────────────────────
+  // Muchos proxies residenciales/datacenter realizan intercepción TLS con su
+  // propia CA. Electron rechaza estos certs con ERR_CERT_AUTHORITY_INVALID.
+  // Cuando hay proxy activo en una sesión de perfil (partición aislada, no
+  // la sesión global), desactivamos la verificación de cert para esa sesión.
+  // Sin proxy, restauramos la verificación por defecto.
+  if (hasProxy) {
+    ses.setCertificateVerifyProc((request, callback) => callback(0)); // 0 = OK
+  } else {
+    ses.setCertificateVerifyProc(null); // null = restaurar comportamiento por defecto
+  }
+
   try {
     if (hasProxyCreds) {
       const cleanRules = `${proxy.scheme || "http"}://${proxy.host}:${proxy.port}`;
@@ -312,6 +352,8 @@ async function prepareSession(profile, proxy) {
 
 module.exports = {
   profileWindows,
+  setMainWindowRef,
+  notifyProfileClosed,
   openChromiumWindow,
   openFirefoxWindow,
   openProfileWindow,
