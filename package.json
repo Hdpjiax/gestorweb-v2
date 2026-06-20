@@ -9,8 +9,8 @@
     "start": "electron .",
     "check": "node scripts/check-js.js",
     "test": "node scripts/run-tests.js",
-    "qa": "npm run check && npm test",
-    "dist": "electron-builder --win nsis"
+    "test:ipc": "playwright test --config=playwright.config.js",
+    "qa": "npm run check && npm test"
   },
   "build": {
     "appId": "local.gestorweb.rebuild",
@@ -37,6 +37,8 @@
   },
   "devDependencies": {
     "electron": "^31.7.7",
-    "electron-builder": "^24.13.3"
+    "electron-builder": "^24.13.3",
+    "@playwright/test": "^1.44.0",
+    "playwright-electron": "^0.10.0"
   }
 }
