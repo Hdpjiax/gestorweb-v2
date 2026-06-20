@@ -182,15 +182,10 @@ async function openChromiumWindow(profile, proxy, startUrl) {
 
   profileWindows.set(profile.id, { type: "electron", win });
 
-  // loadURL puede lanzar ERR_ABORTED (-3) cuando el proxy intercepta
-  // el primer request (handshake TLS / redirect de auth).
-  // Lo capturamos y reintentamos una vez tras un tick para dar tiempo
-  // al proceso de red de aplicar la sesión completamente.
   try {
     await win.loadURL(startUrl);
   } catch (err) {
     if (err?.errno === -3) {
-      // ERR_ABORTED: proxy aún negociando — esperar y reintentar
       await new Promise((r) => setTimeout(r, 600));
       try { await win.loadURL(startUrl); } catch { /* silencioso */ }
     } else {
@@ -282,8 +277,11 @@ async function prepareSession(profile, proxy) {
   const hasProxy = !!(proxy?.host && proxy?.port) || !!profile.tor_mode;
   const hasProxyCreds = !!(proxy?.username || proxy?.password);
 
-  // 1. Certificados — ANTES de setProxy para que aplique al handshake TLS
-  //    del tunel del proxy. Aplica solo a la sesion particionada del perfil.
+  // 1. Certificados — se re-aplica en CADA llamada a prepareSession (no solo
+  //    la primera) para que cambios de proxy (sin proxy → con proxy y viceversa)
+  //    siempre queden reflejados en el verificador activo de la sesión.
+  //    Con proxy MITM: aceptamos cualquier cert dentro de la sesión particionada.
+  //    Sin proxy: restauramos la verificación nativa (null = comportamiento por defecto).
   if (hasProxy) {
     ses.setCertificateVerifyProc((_req, cb) => cb(0));
   } else {
@@ -301,6 +299,10 @@ async function prepareSession(profile, proxy) {
         cleanRules = `${scheme}://${proxy.host}:${proxy.port}`;
       }
       await ses.setProxy({ proxyRules: cleanRules, proxyBypassRules: "<-loopback>" });
+      // Cerrar conexiones TLS abiertas antes del cambio de proxy/verifier.
+      // Sin esto, sockets pre-existentes siguen usando el verifier antiguo
+      // y producen CertVerifyProcBuiltin errors para los primeros requests.
+      try { ses.closeAllConnections(); } catch { /* API no disponible en versiones viejas */ }
     } else {
       await ses.setProxy({ proxyRules: "direct://", proxyBypassRules: "<-loopback>" });
     }
