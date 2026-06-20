@@ -17,7 +17,8 @@ const tests = [
   ["renderer/browser-corrections", "../tests/renderer/browser-corrections.test.js"],
   ["renderer/browser-shell-size", "../tests/renderer/browser-shell-size.test.js"],
   ["renderer/topbar-always", "../tests/renderer/topbar-always.test.js"],
-  ["renderer/profile-inspector-polish", "../tests/renderer/profile-inspector-polish.test.js"]
+  ["renderer/profile-inspector-polish", "../tests/renderer/profile-inspector-polish.test.js"],
+  ["renderer/proxy-assignment", "../tests/renderer/proxy-assignment.test.js"]
 ];
 
 async function run() {
