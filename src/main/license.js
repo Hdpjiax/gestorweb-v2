@@ -20,8 +20,6 @@ function configuredPublicKey() {
   const localFile = path.join(__dirname, "license-public-key.pem");
   if (fs.existsSync(localFile)) return fs.readFileSync(localFile, "utf8");
 
-  try { return require("./license-public-key"); } catch {}
-
   const devServerFile = path.resolve(__dirname, "..", "..", "backend", "license-server", "public_key.pem");
   if (fs.existsSync(devServerFile)) return fs.readFileSync(devServerFile, "utf8");
 
@@ -121,10 +119,28 @@ function getLicenseServerUrl(payload) {
   ).trim().replace(/\/+$/, "");
 }
 
-function currentPlatform(options = {}) {
-  if (options.platform) return String(options.platform).toLowerCase();
-  if (process.platform === "win32") return "windows";
-  return process.platform;
+function getSupabaseConfig(payload) {
+  const db = payload.license_db && typeof payload.license_db === "object" ? payload.license_db : {};
+  const url = String(
+    process.env.GW_LICENSE_SUPABASE_URL ||
+    db.supabase_url ||
+    db.url ||
+    payload.supabase_url ||
+    ""
+  ).trim().replace(/\/+$/, "");
+  const anonKey = String(
+    process.env.GW_LICENSE_SUPABASE_ANON_KEY ||
+    db.supabase_anon_key ||
+    db.anon_key ||
+    payload.supabase_anon_key ||
+    ""
+  ).trim();
+  const provider = String(db.provider || payload.license_provider || "").toLowerCase();
+  return {
+    enabled: provider === "supabase" || (!!url && !!anonKey),
+    url,
+    anonKey
+  };
 }
 
 function verifySignedLicense(text, hwid, options = {}) {
@@ -160,11 +176,6 @@ function verifySignedLicense(text, hwid, options = {}) {
     return { active: false, reason: `licencia emitida para otro HWID (${payload.hwid})`, parsed };
   }
 
-  const platform = currentPlatform(options);
-  if (payload.platform && payload.platform !== "any" && payload.platform !== platform) {
-    return { active: false, reason: `licencia exclusiva para ${payload.platform}`, parsed };
-  }
-
   const expiresAt = getExpiresAt(payload);
   if (expiresAt && Date.now() > expiresAt) {
     return {
@@ -191,18 +202,19 @@ function verifySignedLicense(text, hwid, options = {}) {
     permanent: !expiresAt,
     features: Array.isArray(payload.features) ? payload.features : [],
     serverUrl: getLicenseServerUrl(payload),
+    supabase: getSupabaseConfig(payload),
     onlineRequired: payload.online_required !== false,
     parsed
   };
 }
 
-async function postJson(url, body, timeoutMs = 8000) {
+async function postJson(url, body, timeoutMs = 8000, headers = {}) {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), timeoutMs);
   try {
     const response = await fetch(url, {
       method: "POST",
-      headers: { "content-type": "application/json" },
+      headers: { "content-type": "application/json", ...headers },
       body: JSON.stringify(body),
       signal: controller.signal
     });
@@ -210,7 +222,7 @@ async function postJson(url, body, timeoutMs = 8000) {
     let json = null;
     try { json = text ? JSON.parse(text) : null; } catch {}
     if (!response.ok) {
-      return { ok: false, status: response.status, error: json?.error || text || `HTTP ${response.status}` };
+      return { ok: false, status: response.status, error: json?.error || json?.message || text || `HTTP ${response.status}` };
     }
     return { ok: true, status: response.status, data: json || {} };
   } catch (error) {
@@ -220,26 +232,15 @@ async function postJson(url, body, timeoutMs = 8000) {
   }
 }
 
-async function verifyOnline(text, hwid, localStatus, options = {}) {
-  const payload = localStatus?.parsed?.payload || parseLicenseText(text).payload;
-  const serverUrl = getLicenseServerUrl(payload);
-  const onlineRequired = payload.online_required !== false;
-
-  if (!serverUrl) {
-    if (onlineRequired) return { active: false, reason: "servidor de licencias no configurado" };
-    return { active: true, reason: "ok_offline" };
-  }
-
+async function verifyWithLicenseServer(text, hwid, localStatus, serverUrl) {
   const response = await postJson(`${serverUrl}/v1/verify`, {
     app: DEFAULT_APP_ID,
     hwid,
-    platform: currentPlatform(options),
     licenseText: text
   });
 
   if (!response.ok) {
-    if (onlineRequired) return { active: false, reason: response.error || "no se pudo validar online" };
-    return { active: true, reason: "ok_offline_grace", warning: response.error || "validacion online no disponible" };
+    return { active: false, reason: response.error || "no se pudo validar online" };
   }
 
   if (!response.data?.active) {
@@ -260,6 +261,77 @@ async function verifyOnline(text, hwid, localStatus, options = {}) {
   };
 }
 
+async function verifyWithSupabase(text, hwid, localStatus, config) {
+  if (!config.url || !config.anonKey) {
+    return { active: false, reason: "Supabase URL o anon key no configurados" };
+  }
+
+  const payload = localStatus?.parsed?.payload || parseLicenseText(text).payload;
+  const id = getLicenseId(payload);
+  if (!id) return { active: false, reason: "licencia sin ID" };
+
+  const response = await postJson(
+    `${config.url}/rest/v1/rpc/verify_license_public`,
+    {
+      p_id: id,
+      p_hwid: String(hwid || ""),
+      p_license_hash: sha256(String(text || "").trim())
+    },
+    8000,
+    {
+      apikey: config.anonKey,
+      Authorization: `Bearer ${config.anonKey}`
+    }
+  );
+
+  if (!response.ok) {
+    return { active: false, reason: response.error || "no se pudo validar en Supabase" };
+  }
+
+  const data = Array.isArray(response.data) ? response.data[0] : response.data;
+  if (!data?.active) {
+    return {
+      active: false,
+      reason: data?.reason || "licencia no activa",
+      revoked: !!data?.revoked,
+      expiresAt: data?.expires_at ?? data?.expiresAt ?? localStatus?.expiresAt ?? null,
+      serverTime: data?.server_time || null
+    };
+  }
+
+  return {
+    active: true,
+    reason: "ok_supabase",
+    checkedAt: Date.now(),
+    expiresAt: data?.expires_at ?? data?.expiresAt ?? localStatus?.expiresAt ?? null,
+    serverTime: data?.server_time || null,
+    revoked: false
+  };
+}
+
+async function verifyOnline(text, hwid, localStatus) {
+  const payload = localStatus?.parsed?.payload || parseLicenseText(text).payload;
+  const onlineRequired = payload.online_required !== false;
+  const supabase = getSupabaseConfig(payload);
+  const serverUrl = getLicenseServerUrl(payload);
+
+  let response;
+  if (supabase.enabled) {
+    response = await verifyWithSupabase(text, hwid, localStatus, supabase);
+  } else if (serverUrl) {
+    response = await verifyWithLicenseServer(text, hwid, localStatus, serverUrl);
+  } else if (!onlineRequired) {
+    return { active: true, reason: "ok_offline" };
+  } else {
+    return { active: false, reason: "validador online no configurado" };
+  }
+
+  if (!response.active && !onlineRequired && response.reason) {
+    return { active: true, reason: "ok_offline_grace", warning: response.reason };
+  }
+  return response;
+}
+
 async function checkLicense(text, hwid, options = {}) {
   let local;
   try {
@@ -276,7 +348,7 @@ async function checkLicense(text, hwid, options = {}) {
     };
   }
 
-  const online = await verifyOnline(text, hwid, local, options);
+  const online = await verifyOnline(text, hwid, local);
   if (!online.active) {
     return {
       ...local,
