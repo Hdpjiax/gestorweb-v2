@@ -3,6 +3,7 @@ const path = require("path");
 const { registerIpc } = require("./src/main/ipc");
 const { readJson, stateFile, sessionFor } = require("./src/main/utils");
 const { profileProxyRuntime } = require("./src/main/proxy-runtime");
+const proxyTrustedSessions = require("./src/main/proxy-trust");
 
 if (process.env.GW_TEST_USERDATA) {
   app.setPath("userData", process.env.GW_TEST_USERDATA);
@@ -52,6 +53,18 @@ function createWindow() {
     mainWindow = null;
   });
 }
+
+// Respaldo para el error -202 de Chromium. Nunca se aplica a la ventana
+// principal ni a perfiles con conexión directa: solo a sesiones proxy marcadas
+// por prepareSession antes de iniciar la navegación.
+app.on("certificate-error", (event, webContents, _url, _error, _certificate, callback) => {
+  if (proxyTrustedSessions.has(webContents.session)) {
+    event.preventDefault();
+    callback(true);
+    return;
+  }
+  callback(false);
+});
 
 app.whenReady().then(() => {
   registerIpc(getMainWindow);

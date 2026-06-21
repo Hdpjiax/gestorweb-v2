@@ -16,6 +16,7 @@ const {
   proxyRouteKey,
   profileProxyRuntime
 } = require("./proxy-runtime");
+const proxyTrustedSessions = require("./proxy-trust");
 
 const profileWindows = new Map();
 
@@ -307,6 +308,18 @@ async function prepareSession(profile, proxy) {
   const normalizedProxy = profile.tor_mode ? null : normalizeProxy(proxy);
   if (!profile.tor_mode && proxy && !normalizedProxy) throw new Error("proxy invalido para el perfil");
   const prepared = await profileProxyRuntime.ensure(profile.id, normalizedProxy, !!profile.tor_mode);
+
+  // Algunos proxies gratuitos/residenciales sustituyen el certificado TLS del
+  // sitio por una CA propia. El usuario pidió permitirlo para poder usar su IP.
+  // El bypass queda estrictamente limitado a la partición de este perfil.
+  if (prepared.localPort) {
+    proxyTrustedSessions.add(ses);
+    ses.setCertificateVerifyProc((_request, callback) => callback(0));
+  } else {
+    proxyTrustedSessions.delete(ses);
+    ses.setCertificateVerifyProc(null);
+  }
+
   await ses.setProxy(prepared.proxyConfig);
   if (typeof ses.forceReloadProxyConfig === "function") await ses.forceReloadProxyConfig();
   if (typeof ses.closeAllConnections === "function") await ses.closeAllConnections();

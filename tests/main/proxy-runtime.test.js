@@ -5,6 +5,7 @@ const {
   connectThroughProxy,
   ProfileProxyRuntime
 } = require("../../src/main/proxy-runtime");
+const { protocolCandidates } = require("../../src/main/proxies");
 
 function listen(server) {
   return new Promise((resolve, reject) => {
@@ -167,6 +168,8 @@ async function connectViaBridge(port, targetPort, payload) {
 }
 
 module.exports = async function proxyRuntimeTests() {
+  assert.equal(protocolCandidates({ scheme: "http", port: 4145 })[0], "socks4");
+  assert.equal(protocolCandidates({ scheme: "http", port: 1088 })[0], "socks5");
   assert.deepEqual(normalizeProxy({ scheme: "socks", host: "proxy.test", port: "1080", username: "u", password: "p" }), {
     scheme: "socks5", host: "proxy.test", port: 1080, username: "u", password: "p"
   });

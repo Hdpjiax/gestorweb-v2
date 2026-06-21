@@ -27,14 +27,17 @@ module.exports = async function proxyAssignmentTests() {
   assert.match(newProfileModal, /freeProxies/);
   assert.match(newProfileModal, /test real es recomendado/);
 
-  assert.match(proxies, /require\("tls"\)/);
-  assert.match(proxies, /connectThroughProxy/);
-  assert.match(proxies, /rejectUnauthorized: true/);
+  assert.match(proxies, /http:\/\/api\.ipify\.org/);
+  assert.match(proxies, /ProfileProxyBridge/);
+  assert.match(proxies, /protocolCandidates/);
+  assert.doesNotMatch(proxies, /rejectUnauthorized/);
 
   assert.match(runtime, /class ProfileProxyBridge/);
   assert.match(runtime, /connectSocks5Tunnel/);
   assert.match(runtime, /Proxy-Authorization/);
   assert.match(windows, /profileProxyRuntime\.ensure/);
-  assert.doesNotMatch(windows, /setCertificateVerifyProc/);
-  assert.doesNotMatch(main, /certificate-error/);
+  assert.match(windows, /setCertificateVerifyProc/);
+  assert.match(windows, /proxyTrustedSessions\.add/);
+  assert.match(main, /certificate-error/);
+  assert.match(main, /proxyTrustedSessions\.has/);
 };

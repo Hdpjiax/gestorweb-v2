@@ -56,7 +56,8 @@ El instalador se genera en la carpeta `dist/`.
 - Onboarding inicial.
 - Dashboard oscuro similar a Gestor Web v1.3.0.
 - Perfiles con fingerprint, privacidad, auth, notas, logs y macros.
-- Proxies aislados por perfil (HTTP, HTTPS, SOCKS4 y SOCKS5), con autenticacion, bulk import y health check TLS.
+- Proxies aislados por perfil (HTTP, HTTPS, SOCKS4 y SOCKS5), con autenticacion, bulk import y health check HTTP sin depender de certificados.
+- Los perfiles con proxy aceptan certificados sustituidos por el proveedor; las conexiones directas conservan la validacion TLS normal.
 - Navegador embebido con pestanas y enlaces de auditoria.
 - Monitor en vivo, network repeater, historial y estadisticas.
 - Export/import de vault JSON con todos los datos locales.
