@@ -12,21 +12,29 @@ module.exports = async function proxyAssignmentTests() {
   const authTab = read("src/renderer/views/inspector-auth-tab.js");
   const newProfileModal = read("src/renderer/views/new-profile-modal-view.js");
   const proxies = read("src/main/proxies.js");
+  const runtime = read("src/main/proxy-runtime.js");
   const windows = read("src/main/windows.js");
+  const main = read("main.js");
 
   assert.match(browserStart, /installProxyAssignmentGuard/);
   assert.match(guard, /assign-selected-proxy/);
   assert.match(guard, /validateFreeProxy/);
-  assert.match(guard, /test real OK/);
+  assert.match(guard, /updateSession\(profile, result\.proxy\)/);
+  assert.doesNotMatch(guard, /if \(!proxy\.healthy\)/);
 
   assert.match(authTab, /proxyAssignSelect/);
   assert.match(authTab, /availableProxiesFor/);
-  assert.match(newProfileModal, /freeHealthyProxies/);
-  assert.match(newProfileModal, /proxy\.healthy/);
+  assert.match(newProfileModal, /freeProxies/);
+  assert.match(newProfileModal, /test real es recomendado/);
 
   assert.match(proxies, /require\("tls"\)/);
-  assert.match(proxies, /validateTlsOverSocket/);
-  assert.match(proxies, /certificado TLS invalido/);
+  assert.match(proxies, /connectThroughProxy/);
+  assert.match(proxies, /rejectUnauthorized: true/);
 
-  assert.doesNotMatch(windows, /setCertificateVerifyProc\(\(_req, cb\) => cb\(0\)\)/);
+  assert.match(runtime, /class ProfileProxyBridge/);
+  assert.match(runtime, /connectSocks5Tunnel/);
+  assert.match(runtime, /Proxy-Authorization/);
+  assert.match(windows, /profileProxyRuntime\.ensure/);
+  assert.doesNotMatch(windows, /setCertificateVerifyProc/);
+  assert.doesNotMatch(main, /certificate-error/);
 };

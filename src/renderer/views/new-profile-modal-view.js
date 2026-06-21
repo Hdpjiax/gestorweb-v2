@@ -3,9 +3,9 @@ import { state, ui } from "../state.js";
 import { radioSegments } from "../utils.js";
 import { templates, resolutions, timezones, locales } from "../icons.js";
 
-function freeHealthyProxies() {
+function freeProxies() {
   const usedProxyIds = new Set(state.profiles.map((profile) => profile.proxy_id).filter(Boolean));
-  return state.proxies.filter((proxy) => proxy.healthy && !usedProxyIds.has(proxy.id));
+  return state.proxies.filter((proxy) => !usedProxyIds.has(proxy.id));
 }
 
 export function renderProfileAdvancedFields() {
@@ -45,9 +45,9 @@ export function renderProfileAdvancedFields() {
 }
 
 export function renderNewProfileModal() {
-  const availableProxies = freeHealthyProxies();
+  const availableProxies = freeProxies();
   const proxyNote = state.proxies.length
-    ? "Solo aparecen proxies libres con test real OK. Si no ves uno, ejecuta test real o libera el proxy en otro perfil."
+    ? "Aparecen todos los proxies libres. El test real es recomendado, pero no obligatorio."
     : "Aun no hay proxies cargados. Puedes crear el perfil sin proxy y asignarlo despues.";
 
   return `
@@ -84,7 +84,7 @@ export function renderNewProfileModal() {
             <select class="select mono" name="proxy_id">
               <option value="">Sin proxy</option>
               ${availableProxies
-                .map((p) => `<option value="${attr(p.id)}">${esc(p.label || `${p.scheme}://${p.host}:${p.port}`)} · ${p.latency_ms != null ? `${p.latency_ms}ms` : "ok"}</option>`)
+                .map((p) => `<option value="${attr(p.id)}">${esc(p.label || `${p.scheme}://${p.host}:${p.port}`)} · ${p.healthy ? `${p.latency_ms ?? "?"}ms` : !p.last_error || p.last_error === "sin test" ? "sin test" : "test fallido"}</option>`)
                 .join("")}
             </select>
             <div class="small-note">${esc(proxyNote)}</div>

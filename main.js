@@ -2,8 +2,7 @@ const { app, BrowserWindow } = require("electron");
 const path = require("path");
 const { registerIpc } = require("./src/main/ipc");
 const { readJson, stateFile, sessionFor } = require("./src/main/utils");
-const proxySessions = require("./src/main/proxy-partitions");
-const { prepareSession } = require("./src/main/windows");
+const { profileProxyRuntime } = require("./src/main/proxy-runtime");
 
 if (process.env.GW_TEST_USERDATA) {
   app.setPath("userData", process.env.GW_TEST_USERDATA);
@@ -26,30 +25,6 @@ async function clearBrowserSessionsOnExit() {
       });
     } catch {}
   }));
-}
-
-// Pre-aplica setCertificateVerifyProc a todas las sesiones que ya tienen
-// proxy asignado en el estado guardado. Esto elimina la race condition donde
-// Chromium abre una conexión TLS antes de que prepareSession corra por primera vez.
-async function prewarmProxySessions() {
-  try {
-    const stored = readJson(stateFile(), null);
-    if (!stored) return;
-    const profiles = Array.isArray(stored.profiles) ? stored.profiles : [];
-    const proxies = Array.isArray(stored.proxies) ? stored.proxies : [];
-    const proxyMap = new Map(proxies.map((p) => [String(p.id), p]));
-
-    await Promise.all(profiles.map(async (profile) => {
-      if (!profile?.id) return;
-      const proxy = profile.proxy_id ? proxyMap.get(String(profile.proxy_id)) : null;
-      const hasTorMode = !!profile.tor_mode;
-      const hasProxy = !!(proxy?.host && proxy?.port) || hasTorMode;
-      if (!hasProxy) return;
-      try {
-        await prepareSession(profile, proxy || null);
-      } catch {}
-    }));
-  } catch {}
 }
 
 function createWindow() {
@@ -78,21 +53,7 @@ function createWindow() {
   });
 }
 
-// Hook global: intercepta certificate-error antes de que Chromium lo rechace.
-// Compara por identidad de objeto Session (Session.partition no existe en la API).
-app.on("certificate-error", (event, webContents, _url, _error, _certificate, callback) => {
-  try {
-    if (proxySessions.has(webContents.session)) {
-      event.preventDefault();
-      return callback(true);
-    }
-  } catch {}
-  callback(false);
-});
-
-app.whenReady().then(async () => {
-  // Pre-calentar sesiones con proxy ANTES de crear ventanas
-  await prewarmProxySessions();
+app.whenReady().then(() => {
   registerIpc(getMainWindow);
   createWindow();
   app.on("activate", () => {
@@ -104,7 +65,7 @@ app.on("before-quit", (event) => {
   if (app.__browserSessionsCleared) return;
   app.__browserSessionsCleared = true;
   event.preventDefault();
-  clearBrowserSessionsOnExit().finally(() => app.quit());
+  Promise.all([clearBrowserSessionsOnExit(), profileProxyRuntime.closeAll()]).finally(() => app.quit());
 });
 
 app.on("window-all-closed", () => {

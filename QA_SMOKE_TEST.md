@@ -44,6 +44,9 @@ Checklist manual para ejecutar despues de `npm run qa` y antes de empaquetar.
 - Importar bulk con formato `host:port`.
 - Importar CSV con columnas `host,port,username,password`.
 - Proxies invalidos deben omitirse.
+- Crear dos perfiles, asignar un proxy distinto a cada uno y comprobar que la IP visible sea diferente.
+- Probar HTTP/HTTPS y SOCKS4/SOCKS5 con y sin credenciales.
+- Cambiar o quitar el proxy de un perfil abierto y comprobar que la pestaña se recarga con la nueva ruta.
 - Seleccionar proxies y borrar seleccionados.
 
 ## 7. Vault

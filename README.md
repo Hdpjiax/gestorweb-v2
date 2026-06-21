@@ -56,7 +56,7 @@ El instalador se genera en la carpeta `dist/`.
 - Onboarding inicial.
 - Dashboard oscuro similar a Gestor Web v1.3.0.
 - Perfiles con fingerprint, privacidad, auth, notas, logs y macros.
-- CRUD local de proxies, bulk import y health check.
+- Proxies aislados por perfil (HTTP, HTTPS, SOCKS4 y SOCKS5), con autenticacion, bulk import y health check TLS.
 - Navegador embebido con pestanas y enlaces de auditoria.
 - Monitor en vivo, network repeater, historial y estadisticas.
 - Export/import de vault JSON con todos los datos locales.
@@ -77,6 +77,8 @@ El instalador se genera en la carpeta `dist/`.
 - Pruebas de seguridad en `tests/main/security.test.js`.
 - Pruebas de esquema de estado en `tests/main/state-schema.test.js`.
 - Pruebas de helpers en `tests/renderer/helpers.test.js`.
+- Pruebas del puente de proxies y protocolos en `tests/main/proxy-runtime.test.js`.
+- Prueba Electron de dos perfiles con proxies autenticados distintos en `tests/ipc/ipc.spec.js`.
 - Pruebas de parser de proxies en `tests/renderer/proxy-parser.test.js`.
 - Pruebas de pulido UX en `tests/renderer/ux-polish.test.js`.
 - Checklist manual en `QA_SMOKE_TEST.md`.

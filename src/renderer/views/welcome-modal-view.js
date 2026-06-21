@@ -14,7 +14,7 @@ export function renderWelcomeModal() {
     ],
     [
       "Sobre los proxies",
-      "Si quieres cambiar la IP por perfil, agrega proxies en la seccion Proxies (Ctrl+3). Soporta SOCKS5 y HTTP/HTTPS con autenticacion.",
+      "Si quieres cambiar la IP por perfil, agrega proxies en la seccion Proxies (Ctrl+3). Soporta HTTP, HTTPS, SOCKS4 y SOCKS5, con o sin autenticacion.",
     ],
     [
       "Cosas que debes saber",

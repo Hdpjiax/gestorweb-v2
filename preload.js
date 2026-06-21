@@ -44,7 +44,8 @@ contextBridge.exposeInMainWorld("api", Object.freeze({
   }),
   proxies: Object.freeze({
     check: (proxy) => invoke("proxies:check", proxy),
-    checkAll: (proxies) => invoke("proxies:checkAll", proxies)
+    checkAll: (proxies) => invoke("proxies:checkAll", proxies),
+    updateSession: (profile, proxy) => invoke("proxy:update-session", profile, proxy)
   }),
   repeater: Object.freeze({
     send: (request) => invoke("repeater:send", request)

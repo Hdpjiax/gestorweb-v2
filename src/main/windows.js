@@ -11,8 +11,11 @@ const {
   findGestorBrowser,
   addonPaths
 } = require("./utils");
-const { proxyRulesFor } = require("./proxies");
-const proxySessions = require("./proxy-partitions");
+const {
+  normalizeProxy,
+  proxyRouteKey,
+  profileProxyRuntime
+} = require("./proxy-runtime");
 
 const profileWindows = new Map();
 
@@ -34,6 +37,7 @@ function writeFirefoxProfilePrefs(profile, proxy) {
   const dir = profileDir(profile.id);
   const prefs = [];
   const add = (key, value) => prefs.push(`user_pref(${JSON.stringify(key)}, ${JSON.stringify(value)});`);
+
   add("browser.shell.checkDefaultBrowser", false);
   add("browser.tabs.warnOnClose", false);
   add("toolkit.telemetry.enabled", false);
@@ -56,13 +60,7 @@ function writeFirefoxProfilePrefs(profile, proxy) {
   add("places.history.enabled", !profile.in_memory);
   add("privacy.clearOnShutdown.cache", !!profile.auto_wipe_close);
   add("privacy.clearOnShutdown.cookies", !!profile.auto_wipe_close);
-  if (profile.tor_mode) {
-    add("network.proxy.type", 1);
-    add("network.proxy.socks", "127.0.0.1");
-    add("network.proxy.socks_port", 9050);
-    add("network.proxy.socks_version", 5);
-    add("network.proxy.socks_remote_dns", true);
-  } else if (proxy?.host && proxy?.port) {
+  if (proxy?.host && proxy?.port) {
     add("network.proxy.type", 1);
     if (String(proxy.scheme || "").startsWith("socks")) {
       add("network.proxy.socks", proxy.host);
@@ -74,15 +72,20 @@ function writeFirefoxProfilePrefs(profile, proxy) {
       add("network.proxy.http_port", Number(proxy.port));
       add("network.proxy.ssl", proxy.host);
       add("network.proxy.ssl_port", Number(proxy.port));
+      add("network.proxy.share_proxy_settings", true);
     }
-    if (proxy.username || proxy.password) add("signon.autologin.proxy", true);
+  } else if (profile.tor_mode) {
+    add("network.proxy.type", 1);
+    add("network.proxy.socks", "127.0.0.1");
+    add("network.proxy.socks_port", 9050);
+    add("network.proxy.socks_version", 5);
+    add("network.proxy.socks_remote_dns", true);
   } else {
     add("network.proxy.type", 0);
   }
   fs.writeFileSync(path.join(dir, "user.js"), prefs.join("\n"), "utf8");
   return dir;
 }
-
 // ─── Camoufox config ───────────────────────────────────────────────────────────
 function camouConfig(profile, proxy) {
   const fp = profile.fingerprint || {};
@@ -149,7 +152,7 @@ function camouConfig(profile, proxy) {
       proxyPassword: proxy.password || ""
     };
   }
-  if (profile.tor_mode) {
+  if (profile.tor_mode && !(proxy?.host && proxy?.port)) {
     config.proxy = { mode: "socks5", proxyAddr: "127.0.0.1", proxyPort: 9050, proxyDNS: true };
   }
   return config;
@@ -157,7 +160,7 @@ function camouConfig(profile, proxy) {
 
 // ─── Chromium window ───────────────────────────────────────────────────────────
 async function openChromiumWindow(profile, proxy, startUrl) {
-  await prepareSession(profile, proxy);
+  const prepared = await prepareSession(profile, proxy);
 
   const fp = profile.fingerprint || {};
   const width = fp.resolution?.width || 1280;
@@ -176,12 +179,16 @@ async function openChromiumWindow(profile, proxy, startUrl) {
     }
   });
 
+  const item = { type: "electron", win, routeKey: prepared.routeKey, startUrl };
   win.on("closed", () => {
-    profileWindows.delete(profile.id);
-    notifyProfileClosed(profile.id);
+    if (profileWindows.get(profile.id) === item) {
+      profileWindows.delete(profile.id);
+      profileProxyRuntime.closeProfile(profile.id).catch(() => {});
+      notifyProfileClosed(profile.id);
+    }
   });
 
-  profileWindows.set(profile.id, { type: "electron", win });
+  profileWindows.set(profile.id, item);
 
   const RETRIABLE = new Set([-3, -202]);
   try {
@@ -202,20 +209,28 @@ async function openChromiumWindow(profile, proxy, startUrl) {
 async function openFirefoxWindow(profile, proxy, startUrl) {
   const browserPath = findGestorBrowser();
   if (!browserPath) return openChromiumWindow(profile, proxy, startUrl);
-  const dir = writeFirefoxProfilePrefs(profile, proxy);
+  const prepared = await profileProxyRuntime.ensure(profile.id, proxy, !!profile.tor_mode);
+  const browserProxy = prepared.localPort
+    ? { scheme: "http", host: "127.0.0.1", port: prepared.localPort }
+    : null;
+  const dir = writeFirefoxProfilePrefs(profile, browserProxy);
   const env = {
     ...process.env,
     MOZ_NO_REMOTE: "1",
-    CAMOU_CONFIG_1: JSON.stringify(camouConfig(profile, proxy))
+    CAMOU_CONFIG_1: JSON.stringify(camouConfig(profile, browserProxy))
   };
-  if (proxyRulesFor(profile, proxy)) env.GW_PROXY = proxyRulesFor(profile, proxy);
+  if (browserProxy) env.GW_PROXY = `http://127.0.0.1:${prepared.localPort}`;
   const args = ["-no-remote", "-profile", dir, startUrl];
   const child = spawn(browserPath, args, { cwd: path.dirname(browserPath), env, detached: false, stdio: "ignore" });
+  const item = { type: "firefox", child, routeKey: prepared.routeKey, startUrl };
   child.on("exit", () => {
-    profileWindows.delete(profile.id);
-    notifyProfileClosed(profile.id);
+    if (profileWindows.get(profile.id) === item) {
+      profileWindows.delete(profile.id);
+      profileProxyRuntime.closeProfile(profile.id).catch(() => {});
+      notifyProfileClosed(profile.id);
+    }
   });
-  profileWindows.set(profile.id, { type: "firefox", child });
+  profileWindows.set(profile.id, item);
   return { ok: true, mode: "firefox", pid: child.pid, id: profile.id, browserPath };
 }
 
@@ -223,7 +238,20 @@ async function openFirefoxWindow(profile, proxy, startUrl) {
 async function openProfileWindow(profile, proxy, startUrl) {
   if (!profile?.id) return { ok: false, error: "missing profile" };
   const existing = profileWindows.get(profile.id);
+  const desiredRouteKey = profile.tor_mode
+    ? proxyRouteKey({ scheme: "socks5", host: "127.0.0.1", port: 9050 })
+    : proxyRouteKey(proxy);
   if (existing) {
+    if (existing.routeKey !== desiredRouteKey) {
+      if (existing.type === "electron") {
+        const prepared = await prepareSession(profile, proxy);
+        existing.routeKey = prepared.routeKey;
+        existing.win.webContents.reload();
+        focusProfileWindow(profile.id);
+        return { ok: true, reused: true, updatedProxy: true, mode: existing.type };
+      }
+      return updateProfileProxy(profile, proxy);
+    }
     focusProfileWindow(profile.id);
     return { ok: true, reused: true, mode: existing.type };
   }
@@ -236,9 +264,10 @@ async function openProfileWindow(profile, proxy, startUrl) {
 function closeProfileWindow(profileId) {
   const item = profileWindows.get(profileId);
   if (!item) return { ok: true, closed: false };
+  profileWindows.delete(profileId);
   if (item.type === "electron" && !item.win.isDestroyed()) item.win.close();
   if (item.type === "firefox" && item.child && !item.child.killed) item.child.kill();
-  profileWindows.delete(profileId);
+  profileProxyRuntime.closeProfile(profileId).catch(() => {});
   notifyProfileClosed(profileId);
   return { ok: true, closed: true };
 }
@@ -262,7 +291,6 @@ function focusProfileWindow(profileId) {
 
 // ─── Session / proxy setup ─────────────────────────────────────────────────────
 const _sessionHandlersRegistered = new WeakSet();
-const _sessionProxyCreds = new WeakMap();
 const _sessionRuntimeState = new WeakMap();
 
 async function prepareSession(profile, proxy) {
@@ -276,64 +304,16 @@ async function prepareSession(profile, proxy) {
   try { ses.setUserAgent(fp.userAgent || "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:135.0) Gecko/20100101 Firefox/135.0", fp.locale || "es-MX"); } catch {}
   try { if (typeof ses.setPreloads === "function") ses.setPreloads([preload]); } catch {}
 
-  const hasProxy = !!(proxy?.host && proxy?.port) || !!profile.tor_mode;
-  const hasProxyCreds = !!(proxy?.username || proxy?.password);
+  const normalizedProxy = profile.tor_mode ? null : normalizeProxy(proxy);
+  if (!profile.tor_mode && proxy && !normalizedProxy) throw new Error("proxy invalido para el perfil");
+  const prepared = await profileProxyRuntime.ensure(profile.id, normalizedProxy, !!profile.tor_mode);
+  await ses.setProxy(prepared.proxyConfig);
+  if (typeof ses.forceReloadProxyConfig === "function") await ses.forceReloadProxyConfig();
+  if (typeof ses.closeAllConnections === "function") await ses.closeAllConnections();
 
-  // 1. Proxy
-  try {
-    if (hasProxy) {
-      let cleanRules;
-      if (profile.tor_mode) {
-        cleanRules = "socks5://127.0.0.1:9050";
-      } else {
-        const scheme = (proxy.scheme || "http").replace(/^socks$/, "socks5");
-        cleanRules = `${scheme}://${proxy.host}:${proxy.port}`;
-      }
-      await ses.setProxy({ proxyRules: cleanRules, proxyBypassRules: "<-loopback>" });
-    } else {
-      await ses.setProxy({ proxyRules: "direct://", proxyBypassRules: "<-loopback>" });
-    }
-  } catch (e) {
-    console.error("[windows] setProxy error:", e.message);
-  }
-
-  // 2. Registrar/desregistrar la sesión en el WeakSet compartido con main.js.
-  //    main.js compara webContents.session (objeto real) contra este WeakSet.
-  //    IMPORTANTE: Session.partition NO existe en la API de Electron —
-  //    comparar strings de partición siempre daría undefined → false.
-  if (hasProxy) {
-    proxySessions.add(ses);
-  } else {
-    proxySessions.delete(ses);
-  }
-
-  // 3. setCertificateVerifyProc — capa redundante a nivel de sesión.
-  if (hasProxy) {
-    ses.setCertificateVerifyProc((_req, cb) => cb(0));
-  } else {
-    ses.setCertificateVerifyProc(null);
-  }
-
-  // 4. Cerrar conexiones TLS previas para forzar nuevo handshake con verifier activo.
-  try { ses.closeAllConnections(); } catch { /* Electron < 21 */ }
-
-  // 5. Credenciales de proxy.
-  if (hasProxyCreds) {
-    _sessionProxyCreds.set(ses, { username: proxy.username || "", password: proxy.password || "" });
-  } else {
-    _sessionProxyCreds.delete(ses);
-  }
-
-  // 6. Handlers de sesión — registrar UNA SOLA VEZ.
+  // Handlers de sesión — registrar UNA SOLA VEZ.
   if (!_sessionHandlersRegistered.has(ses)) {
     _sessionHandlersRegistered.add(ses);
-
-    ses.on("login", (_event, _webContents, authInfo, callback) => {
-      if (!authInfo.isProxy) return callback("", "");
-      const creds = _sessionProxyCreds.get(ses);
-      if (creds) callback(creds.username, creds.password);
-      else callback("", "");
-    });
 
     ses.webRequest.onBeforeRequest((details, callback) => {
       try {
@@ -371,7 +351,31 @@ async function prepareSession(profile, proxy) {
     });
   }
 
-  return { ok: true, partition: partitionFor(profile.id), proxyRules: hasProxy ? "set" : "direct", preload };
+  return {
+    ok: true,
+    partition: partitionFor(profile.id),
+    proxyRules: prepared.localPort ? "set" : "direct",
+    routeKey: prepared.routeKey,
+    route: prepared.route,
+    localPort: prepared.localPort,
+    preload
+  };
+}
+
+async function updateProfileProxy(profile, proxy) {
+  const prepared = await prepareSession(profile, proxy);
+  const item = profileWindows.get(profile.id);
+  if (!item) return { ...prepared, windowUpdated: false };
+  if (item.type === "electron") {
+    item.routeKey = prepared.routeKey;
+    item.win.webContents.reload();
+    return { ...prepared, windowUpdated: true, restarted: false };
+  }
+  const url = item.startUrl || profile.url || "https://duckduckgo.com/";
+  profileWindows.delete(profile.id);
+  if (item.child && !item.child.killed) item.child.kill();
+  const reopened = await openFirefoxWindow(profile, proxy, url);
+  return { ...prepared, ...reopened, windowUpdated: true, restarted: true };
 }
 
 module.exports = {
@@ -383,5 +387,6 @@ module.exports = {
   openProfileWindow,
   closeProfileWindow,
   focusProfileWindow,
-  prepareSession
+  prepareSession,
+  updateProfileProxy
 };

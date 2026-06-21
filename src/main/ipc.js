@@ -17,10 +17,12 @@ const {
   openProfileWindow,
   closeProfileWindow,
   focusProfileWindow,
-  prepareSession
+  prepareSession,
+  updateProfileProxy
 } = require("./windows");
 
 const { checkProxy } = require("./proxies");
+const { normalizeProxy } = require("./proxy-runtime");
 const {
   MAX_STATE_BYTES,
   assertJsonSize,
@@ -183,15 +185,11 @@ function sanitizeProfile(profile) {
 // Si el renderer pasa proxy=null pero el perfil tiene proxy_id,
 // resolvemos automáticamente para que proxy-per-profile siempre funcione.
 function resolveProxyForProfile(profile, explicitProxy) {
-  if (explicitProxy?.host && explicitProxy?.port) return explicitProxy;
+  const direct = normalizeProxy(explicitProxy);
+  if (direct) return direct;
   if (!profile?.proxy_id) return null;
-  try {
-    const state = loadAppState();
-    const found = (state.proxies || []).find((p) => String(p.id) === String(profile.proxy_id));
-    return found || null;
-  } catch {
-    return null;
-  }
+  const state = loadAppState();
+  return normalizeProxy((state.proxies || []).find((item) => String(item.id) === String(profile.proxy_id)));
 }
 
 // ─── IPC HANDLERS ─────────────────────────────────────────────────────────────
@@ -330,6 +328,12 @@ function registerIpc(mainWindowRef) {
   // ── Proxies ─────────────────────────────────────────────────────────────────
   ipcMain.handle("proxies:check", (_event, proxy) => checkProxy(proxy));
   ipcMain.handle("proxies:checkAll", (_event, proxies) => Promise.all((Array.isArray(proxies) ? proxies : []).slice(0, 500).map(checkProxy)));
+  ipcMain.handle("proxy:update-session", async (_event, rawProfile, rawProxy) => {
+    const profile = sanitizeProfile(rawProfile);
+    const proxy = rawProxy == null ? null : normalizeProxy(rawProxy);
+    if (rawProxy != null && !proxy) throw new Error("invalid proxy");
+    return updateProfileProxy(profile, proxy);
+  });
 
   // ── Repeater ─────────────────────────────────────────────────────────────────
   ipcMain.handle("repeater:send", async (_event, request) => {

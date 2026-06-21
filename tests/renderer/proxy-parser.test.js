@@ -31,6 +31,9 @@ module.exports = async function proxyParserTests() {
     label: null
   });
 
+  assert.equal(parser.parseProxyLine("socks4a://example.com:1080", "http").scheme, "socks4");
+  assert.equal(parser.parseProxyLine("socks://example.com:1080", "http").scheme, "socks5");
+
   assert.equal(parser.parseProxyLine("999.1.1.1:8080", "http"), null);
   assert.equal(parser.parseProxyLine("example:8080", "http"), null);
   assert.equal(parser.parseProxyLine("ftp://example.com:21", "http"), null);

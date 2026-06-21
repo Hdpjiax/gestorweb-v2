@@ -465,12 +465,23 @@ function removeDeadProxies() {
 }
 
 function removeProxySet(ids, eventKind, payload) {
+  const affectedProfileIds = state.profiles.filter((profile) => ids.has(profile.proxy_id)).map((profile) => profile.id);
   ids.forEach((id) => ui.selectedProxyIds.delete(id));
   update((s) => {
     s.proxies = s.proxies.filter((p) => !ids.has(p.id));
     s.profiles.forEach((p) => { if (ids.has(p.proxy_id)) p.proxy_id = null; });
     logEvent(eventKind, null, payload);
   });
+  syncProfilesWithoutProxy(affectedProfileIds);
+}
+
+function syncProfilesWithoutProxy(profileIds) {
+  if (!native?.proxies?.updateSession) return;
+  for (const profileId of profileIds) {
+    const profile = profileById(profileId);
+    if (!profile || !state.liveIds.includes(profileId)) continue;
+    native.proxies.updateSession(profile, null).catch(() => {});
+  }
 }
 
 async function healthCheck() {
@@ -513,12 +524,14 @@ async function healthCheck() {
 }
 
 function removeProxy(id) {
+  const affectedProfileIds = state.profiles.filter((profile) => profile.proxy_id === id).map((profile) => profile.id);
   ui.selectedProxyIds.delete(id);
   update((s) => {
     s.proxies = s.proxies.filter((p) => p.id !== id);
     s.profiles.forEach((p) => { if (p.proxy_id === id) p.proxy_id = null; });
     logEvent("proxy_removed", null, id);
   });
+  syncProfilesWithoutProxy(affectedProfileIds);
 }
 
 function addSchedule(event) {

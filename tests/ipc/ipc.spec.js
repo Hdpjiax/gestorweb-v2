@@ -13,6 +13,7 @@ const { test, expect, _electron: electron } = require('@playwright/test');
 const path = require('path');
 const os = require('os');
 const fs = require('fs');
+const net = require('net');
 
 // ─── Setup / Teardown ────────────────────────────────────────────────────────
 
@@ -51,6 +52,34 @@ async function ipc(channel, ...args) {
     },
     { ch: channel, a: args }
   );
+}
+
+async function startMockHttpProxy(marker, expectedAuthorization) {
+  const requests = [];
+  const server = net.createServer((socket) => {
+    let raw = '';
+    socket.on('data', (chunk) => {
+      raw += chunk.toString('latin1');
+      if (!raw.includes('\r\n\r\n')) return;
+      requests.push(raw);
+      const authorization = (raw.match(/Proxy-Authorization:\s*([^\r\n]+)/i) || [])[1] || '';
+      if (authorization !== expectedAuthorization) {
+        socket.end('HTTP/1.1 407 Proxy Authentication Required\r\nConnection: close\r\n\r\n');
+        return;
+      }
+      const body = JSON.stringify({ marker });
+      socket.end(`HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nContent-Length: ${Buffer.byteLength(body)}\r\nConnection: close\r\n\r\n${body}`);
+    });
+  });
+  await new Promise((resolve, reject) => {
+    server.once('error', reject);
+    server.listen(0, '127.0.0.1', resolve);
+  });
+  return {
+    port: server.address().port,
+    requests,
+    close: () => new Promise((resolve) => server.close(resolve))
+  };
 }
 
 // ─── Tests ────────────────────────────────────────────────────────────────────
@@ -165,6 +194,39 @@ test('proxies:checkAll trunca a 500 proxies máximo', async () => {
   const many = Array.from({ length: 600 }, (_, i) => ({ host: '127.0.0.1', port: 20000 + i, scheme: 'http' }));
   const result = await ipc('proxies:checkAll', many);
   expect(result.length).toBeLessThanOrEqual(500);
+});
+
+test('dos perfiles usan proxies autenticados distintos sin mezclar sesiones', async () => {
+  const authA = `Basic ${Buffer.from('perfil-a:clave-a').toString('base64')}`;
+  const authB = `Basic ${Buffer.from('perfil-b:clave-b').toString('base64')}`;
+  const proxyA = await startMockHttpProxy('salida-a', authA);
+  const proxyB = await startMockHttpProxy('salida-b', authB);
+  try {
+    const preparedA = await ipc('browse:prepareSession',
+      { id: 'integration-a', name: 'A', url: '', fingerprint: {} },
+      { scheme: 'http', host: '127.0.0.1', port: proxyA.port, username: 'perfil-a', password: 'clave-a' }
+    );
+    const preparedB = await ipc('browse:prepareSession',
+      { id: 'integration-b', name: 'B', url: '', fingerprint: {} },
+      { scheme: 'http', host: '127.0.0.1', port: proxyB.port, username: 'perfil-b', password: 'clave-b' }
+    );
+    expect(preparedA.localPort).not.toBe(preparedB.localPort);
+
+    const bodies = await electronApp.evaluate(async ({ session }) => {
+      const fetchFrom = async (id) => {
+        const response = await session.fromPartition(`persist:gw-${id}`).fetch('http://proxy-route.invalid/prueba');
+        return response.text();
+      };
+      return Promise.all([fetchFrom('integration-a'), fetchFrom('integration-b')]);
+    });
+
+    expect(JSON.parse(bodies[0]).marker).toBe('salida-a');
+    expect(JSON.parse(bodies[1]).marker).toBe('salida-b');
+    expect(proxyA.requests.some((request) => request.includes(authA))).toBe(true);
+    expect(proxyB.requests.some((request) => request.includes(authB))).toBe(true);
+  } finally {
+    await Promise.all([proxyA.close(), proxyB.close()]);
+  }
 });
 
 // ── Repeater ──────────────────────────────────────────────────────────────────

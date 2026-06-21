@@ -122,7 +122,8 @@ export function parseProxyCsvRow(row, defaultScheme) {
 }
 
 export function normalizeProxy(item, defaultScheme = "http") {
-  const scheme = String(item.scheme || defaultScheme || "http").toLowerCase().replace(/:$/, "");
+  const rawScheme = String(item.scheme || defaultScheme || "http").toLowerCase().replace(/:$/, "");
+  const scheme = rawScheme === "socks" ? "socks5" : rawScheme === "socks4a" ? "socks4" : rawScheme;
   const host = String(item.host || "").trim().replace(/^\[|\]$/g, "");
   const port = parseInt(item.port, 10);
   if (!["http", "https", "socks4", "socks5"].includes(scheme)) return null;

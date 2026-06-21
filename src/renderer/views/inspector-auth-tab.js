@@ -10,7 +10,7 @@ function availableProxiesFor(profile) {
       .map((item) => item.proxy_id)
       .filter(Boolean)
   );
-  return state.proxies.filter((proxy) => proxy.healthy && !usedByOther.has(proxy.id));
+  return state.proxies.filter((proxy) => !usedByOther.has(proxy.id));
 }
 
 function proxyLabel(proxy) {
@@ -49,14 +49,14 @@ export function renderInspectorAuthTab(profile) {
           <label class="label">Asignar proxy libre</label>
           <div class="between">
             <select id="proxyAssignSelect" class="select mono" data-profile-id="${attr(profile.id)}" ${availableProxies.length ? "" : "disabled"}>
-              <option value="">${availableProxies.length ? "Selecciona proxy libre testeado" : "No hay proxies libres con test OK"}</option>
+              <option value="">${availableProxies.length ? "Selecciona un proxy libre" : "No hay proxies libres"}</option>
               ${availableProxies.map((item) => `
                 <option value="${attr(item.id)}" ${item.id === profile.proxy_id ? "selected" : ""}>${esc(proxyLabel(item))}</option>
               `).join("")}
             </select>
             <button class="btn btn-primary" data-action="assign-selected-proxy" data-id="${attr(profile.id)}" ${availableProxies.length ? "" : "disabled"}>asignar</button>
           </div>
-          <div class="small-note">Solo se puede usar un proxy por perfil. Si no aparece, esta asignado a otro perfil o no paso el test real.</div>
+          <div class="small-note">Cada proxy se reserva para un perfil. El test real es recomendado, pero puedes asignarlo sin probar.</div>
         </div>
       `}
 

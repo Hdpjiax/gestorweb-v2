@@ -10,56 +10,93 @@ function usedProxyIds(exceptProfileId = null) {
   );
 }
 
-function freeHealthyProxy(exceptProfileId = null) {
+function isUsableProxy(proxy) {
+  const scheme = String(proxy?.scheme || "http").toLowerCase();
+  const port = Number(proxy?.port);
+  return ["http", "https", "socks4", "socks5"].includes(scheme)
+    && typeof proxy?.host === "string"
+    && !!proxy.host.trim()
+    && Number.isInteger(port)
+    && port >= 1
+    && port <= 65535;
+}
+
+function freeProxy(exceptProfileId = null) {
   const used = usedProxyIds(exceptProfileId);
-  return state.proxies.find((proxy) => proxy.healthy && !used.has(proxy.id)) || null;
+  const available = state.proxies.filter((proxy) => isUsableProxy(proxy) && !used.has(proxy.id));
+  return available.find((proxy) => proxy.healthy)
+    || available.find((proxy) => proxy.last_error === "sin test" || !proxy.last_error)
+    || available[0]
+    || null;
 }
 
 function validateFreeProxy(proxyId, exceptProfileId = null) {
   if (!proxyId) return { ok: false, error: "Selecciona un proxy libre." };
-
   const proxy = proxyById(proxyId);
   if (!proxy) return { ok: false, error: "Proxy no encontrado." };
-  if (!proxy.healthy) return { ok: false, error: "Ese proxy no tiene test real OK. Ejecuta test real antes de asignarlo." };
-
+  if (!isUsableProxy(proxy)) return { ok: false, error: "El proxy tiene un protocolo, host o puerto invalido." };
   const usedBy = state.profiles.find((item) => item.id !== exceptProfileId && item.proxy_id === proxyId);
   if (usedBy) return { ok: false, error: `Ese proxy ya esta asignado a ${usedBy.name || "otro perfil"}.` };
-
   return { ok: true, proxy };
 }
 
 function validateProxyForProfile(profileId, proxyId) {
   const profile = profileById(profileId);
   if (!profile) return { ok: false, error: "Perfil no encontrado." };
-
+  if (!proxyId) return { ok: true, profile, proxy: null };
   const result = validateFreeProxy(proxyId, profileId);
-  if (!result.ok) return result;
-
-  return { ...result, profile };
+  return result.ok ? { ...result, profile } : result;
 }
 
-function assignProxyById(profileId, proxyId) {
+function profileIsOpen(profileId) {
+  return state.liveIds.includes(profileId)
+    || state.browserTabs.some((tab) => tab.profileId === profileId);
+}
+
+function reloadProfileWebviews(profileId) {
+  const tabIds = new Set(state.browserTabs.filter((tab) => tab.profileId === profileId).map((tab) => tab.id));
+  document.querySelectorAll("webview[data-tab-id]").forEach((webview) => {
+    if (tabIds.has(webview.dataset.tabId)) webview.reload?.();
+  });
+}
+
+async function applyProxy(profileId, proxyId) {
   const result = validateProxyForProfile(profileId, proxyId);
-  if (!result.ok) {
-    alert(result.error);
-    return;
-  }
+  if (!result.ok) return alert(result.error);
+  const previousProxyId = result.profile.proxy_id || null;
+  const previousProxy = previousProxyId ? proxyById(previousProxyId) : null;
 
   update(() => {
     const profile = profileById(profileId);
     if (!profile) return;
-    profile.proxy_id = proxyId;
-    logEvent("rotate_proxy", profileId, `${result.proxy.host}:${result.proxy.port}`);
+    profile.proxy_id = proxyId || null;
+    const payload = result.proxy ? `${result.proxy.scheme}://${result.proxy.host}:${result.proxy.port}` : "conexion directa";
+    logEvent("rotate_proxy", profileId, payload);
   });
+
+  if (!profileIsOpen(profileId) || !window.api?.proxies?.updateSession) return;
+  try {
+    const profile = profileById(profileId);
+    await window.api.proxies.updateSession(profile, result.proxy);
+    reloadProfileWebviews(profileId);
+  } catch (error) {
+    update(() => {
+      const profile = profileById(profileId);
+      if (profile) profile.proxy_id = previousProxyId;
+    });
+    try {
+      const profile = profileById(profileId);
+      if (profile) await window.api.proxies.updateSession(profile, previousProxy);
+      reloadProfileWebviews(profileId);
+    } catch {}
+    alert(`No se pudo aplicar el proxy: ${error?.message || "error de conexion"}`);
+  }
 }
 
 function autoAssignProxy(profileId) {
-  const proxy = freeHealthyProxy(profileId);
-  if (!proxy) {
-    alert("No hay proxies libres con test real OK. Ve a Proxies y ejecuta test real; los que fallen por certificado no se asignan.");
-    return;
-  }
-  assignProxyById(profileId, proxy.id);
+  const proxy = freeProxy(profileId);
+  if (!proxy) return alert("No hay proxies libres. Agrega uno en la seccion Proxies.");
+  return applyProxy(profileId, proxy.id);
 }
 
 function selectedProxyId() {
@@ -69,29 +106,24 @@ function selectedProxyId() {
 function guardProxyClick(event) {
   const target = event.target?.closest?.("[data-action]");
   if (!target) return;
-
   const action = target.dataset.action;
-  if (action !== "assign-proxy" && action !== "assign-selected-proxy") return;
-
+  if (!["assign-proxy", "assign-selected-proxy", "remove-proxy"].includes(action)) return;
   event.preventDefault();
   event.stopPropagation();
   event.stopImmediatePropagation();
-
   const profileId = target.dataset.id;
   if (action === "assign-proxy") autoAssignProxy(profileId);
-  if (action === "assign-selected-proxy") assignProxyById(profileId, selectedProxyId());
+  if (action === "assign-selected-proxy") applyProxy(profileId, selectedProxyId());
+  if (action === "remove-proxy") applyProxy(profileId, null);
 }
 
 function guardNewProfileSubmit(event) {
   const form = event.target;
   if (form?.id !== "newProfileForm") return;
-
   const proxyId = String(new FormData(form).get("proxy_id") || "");
   if (!proxyId) return;
-
   const result = validateFreeProxy(proxyId);
   if (result.ok) return;
-
   event.preventDefault();
   event.stopPropagation();
   event.stopImmediatePropagation();
