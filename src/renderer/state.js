@@ -1,6 +1,7 @@
 import { clone, shortId, esc, attr } from "./helpers.js";
 
 const STORAGE_KEY = "gestor-web-rebuild:v2";
+const HWID_STORAGE_KEY = "gestor-web-rebuild:hwid";
 export const root = document.getElementById("app");
 export const native = window.api || null;
 
@@ -90,10 +91,51 @@ function clearBrowserRuntime(next) {
   });
 }
 
+async function refreshHwid() {
+  try {
+    const hwid = await native?.license?.hwid?.();
+    if (hwid) {
+      localStorage.setItem(HWID_STORAGE_KEY, hwid);
+      return hwid;
+    }
+  } catch {}
+
+  const fallback = localStorage.getItem(HWID_STORAGE_KEY) || `GW-${shortId(4)}-${shortId(4)}-${shortId(4)}`;
+  localStorage.setItem(HWID_STORAGE_KEY, fallback);
+  return fallback;
+}
+
+async function refreshLicenseStatus(stored) {
+  if (!native?.license?.status || !stored?.license?.text) return stored;
+  try {
+    const status = await native.license.status();
+    if (!status) return stored;
+    return {
+      ...stored,
+      license: {
+        ...stored.license,
+        ...status,
+        text: status.text || stored.license.text,
+        active: !!status.active
+      }
+    };
+  } catch {
+    return {
+      ...stored,
+      license: {
+        ...stored.license,
+        active: false,
+        reason: "no se pudo validar licencia online"
+      }
+    };
+  }
+}
+
 export async function load() {
+  await refreshHwid();
   if (native?.app?.loadState) {
     const stored = await native.app.loadState();
-    if (stored) return clearBrowserRuntime({ ...clone(defaults), ...stored });
+    if (stored) return clearBrowserRuntime(await refreshLicenseStatus({ ...clone(defaults), ...stored }));
   }
   try {
     const raw = localStorage.getItem(STORAGE_KEY) || localStorage.getItem("gestor-web-rebuild:v1");
@@ -138,14 +180,19 @@ export function render() {
 }
 
 function renderLicense() {
-  const hwid = localStorage.getItem("gestor-web-rebuild:hwid") || `GW-${shortId(4)}-${shortId(4)}-${shortId(4)}`;
-  localStorage.setItem("gestor-web-rebuild:hwid", hwid);
+  const hwid = localStorage.getItem(HWID_STORAGE_KEY) || `GW-${shortId(4)}-${shortId(4)}-${shortId(4)}`;
+  localStorage.setItem(HWID_STORAGE_KEY, hwid);
+  const reason = state.license?.reason || "sin licencia";
+  const statusText = state.license?.expiresAt
+    ? `${reason} · vence: ${new Date(state.license.expiresAt).toLocaleString()}`
+    : reason;
+
   return `
     <div class="screen">
       <form id="licenseForm" class="license-card">
         <div class="card-head">
           <h1 class="title">Activacion</h1>
-          <div class="subtitle">Esta copia necesita una licencia para arrancar</div>
+          <div class="subtitle">Esta copia necesita una licencia online para arrancar</div>
         </div>
         <div class="card-body stack">
           <div>
@@ -155,11 +202,11 @@ function renderLicense() {
               <button class="btn btn-primary" type="button" data-action="copy-hwid" data-hwid="${attr(hwid)}">copiar HWID</button>
             </div>
             <div class="small-note">ID corto: ${esc(hwid.replaceAll("-", "").slice(-12))}</div>
-            <div class="small-note">Envia tu HWID al vendedor. El emitira un .gw firmado.</div>
+            <div class="small-note">Envia tu HWID al vendedor. El emitira una licencia GW-LIC-V1 firmada y revocable.</div>
           </div>
           <div>
             <label class="label">2. Activar licencia</label>
-            <textarea id="licenseText" class="textarea mono" placeholder="GW-XXXX-XXXX-XXXX o contenido del .gw (GW-LIC-V1...)"></textarea>
+            <textarea id="licenseText" class="textarea mono" placeholder="GW-LIC-V1&#10;payload&#10;firma criptografica">${esc(state.license?.text || "")}</textarea>
           </div>
           <div class="between">
             <button class="btn btn-ghost" type="button" data-action="import-license">importar archivo .gw</button>
@@ -167,8 +214,8 @@ function renderLicense() {
           </div>
         </div>
         <div class="card-foot between">
-          <span>Estado: sin licencia</span>
-          <span>HWID generado de CPU + placa + UUID + disco + MAC</span>
+          <span>Estado: ${esc(statusText)}</span>
+          <span>HWID generado desde el dispositivo local</span>
         </div>
       </form>
     </div>
