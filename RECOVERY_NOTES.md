@@ -7,14 +7,14 @@ Ruta original analizada:
 Fuentes disponibles:
 
 - 45 capturas `photo_*.jpg`.
-- Instalacion compilada `Gestor Web-1.3.0-Setup`.
+- Instalacion compilada `Gestor-Web-Setup-1.5.0.exe`.
 - Archivo Electron `resources/app.asar`, extraido en `app-asar-extracted`.
 
 Hallazgos tecnicos:
 
 - App original: Electron + React.
 - Nombre: `gestor-web`.
-- Version: `1.3.0`.
+- Version: `1.5.0`.
 - Descripcion: gestor de perfiles web aislados con proxy y fingerprint por sesion.
 - Dependencias recuperadas: `electron-updater`, `react`, `react-dom`, `lucide-react`, `playwright`, `playwright-camoufox`, `proxy-chain`, `socks-proxy-agent`, `undici`, `zustand`.
 

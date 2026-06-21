@@ -34,6 +34,7 @@ function createWindow() {
     height: 900,
     minWidth: 1100,
     minHeight: 720,
+    icon: path.join(__dirname, "build", "icon.png"),
     backgroundColor: "#0a0e14",
     title: "Gestor Web",
     webPreferences: {

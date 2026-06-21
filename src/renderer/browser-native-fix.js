@@ -27,7 +27,7 @@ function decorateBrowser() {
   if (!browser.querySelector(".browser-brandbar")) {
     const brand = document.createElement("div");
     brand.className = "browser-brandbar";
-    brand.innerHTML = `<div class="browser-brand-left"><span class="brand-dot"></span><strong>Gestor Web</strong><small>v1.3.0</small><small class="mono">${state.license?.shortId || "70EEB97046D"}</small></div><div class="browser-brand-right"><small>IP</small><b>midnight</b><b class="save-pill"><i></i> modo ahorro activo</b></div>`;
+    brand.innerHTML = `<div class="browser-brand-left"><span class="brand-dot"></span><strong>Gestor Web</strong><small>v1.5.0</small><small class="mono">${state.license?.shortId || "70EEB97046D"}</small></div><div class="browser-brand-right"><small>IP</small><b>midnight</b><b class="save-pill"><i></i> modo ahorro activo</b></div>`;
     browser.prepend(brand);
   }
   const toolbar = browser.querySelector(".browser-toolbar");

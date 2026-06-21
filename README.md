@@ -1,4 +1,4 @@
-# Gestor Web Rebuild
+# Gestor Web
 
 Replica limpia creada desde los restos recuperados de `GESTOR-WEB`.
 
@@ -54,7 +54,7 @@ El instalador se genera en la carpeta `dist/`.
 
 - Activacion simulada por HWID/licencia.
 - Onboarding inicial.
-- Dashboard oscuro similar a Gestor Web v1.3.0.
+- Dashboard oscuro de Gestor Web v1.5.0.
 - Perfiles con fingerprint, privacidad, auth, notas, logs y macros.
 - Proxies aislados por perfil (HTTP, HTTPS, SOCKS4 y SOCKS5), con autenticacion, bulk import y health check HTTP sin depender de certificados.
 - Los perfiles con proxy aceptan certificados sustituidos por el proveedor; las conexiones directas conservan la validacion TLS normal.

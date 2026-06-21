@@ -76,7 +76,7 @@ function renderBrowser(signature) {
   return `
     <section class="gw-browser-shell" data-signature="${attr(signature)}">
       <div class="gw-browser-top">
-        <div class="gw-brand"><span></span><strong>Gestor Web</strong><small>v1.3.0</small><small class="mono">${esc(state.license?.shortId || "70EEB97046D")}</small></div>
+        <div class="gw-brand"><span></span><strong>Gestor Web</strong><small>v1.5.0</small><small class="mono">${esc(state.license?.shortId || "70EEB97046D")}</small></div>
         <div class="gw-status"><small>IP</small><b>midnight</b><b class="ok"><i></i> modo ahorro activo</b></div>
       </div>
       <div class="gw-tabs-line">

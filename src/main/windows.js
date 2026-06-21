@@ -328,6 +328,7 @@ async function openManagedProfileWindow(profile, proxy, startUrl, engineMode) {
     height,
     minWidth: 880,
     minHeight: 620,
+    icon: path.join(__dirname, "..", "..", "build", "icon.png"),
     frame: false,
     show: false,
     title: profile.name || "Gestor Browser",

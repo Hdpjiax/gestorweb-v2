@@ -315,12 +315,12 @@ function findGestorBrowser() {
     searchPaths.push(
       path.join(base, "gestor-browser", "GestorWeb.exe"),
       path.join(base, "gestor-browser", "Camoufox.exe"),
-      path.join(base, "Gestor Web-1.3.0-Setup", "resources", "gestor-browser", "GestorWeb.exe"),
-      path.join(base, "Gestor Web-1.3.0-Setup", "resources", "gestor-browser", "Camoufox.exe"),
+      path.join(base, "Gestor Web-1.5.0-Setup", "resources", "gestor-browser", "GestorWeb.exe"),
+      path.join(base, "Gestor Web-1.5.0-Setup", "resources", "gestor-browser", "Camoufox.exe"),
       path.join(__dirname, "..", "gestor-browser", "GestorWeb.exe"),
       path.join(__dirname, "..", "gestor-browser", "Camoufox.exe"),
-      path.join(__dirname, "..", "Gestor Web-1.3.0-Setup", "resources", "gestor-browser", "GestorWeb.exe"),
-      path.join(__dirname, "..", "Gestor Web-1.3.0-Setup", "resources", "gestor-browser", "Camoufox.exe")
+      path.join(__dirname, "..", "Gestor Web-1.5.0-Setup", "resources", "gestor-browser", "GestorWeb.exe"),
+      path.join(__dirname, "..", "Gestor Web-1.5.0-Setup", "resources", "gestor-browser", "Camoufox.exe")
     );
   }
   const found = searchPaths.find((p) => fs.existsSync(p));
