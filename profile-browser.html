@@ -42,15 +42,14 @@
     </div>
   </header>
   <main id="browserStage" class="browser-stage">
-    <div id="blankSurface" class="blank-surface">
-      <div class="blank-glow"></div>
-    </div>
+    <div id="blankSurface" class="blank-surface"></div>
     <div id="errorSurface" class="error-surface" hidden>
       <strong>No se pudo abrir esta página</strong>
       <span id="errorText"></span>
       <button id="retryButton" type="button">Reintentar</button>
     </div>
   </main>
+  <div id="cursorFollower" class="cursor-follower" aria-hidden="true"></div>
   <script src="profile-browser.js"></script>
 </body>
 </html>

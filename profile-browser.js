@@ -17,6 +17,7 @@ const reloadButton = document.getElementById("reloadButton");
 const securityIcon = document.getElementById("securityIcon");
 const routeBadge = document.getElementById("routeBadge");
 const engineLabel = document.getElementById("engineLabel");
+const cursorFollower = document.getElementById("cursorFollower");
 
 let webview = null;
 let currentUrl = "";
@@ -24,6 +25,19 @@ let currentUrl = "";
 document.title = `${profileName} — Gestor Browser`;
 engineLabel.textContent = engineMode === "camoufox" ? "Camoufox identity" : "Chromium identity";
 routeBadge.textContent = profileName;
+
+function moveCursorFollower(event) {
+  // clientX/clientY son las coordenadas exactas de la punta del cursor.
+  // El círculo empieza 4 px debajo y queda centrado horizontalmente en la punta.
+  cursorFollower.style.transform = `translate3d(${event.clientX - 8}px, ${event.clientY + 4}px, 0)`;
+  cursorFollower.style.opacity = "1";
+}
+
+document.addEventListener("mousemove", moveCursorFollower, true);
+document.addEventListener("mouseout", (event) => {
+  if (!event.relatedTarget || event.relatedTarget.tagName === "WEBVIEW") cursorFollower.style.opacity = "0";
+}, true);
+window.addEventListener("blur", () => { cursorFollower.style.opacity = "0"; });
 
 function searchUrl(query) {
   return `https://duckduckgo.com/?q=${encodeURIComponent(query)}`;
@@ -73,6 +87,8 @@ function showBlank() {
 }
 
 function bindWebview(view) {
+  view.addEventListener("mouseenter", () => { cursorFollower.style.opacity = "0"; });
+  view.addEventListener("dom-ready", syncWebviewBounds);
   view.addEventListener("did-start-loading", () => {
     reloadButton.classList.add("loading");
     errorSurface.hidden = true;
@@ -104,6 +120,18 @@ function bindWebview(view) {
   });
 }
 
+function syncWebviewBounds() {
+  if (!webview) return;
+  const width = Math.max(1, stage.clientWidth);
+  const height = Math.max(1, stage.clientHeight);
+  webview.style.width = `${width}px`;
+  webview.style.height = `${height}px`;
+}
+
+const stageResizeObserver = new ResizeObserver(syncWebviewBounds);
+stageResizeObserver.observe(stage);
+window.addEventListener("resize", syncWebviewBounds);
+
 function ensureWebview(url) {
   if (webview) return webview;
   webview = document.createElement("webview");
@@ -111,8 +139,10 @@ function ensureWebview(url) {
   webview.setAttribute("allowpopups", "true");
   if (userAgent) webview.setAttribute("useragent", userAgent);
   bindWebview(webview);
-  webview.src = url;
   stage.appendChild(webview);
+  syncWebviewBounds();
+  webview.src = url;
+  requestAnimationFrame(syncWebviewBounds);
   return webview;
 }
 

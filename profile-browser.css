@@ -208,21 +208,30 @@ button { color: inherit; }
   background: #1b1a21;
 }
 
-.blank-glow {
-  width: 30px;
-  height: 30px;
-  border: 6px solid rgba(220, 91, 91, .18);
+.cursor-follower {
+  position: fixed;
+  z-index: 2147483647;
+  top: 0;
+  left: 0;
+  width: 16px;
+  height: 16px;
   border-radius: 50%;
-  background: #df6464;
-  box-shadow: 0 0 0 5px rgba(223, 100, 100, .14), inset 0 0 10px rgba(255,255,255,.25);
-  opacity: .78;
+  background: #ef4444;
+  box-shadow: 0 0 0 4px rgba(239, 68, 68, .24), 0 2px 8px rgba(0, 0, 0, .5);
+  opacity: 0;
+  pointer-events: none;
+  will-change: transform;
+  transition: opacity 80ms linear;
 }
 
 .browser-stage webview {
   position: absolute;
   inset: 0;
+  display: flex;
   width: 100%;
   height: 100%;
+  min-width: 100%;
+  min-height: 100%;
   border: 0;
   background: #fff;
 }

@@ -316,6 +316,11 @@ test('perfil sin URL abre el navegador controlado en una pestaÃ±a realmente vacÃ
   await expect(profileWindow.locator('#addressInput')).toHaveValue('');
   await expect(profileWindow.locator('#blankSurface')).toBeVisible();
   await expect(profileWindow.locator('webview')).toHaveCount(0);
+  await profileWindow.mouse.move(240, 180);
+  await expect.poll(() => profileWindow.locator('#cursorFollower').evaluate((element) => ({
+    opacity: element.style.opacity,
+    transform: element.style.transform
+  }))).toEqual({ opacity: '1', transform: 'translate3d(232px, 184px, 0px)' });
 
   expect((await ipc('profiles:isWindowOpen', profile.id)).open).toBe(true);
   await ipc('profiles:closeWindow', profile.id);
@@ -354,12 +359,27 @@ test('perfil con URL abre la URL y conserva la identidad Chromium seleccionada',
     await profileWindow.waitForLoadState('domcontentloaded');
     await expect(profileWindow.locator('#engineLabel')).toHaveText('Chromium identity');
     await expect(profileWindow.locator('webview')).toHaveCount(1);
+    await expect.poll(() => profileWindow.locator('webview').evaluate((element) => {
+      const height = element.getBoundingClientRect().height;
+      const stageHeight = element.parentElement.getBoundingClientRect().height;
+      return height === stageHeight && stageHeight > 600;
+    })).toBe(true);
 
     await expect.poll(() => electronApp.evaluate(async ({ webContents }, expectedUrl) => {
       const guest = webContents.getAllWebContents().find((item) => item.getURL() === expectedUrl);
       if (!guest) return null;
       return guest.executeJavaScript('({ userAgent: navigator.userAgent, vendor: navigator.vendor, title: document.title })');
     }, url)).toEqual({ userAgent: profile.fingerprint.userAgent, vendor: 'Google Inc.', title: 'Perfil listo' });
+
+    await expect.poll(() => electronApp.evaluate(async ({ webContents }, expectedUrl) => {
+      const guest = webContents.getAllWebContents().find((item) => item.getURL() === expectedUrl);
+      if (!guest) return null;
+      return guest.executeJavaScript(`(() => {
+        document.dispatchEvent(new MouseEvent('mousemove', { clientX: 321, clientY: 123, bubbles: true }));
+        const pointer = document.getElementById('gw-cursor-follower');
+        return pointer && { opacity: pointer.style.opacity, transform: pointer.style.transform };
+      })()`);
+    }, url)).toEqual({ opacity: '1', transform: 'translate3d(313px, 127px, 0px)' });
   } finally {
     await ipc('profiles:closeWindow', profile.id);
     await new Promise((resolve) => server.close(resolve));

@@ -14,16 +14,28 @@ module.exports = async function profileBrowserTests() {
   const actions = read("src/renderer/actions.js");
   const modal = read("src/renderer/views/new-profile-modal-view.js");
   const fingerprint = read("src/renderer/fingerprint.js");
+  const mainUtils = read("src/main/utils.js");
 
   assert.match(html, /id="tabTitle"/);
   assert.match(html, /id="addressInput"/);
   assert.match(html, /id="blankSurface"/);
+  assert.match(html, /id="cursorFollower"/);
+  assert.doesNotMatch(html, /blank-glow/);
   assert.match(css, /\.blank-surface/);
+  assert.match(css, /\.cursor-follower/);
   assert.match(css, /-webkit-app-region: drag/);
   assert.match(browser, /if \(startUrl\) navigate\(startUrl\);\s*else showBlank\(\);/);
   assert.match(browser, /duckduckgo\.com\/\?q=/);
   assert.match(browser, /canGoBack/);
   assert.match(browser, /canGoForward/);
+  assert.match(browser, /event\.clientX - 8/);
+  assert.match(browser, /event\.clientY \+ 4/);
+  assert.match(browser, /new ResizeObserver\(syncWebviewBounds\)/);
+  assert.match(browser, /webview\.style\.height = `\$\{height\}px`/);
+  assert.match(mainUtils, /gw-cursor-follower/);
+  assert.match(mainUtils, /event\.clientX - 8/);
+  assert.match(mainUtils, /event\.clientY \+ 4/);
+  assert.doesNotMatch(mainUtils, /document\.body\.style\.cursor\s*=\s*['"]none/);
 
   assert.match(windows, /openManagedProfileWindow/);
   assert.match(windows, /profile-browser\.html/);

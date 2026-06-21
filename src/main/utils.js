@@ -279,6 +279,27 @@ function writeFingerprintPreload(profile) {
       }
     } catch {}
   }
+  function installCursorFollower() {
+    const attach = () => {
+      if (!document.documentElement || document.getElementById('gw-cursor-follower')) return;
+      const pointer = document.createElement('div');
+      pointer.id = 'gw-cursor-follower';
+      pointer.setAttribute('aria-hidden', 'true');
+      pointer.style.cssText = 'position:fixed!important;z-index:2147483647!important;top:0!important;left:0!important;width:16px!important;height:16px!important;border-radius:50%!important;background:#ef4444!important;box-shadow:0 0 0 4px rgba(239,68,68,.24),0 2px 8px rgba(0,0,0,.5)!important;opacity:0;pointer-events:none!important;will-change:transform!important;transition:opacity 80ms linear!important;';
+      document.documentElement.appendChild(pointer);
+      document.addEventListener('mousemove', (event) => {
+        pointer.style.setProperty('transform', 'translate3d(' + (event.clientX - 8) + 'px,' + (event.clientY + 4) + 'px,0)', 'important');
+        pointer.style.setProperty('opacity', '1', 'important');
+      }, true);
+      document.addEventListener('mouseout', (event) => {
+        if (!event.relatedTarget) pointer.style.setProperty('opacity', '0', 'important');
+      }, true);
+      window.addEventListener('blur', () => pointer.style.setProperty('opacity', '0', 'important'));
+    };
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', attach, { once: true });
+    else attach();
+  }
+  installCursorFollower();
 })();`;
 
   fs.writeFileSync(file, code, "utf8");
