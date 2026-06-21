@@ -1,0 +1,17 @@
+{
+  "name": "gestor-web-license-server",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Servidor de licencias online para Gestor Web, sin dependencias externas.",
+  "main": "server.js",
+  "scripts": {
+    "keys": "node generate-keys.js",
+    "start": "node server.js",
+    "issue": "node issue-license.js",
+    "revoke": "node revoke-license.js"
+  },
+  "license": "UNLICENSED",
+  "engines": {
+    "node": ">=18"
+  }
+}
