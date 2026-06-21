@@ -6,7 +6,9 @@
   "main": "server.js",
   "scripts": {
     "keys": "node generate-keys.js",
-    "start": "node server.js"
+    "start": "node server.js",
+    "issue": "node issue-license.js",
+    "revoke": "node revoke-license.js"
   },
   "license": "UNLICENSED",
   "engines": {
