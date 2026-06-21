@@ -2,13 +2,15 @@
   "name": "gestor-web-license-server",
   "version": "1.0.0",
   "private": true,
-  "description": "Servidor de licencias online para Gestor Web Windows y Android.",
+  "description": "Herramientas de licencias online para Gestor Web Windows y Android.",
   "main": "server.js",
   "scripts": {
     "keys": "node generate-keys.js",
     "start": "node server.js",
     "issue": "node issue-license.js",
-    "revoke": "node revoke-license.js"
+    "revoke": "node revoke-license.js",
+    "issue:supabase": "node supabase-issue-license.js",
+    "revoke:supabase": "node supabase-revoke-license.js"
   },
   "license": "UNLICENSED",
   "engines": {
