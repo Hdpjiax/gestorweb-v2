@@ -1,4 +1,4 @@
-const { ipcMain, shell, dialog, net: electronNet, app } = require("electron");
+const { ipcMain, shell, dialog, net: electronNet, app, BrowserWindow } = require("electron");
 const crypto = require("crypto");
 const fs = require("fs");
 
@@ -219,6 +219,14 @@ function registerIpc(mainWindowRef) {
     };
   });
   ipcMain.handle("app:healthcheck", () => ({ ok: true, electron: process.versions.electron, chrome: process.versions.chrome }));
+  ipcMain.handle("profile-browser:window-action", (event, action) => {
+    const win = BrowserWindow.fromWebContents(event.sender);
+    if (!win || win.isDestroyed()) return { ok: false };
+    if (action === "minimize") win.minimize();
+    if (action === "maximize") win.isMaximized() ? win.unmaximize() : win.maximize();
+    if (action === "close") win.close();
+    return { ok: true, maximized: win.isMaximized() };
+  });
   ipcMain.handle("app:openExternal", async (_event, url) => {
     const safeUrl = safeExternalUrl(url);
     if (!safeUrl) return { ok: false, error: "invalid_url" };
@@ -304,13 +312,22 @@ function registerIpc(mainWindowRef) {
     try { return JSON.parse(result.body); } catch { return { ip: null, raw: result.body }; }
   });
 
-  // ── Perfiles / ventanas ─────────────────────────────────────────────────────
-  ipcMain.handle("profiles:openWindow", (_event, profile, proxy, url) => {
-    const sanitized = sanitizeProfile(profile);
-    // Resolver proxy automáticamente desde proxy_id si el renderer no pasó uno
-    const resolvedProxy = resolveProxyForProfile(sanitized, proxy);
-    return openProfileWindow(sanitized, resolvedProxy, safeProfileUrl(url));
-  });
+   // ── Perfiles / ventanas ─────────────────────────────────────────────────────
+   ipcMain.handle("profiles:openWindow", async (_event, profile, proxy, url) => {
+     console.log(`[ipc] profiles:openWindow called with profile: ${profile?.id}, proxy: ${proxy ? JSON.stringify(proxy) : 'null'}, url: ${url}`);
+     try {
+       const sanitized = sanitizeProfile(profile);
+       // Resolver proxy automáticamente desde proxy_id si el renderer no pasó uno
+       const resolvedProxy = resolveProxyForProfile(sanitized, proxy);
+       console.log(`[ipc] resolvedProxy: ${resolvedProxy ? JSON.stringify(resolvedProxy) : 'null'}`);
+       const result = await openProfileWindow(sanitized, resolvedProxy, safeProfileUrl(url));
+       console.log(`[ipc] openProfileWindow result: ${JSON.stringify(result)}`);
+       return result;
+     } catch (error) {
+       console.error(`[ipc] Error in profiles:openWindow:`, error);
+       throw error;
+     }
+   });
   ipcMain.handle("profiles:closeWindow", async (_event, profileId) => {
     const id = assertProfileId(profileId);
     const state = loadAppState();

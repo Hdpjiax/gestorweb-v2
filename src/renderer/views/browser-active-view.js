@@ -9,7 +9,7 @@ export function renderBrowserActive(tab) {
     const userAgent = profile?.fingerprint?.userAgent || firefoxUserAgent();
     return `
       <div class="webview-shell">
-        <webview class="webview-frame" data-tab-id="${tab.id}" src="${attr(tab.url)}" partition="persist:gw-${attr(tab.profileId)}" useragent="${attr(userAgent)}" allowpopups></webview>
+        <webview class="webview-frame" data-tab-id="${tab.id}" src="${attr(tab.url || "about:blank")}" partition="persist:gw-${attr(tab.profileId)}" useragent="${attr(userAgent)}" allowpopups></webview>
       </div>
     `;
   }

@@ -160,8 +160,16 @@ function camouConfig(profile, proxy) {
 }
 
 // ─── Chromium window ───────────────────────────────────────────────────────────
-async function openChromiumWindow(profile, proxy, startUrl) {
-  const prepared = await prepareSession(profile, proxy);
+async function openChromiumWindowLegacy(profile, proxy, startUrl) {
+  console.log(`[windows] openChromiumWindow called with profile: ${profile?.id}, proxy: ${proxy ? JSON.stringify(proxy) : 'null'}, startUrl: ${startUrl}`);
+  try {
+    console.log(`[windows] Calling prepareSession`);
+    const prepared = await prepareSession(profile, proxy);
+    console.log(`[windows] prepareSession completed, prepared: ${JSON.stringify(prepared)}`);
+  } catch (prepareError) {
+    console.error(`[windows] Error in prepareSession:`, prepareError);
+    throw prepareError;
+  }
 
   const fp = profile.fingerprint || {};
   const width = fp.resolution?.width || 1280;
@@ -180,24 +188,33 @@ async function openChromiumWindow(profile, proxy, startUrl) {
     }
   });
 
-  const item = { type: "electron", win, routeKey: prepared.routeKey, startUrl };
   win.on("closed", () => {
-    if (profileWindows.get(profile.id) === item) {
+    if (profileWindows.get(profile.id) === win) {
       profileWindows.delete(profile.id);
       profileProxyRuntime.closeProfile(profile.id).catch(() => {});
       notifyProfileClosed(profile.id);
     }
   });
 
-  profileWindows.set(profile.id, item);
+  profileWindows.set(profile.id, win);
 
   const RETRIABLE = new Set([-3, -202]);
   try {
+    console.log(`[windows] Loading URL: ${startUrl}`);
     await win.loadURL(startUrl);
+    console.log(`[windows] URL loaded successfully`);
   } catch (err) {
+    console.error(`[windows] Error loading URL:`, err);
     if (RETRIABLE.has(err?.errno)) {
+      console.log(`[windows] Retriable error, retrying after 800ms`);
       await new Promise((r) => setTimeout(r, 800));
-      try { await win.loadURL(startUrl); } catch { /* silencioso */ }
+      try {
+        await win.loadURL(startUrl);
+        console.log(`[windows] URL loaded successfully on retry`);
+      } catch (retryError) {
+        console.error(`[windows] Error loading URL on retry:`, retryError);
+        throw retryError;
+      }
     } else {
       throw err;
     }
@@ -207,37 +224,134 @@ async function openChromiumWindow(profile, proxy, startUrl) {
 }
 
 // ─── Firefox window ────────────────────────────────────────────────────────────
-async function openFirefoxWindow(profile, proxy, startUrl) {
-  const browserPath = findGestorBrowser();
-  if (!browserPath) return openChromiumWindow(profile, proxy, startUrl);
-  const prepared = await profileProxyRuntime.ensure(profile.id, proxy, !!profile.tor_mode);
-  const browserProxy = prepared.localPort
-    ? { scheme: "http", host: "127.0.0.1", port: prepared.localPort }
-    : null;
-  const dir = writeFirefoxProfilePrefs(profile, browserProxy);
-  const env = {
-    ...process.env,
-    MOZ_NO_REMOTE: "1",
-    CAMOU_CONFIG_1: JSON.stringify(camouConfig(profile, browserProxy))
-  };
-  if (browserProxy) env.GW_PROXY = `http://127.0.0.1:${prepared.localPort}`;
-  const args = ["-no-remote", "-profile", dir, startUrl];
-  const child = spawn(browserPath, args, { cwd: path.dirname(browserPath), env, detached: false, stdio: "ignore" });
-  const item = { type: "firefox", child, routeKey: prepared.routeKey, startUrl };
-  child.on("exit", () => {
-    if (profileWindows.get(profile.id) === item) {
-      profileWindows.delete(profile.id);
-      profileProxyRuntime.closeProfile(profile.id).catch(() => {});
-      notifyProfileClosed(profile.id);
+async function openFirefoxWindowLegacy(profile, proxy, startUrl) {
+  console.log(`[windows] openFirefoxWindow called with profile: ${profile?.id}, proxy: ${proxy ? JSON.stringify(proxy) : 'null'}, startUrl: ${startUrl}`);
+  try {
+    const browserPath = findGestorBrowser();
+    console.log(`[windows] browserPath: ${browserPath}`);
+    if (!browserPath) {
+      console.log(`[windows] Browser not found, falling back to openChromiumWindow`);
+      return openChromiumWindowLegacy(profile, proxy, startUrl);
+    }
+    console.log(`[windows] Calling profileProxyRuntime.ensure`);
+    const prepared = await profileProxyRuntime.ensure(profile.id, proxy, !!profile.tor_mode);
+    console.log(`[windows] profileProxyRuntime.ensure completed, prepared: ${JSON.stringify(prepared)}`);
+    const browserProxy = prepared.localPort
+      ? { scheme: "http", host: "127.0.0.1", port: prepared.localPort }
+      : null;
+    console.log(`[windows] browserProxy: ${browserProxy ? JSON.stringify(browserProxy) : 'null'}`);
+    const dir = writeFirefoxProfilePrefs(profile, browserProxy);
+    console.log(`[windows] Firefox profile dir: ${dir}`);
+    const env = {
+      ...process.env,
+      MOZ_NO_REMOTE: "1",
+      CAMOU_CONFIG_1: JSON.stringify(camouConfig(profile, browserProxy))
+    };
+    if (browserProxy) env.GW_PROXY = `http://127.0.0.1:${prepared.localPort}`;
+    console.log(`[windows] Env GW_PROXY: ${env.GW_PROXY}`);
+    const args = ["-no-remote", "-profile", dir, startUrl];
+    console.log(`[windows] Spawning browser with args: ${args}`);
+    const child = spawn(browserPath, args, { cwd: path.dirname(browserPath), env, detached: false, stdio: "ignore" });
+    const item = { type: "firefox", child, routeKey: prepared.routeKey, startUrl };
+    child.on("exit", () => {
+      if (profileWindows.get(profile.id) === item) {
+        profileWindows.delete(profile.id);
+        profileProxyRuntime.closeProfile(profile.id).catch(() => {});
+        notifyProfileClosed(profile.id);
+      }
+    });
+    profileWindows.set(profile.id, item);
+    console.log(`[windows] Firefox window started successfully, pid: ${child.pid}`);
+    return { ok: true, mode: "firefox", pid: child.pid, id: profile.id, browserPath };
+  } catch (error) {
+    console.error(`[windows] Error in openFirefoxWindow:`, error);
+    throw error;
+  }
+}
+
+// Ventana controlada común para ambos modos. Camoufox/Firefox y Chromium
+// comparten así la misma sesión, proxy, certificados y shell de navegación.
+async function openManagedProfileWindow(profile, proxy, startUrl, engineMode) {
+  const prepared = await prepareSession(profile, proxy);
+  const fp = profile.fingerprint || {};
+  const requestedWidth = Number(fp.resolution?.width) || 1440;
+  const requestedHeight = Number(fp.resolution?.height) || 900;
+  const width = Math.max(980, Math.min(1920, requestedWidth));
+  const height = Math.max(700, Math.min(1080, requestedHeight));
+  const partition = partitionFor(profile.id);
+
+  const win = new BrowserWindow({
+    width,
+    height,
+    minWidth: 880,
+    minHeight: 620,
+    frame: false,
+    show: false,
+    title: profile.name || "Gestor Browser",
+    backgroundColor: "#1b1a21",
+    webPreferences: {
+      partition,
+      preload: path.join(__dirname, "..", "..", "profile-browser-preload.js"),
+      contextIsolation: true,
+      nodeIntegration: false,
+      sandbox: true,
+      webSecurity: true,
+      allowRunningInsecureContent: false,
+      webviewTag: true,
+      devTools: false
     }
   });
+
+  win.webContents.on("will-attach-webview", (_event, webPreferences) => {
+    webPreferences.partition = partition;
+    webPreferences.contextIsolation = true;
+    webPreferences.nodeIntegration = false;
+    webPreferences.sandbox = true;
+    webPreferences.devTools = false;
+  });
+
+  const item = {
+    type: "electron",
+    win,
+    routeKey: prepared.routeKey,
+    startUrl: startUrl || "",
+    engineMode
+  };
+
+  win.on("closed", () => {
+    if (profileWindows.get(profile.id) !== item) return;
+    profileWindows.delete(profile.id);
+    profileProxyRuntime.closeProfile(profile.id).catch(() => {});
+    notifyProfileClosed(profile.id);
+  });
+
   profileWindows.set(profile.id, item);
-  return { ok: true, mode: "firefox", pid: child.pid, id: profile.id, browserPath };
+  await win.loadFile(path.join(__dirname, "..", "..", "profile-browser.html"), {
+    query: {
+      profileId: String(profile.id),
+      profileName: profile.name || "Perfil",
+      partition,
+      startUrl: startUrl || "",
+      userAgent: fp.userAgent || "",
+      engineMode
+    }
+  });
+  win.show();
+  return { ok: true, mode: engineMode, id: profile.id };
+}
+
+function openChromiumWindow(profile, proxy, startUrl) {
+  return openManagedProfileWindow(profile, proxy, startUrl, "chromium");
+}
+
+function openFirefoxWindow(profile, proxy, startUrl) {
+  return openManagedProfileWindow(profile, proxy, startUrl, "camoufox");
 }
 
 // ─── Dispatcher ────────────────────────────────────────────────────────────────
 async function openProfileWindow(profile, proxy, startUrl) {
   if (!profile?.id) return { ok: false, error: "missing profile" };
+  console.log(`[windows] openProfileWindow called with profile: ${profile?.id}, proxy: ${proxy ? JSON.stringify(proxy) : 'null'}, startUrl: ${startUrl}`);
   const existing = profileWindows.get(profile.id);
   const desiredRouteKey = profile.tor_mode
     ? proxyRouteKey({ scheme: "socks5", host: "127.0.0.1", port: 9050 })
@@ -245,21 +359,27 @@ async function openProfileWindow(profile, proxy, startUrl) {
   if (existing) {
     if (existing.routeKey !== desiredRouteKey) {
       if (existing.type === "electron") {
+        console.log(`[windows] Existing electron window, preparing session with new proxy`);
         const prepared = await prepareSession(profile, proxy);
         existing.routeKey = prepared.routeKey;
         existing.win.webContents.reload();
         focusProfileWindow(profile.id);
         return { ok: true, reused: true, updatedProxy: true, mode: existing.type };
       }
+      console.log(`[windows] Existing non-electron window, updating profile proxy`);
       return updateProfileProxy(profile, proxy);
     }
+    console.log(`[windows] Existing window with same route key, focusing`);
     focusProfileWindow(profile.id);
     return { ok: true, reused: true, mode: existing.type };
   }
-  const url = startUrl || profile.url || (profile.tor_mode ? "https://check.torproject.org/" : "https://duckduckgo.com/");
-  return profile.gw_engine !== false
-    ? openFirefoxWindow(profile, proxy, url)
-    : openChromiumWindow(profile, proxy, url);
+  const url = startUrl || profile.url || "";
+  console.log(`[windows] Creating new window. Using url: ${url}, gw_engine: ${profile.gw_engine}`);
+  const result = profile.gw_engine !== false
+    ? await openFirefoxWindow(profile, proxy, url)
+    : await openChromiumWindow(profile, proxy, url);
+  console.log(`[windows] openProfileWindow result: ${JSON.stringify(result)}`);
+  return result;
 }
 
 function closeProfileWindow(profileId) {
@@ -379,16 +499,12 @@ async function updateProfileProxy(profile, proxy) {
   const prepared = await prepareSession(profile, proxy);
   const item = profileWindows.get(profile.id);
   if (!item) return { ...prepared, windowUpdated: false };
-  if (item.type === "electron") {
-    item.routeKey = prepared.routeKey;
+  item.routeKey = prepared.routeKey;
+  if (item.type === "electron" && !item.win.isDestroyed()) {
     item.win.webContents.reload();
     return { ...prepared, windowUpdated: true, restarted: false };
   }
-  const url = item.startUrl || profile.url || "https://duckduckgo.com/";
-  profileWindows.delete(profile.id);
-  if (item.child && !item.child.killed) item.child.kill();
-  const reopened = await openFirefoxWindow(profile, proxy, url);
-  return { ...prepared, ...reopened, windowUpdated: true, restarted: true };
+  return { ...prepared, windowUpdated: false, restarted: false };
 }
 
 module.exports = {

@@ -295,32 +295,68 @@ class ProfileProxyBridge {
     return this.port;
   }
 
-  async handle(client) {
-    client.setTimeout(DEFAULT_TIMEOUT_MS, () => client.destroy());
-    const reader = createSocketReader(client);
-    try {
-      const headerBuffer = await reader.until(Buffer.from("\r\n\r\n"));
-      const header = headerBuffer.toString("latin1");
-      const [requestLine] = header.split("\r\n");
-      const [method, destination, version = "HTTP/1.1"] = requestLine.split(" ");
-      if (!method || !destination) throw new Error("peticion de proxy invalida");
+async handle(client) {
+  // Set up overall timeout for the entire handle operation
+  const handleTimeout = setTimeout(() => {
+    if (!client.destroyed) {
+      client.end(`HTTP/1.1 504 Gateway Timeout\r\nContent-Type: text/plain; charset=utf-8\r\nConnection: close\r\n\r\nGateway timeout`);
+    }
+  }, DEFAULT_TIMEOUT_MS * 2); // 2x the normal timeout for overall operation
 
-      if (method.toUpperCase() === "CONNECT") {
-        const target = parseAuthority(destination, 443);
-        const upstream = await connectThroughProxy(this.proxy, target.host, target.port);
-        reader.release();
-        client.setTimeout(0);
-        client.write(`${version} 200 Connection Established\r\nProxy-Agent: Gestor-Web\r\n\r\n`);
-        upstream.on("error", () => client.destroy());
-        client.on("error", () => upstream.destroy());
-        client.pipe(upstream).pipe(client);
-        return;
+  // Set client timeout
+  client.setTimeout(DEFAULT_TIMEOUT_MS, () => {
+    if (!client.destroyed) {
+      client.end(`HTTP/1.1 408 Request Timeout\r\nContent-Type: text/plain; charset=utf-8\r\nConnection: close\r\n\r\nRequest timeout`);
+    }
+  });
+
+  const reader = createSocketReader(client);
+  try {
+    const headerBuffer = await reader.until(Buffer.from("\r\n\r\n"));
+    const header = headerBuffer.toString("latin1");
+    const [requestLine] = header.split("\r\n");
+    const [method, destination, version = "HTTP/1.1"] = requestLine.split(" ");
+    if (!method || !destination) throw new Error("peticion de proxy invalida");
+
+    if (method.toUpperCase() === "CONNECT") {
+      const target = parseAuthority(destination, 443);
+      let upstream;
+      try {
+        upstream = await connectThroughProxy(this.proxy, target.host, target.port);
+      } catch (connectError) {
+        throw new Error(`Failed to connect to upstream proxy: ${connectError.message}`);
       }
 
-      const url = new URL(destination);
-      const targetPort = Number(url.port || (url.protocol === "https:" ? 443 : 80));
-      let upstream;
-      let outboundHeader;
+      reader.release();
+      client.setTimeout(0);
+      try {
+        client.write(`${version} 200 Connection Established\r\nProxy-Agent: Gestor-Web\r\n\r\n`);
+      } catch (writeError) {
+        // If we can't write the response, destroy the client
+        if (!client.destroyed) client.destroy();
+        throw writeError;
+      }
+
+      // Set up error handling for the pipes
+      upstream.on("error", () => {
+        if (!client.destroyed) client.destroy();
+      });
+      client.on("error", () => {
+        if (!upstream.destroyed) upstream.destroy();
+      });
+
+      // Pipe the tunnels
+      client.pipe(upstream).pipe(client);
+      return;
+    }
+
+    // Handle regular HTTP/HTTPS requests
+    const url = new URL(destination);
+    const targetPort = Number(url.port || (url.protocol === "https:" ? 443 : 80));
+    let upstream;
+    let outboundHeader;
+
+    try {
       if (this.proxy.scheme === "http" || this.proxy.scheme === "https") {
         upstream = await connectProxyTransport(this.proxy);
         const auth = basicProxyAuthorization(this.proxy);
@@ -330,19 +366,64 @@ class ProfileProxyBridge {
         const path = `${url.pathname || "/"}${url.search || ""}`;
         outboundHeader = rewriteHeaders(header, `${method} ${path} ${version}`);
       }
-      reader.release();
-      client.setTimeout(0);
-      upstream.write(outboundHeader, "latin1");
-      upstream.on("error", () => client.destroy());
-      client.on("error", () => upstream.destroy());
-      client.pipe(upstream).pipe(client);
-    } catch (error) {
-      try { reader.release(); } catch {}
-      if (!client.destroyed) {
-        client.end(`HTTP/1.1 502 Bad Gateway\r\nContent-Type: text/plain; charset=utf-8\r\nConnection: close\r\n\r\n${error.message}`);
-      }
+    } catch (connectError) {
+      throw new Error(`Failed to connect to upstream proxy: ${connectError.message}`);
     }
+
+    reader.release();
+    client.setTimeout(0);
+
+    try {
+      upstream.write(outboundHeader, "latin1");
+    } catch (writeError) {
+      // If we can't write to upstream, clean up and throw
+      try { upstream.destroy(); } catch {}
+      if (!client.destroyed) client.end(`HTTP/1.1 502 Bad Gateway\r\nContent-Type: text/plain; charset=utf-8\r\nConnection: close\r\n\r\nFailed to write request to upstream proxy`);
+      throw writeError;
+    }
+
+    // Set up error handling for the pipes
+    upstream.on("error", () => {
+      if (!client.destroyed) client.destroy();
+    });
+    client.on("error", () => {
+      if (!upstream.destroyed) upstream.destroy();
+    });
+
+    // Pipe the response from upstream to client, and client request to upstream
+    client.pipe(upstream).pipe(client);
+  } catch (error) {
+    // Clear the overall timeout
+    clearTimeout(handleTimeout);
+
+    // Ensure we always send a response to the client
+    try { reader.release(); } catch {}
+    if (!client.destroyed) {
+      // Determine appropriate status code
+      let statusCode = 502;
+      let statusMessage = "Bad Gateway";
+      if (error.message.includes("timeout")) {
+        statusCode = 408;
+        statusMessage = "Request Timeout";
+      } else if (error.message.includes("failed to connect") || error.message.includes("connect")) {
+        statusCode = 502;
+        statusMessage = "Bad Gateway";
+      } else if (error.message.includes("invalid request")) {
+        statusCode = 400;
+        statusMessage = "Bad Request";
+      }
+
+      client.end(`HTTP/1.1 ${statusCode} ${statusMessage}\r\nContent-Type: text/plain; charset=utf-8\r\nConnection: close\r\n\r\n${error.message}`);
+    }
+
+    // Ensure sockets are cleaned up
+    try { if (reader) reader.release(); } catch {}
+    try { if (!client.destroyed) client.destroy(); } catch {}
+  } finally {
+    // Clear the overall timeout if we haven't already
+    clearTimeout(handleTimeout);
   }
+}
 
   async close() {
     for (const socket of this.sockets) socket.destroy();

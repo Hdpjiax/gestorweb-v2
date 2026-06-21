@@ -2,7 +2,7 @@ import { uid, shortId, clone } from "./helpers.js";
 import { state, ui, update, rerender, render, save, liveSet, native, root, setState, normalize, defaults } from "./state.js";
 import { profileById, proxyById, filteredProfiles, logEvent, normalizeUrl, safeHost, pLabel, activeWebview, updateBrowserTab, bindInput } from "./utils.js";
 import { templates, ICONS } from "./icons.js";
-import { makeFingerprint, forceFirefoxFingerprint, presetValues } from "./fingerprint.js";
+import { makeFingerprint, presetValues } from "./fingerprint.js";
 import { normalizeProxy, parseProxyBulk, proxyKey } from "./proxy-parser.js";
 
 export function bind() {
@@ -52,8 +52,8 @@ function bindModalSubtitles() {
       anonymous: "tracker-block · strip-utm · no-clienthints · no-referrer · DoH · spoof-extremo · memoria · auto-wipe · TOR en 127.0.0.1:9050"
     },
     engine: {
-      "Firefox / Camoufox (indetectable)": "spoofing a nivel de motor estilo Dolphin, maxima indetectabilidad, recomendado para pagos",
-      "Chromium (compatibilidad)": "motor clasico con spoof por JS — canvas/audio noise real aplicado via preload"
+      "Firefox / Camoufox (indetectable)": "identidad Firefox / Camoufox aplicada a la sesion aislada del perfil",
+      "Chromium (compatibilidad)": "identidad Chromium aplicada a la sesion aislada del perfil"
     },
     mode: {
       normal: "spoofs agresivos ON · maximo anti-fingerprint · captchas duros pueden fallar",
@@ -82,6 +82,24 @@ function bindModalSubtitles() {
     if (e.target.name === "privacy") updatePrivacySubtitle();
     if (e.target.name === "engine") updateEngineSubtitle();
     if (e.target.name === "mode") updateModeSubtitle();
+    if (e.target.name === "template_id") {
+      ui.profileTemplateId = e.target.value;
+      const template = templates.find((item) => item.id === e.target.value);
+      if (!template) return;
+      const resolution = modal.querySelector('[name="resolution"]');
+      const timezone = modal.querySelector('[name="timezone"]');
+      const locale = modal.querySelector('[name="locale"]');
+      if (resolution) {
+        const option = [...resolution.options].find((item) => item.value.startsWith(`${template.width}x${template.height}`));
+        if (option) resolution.value = option.value;
+      }
+      if (timezone) timezone.value = template.timezone;
+      if (locale) locale.value = template.locale;
+      const engineValue = template.browser.includes("Firefox") ? "Firefox / Camoufox (indetectable)" : "Chromium (compatibilidad)";
+      const engine = [...modal.querySelectorAll('input[name="engine"]')].find((item) => item.value === engineValue);
+      if (engine) engine.checked = true;
+      updateEngineSubtitle();
+    }
   });
 }
 
@@ -112,7 +130,7 @@ function handleClick(event) {
     "copy-hwid": () => navigator.clipboard?.writeText(target.dataset.hwid),
     "import-license": () => alert("Importador .gw pendiente. Pega la licencia en el textarea para activar esta replica."),
     "set-view": () => update((s) => { s.view = target.dataset.view; }),
-    "new-profile": () => { ui.newProfile = true; ui.profileAdvanced = false; rerender(); },
+    "new-profile": () => { ui.newProfile = true; ui.profileAdvanced = false; ui.profileTemplateId = "win_firefox_mx"; rerender(); },
     "close-modal": () => { ui.newProfile = false; rerender(); },
     "toggle-profile-advanced": () => { ui.profileAdvanced = !ui.profileAdvanced; rerender(); },
     "select-profile": () => update((s) => { s.selectedId = id; }),
@@ -212,6 +230,7 @@ function createProfile(event) {
     url: normalizeUrl(String(data.get("url") || "").trim()),
     group_tag: String(data.get("group_tag") || "").trim() || null,
     proxy_id: data.get("proxy_id") || null,
+    template_id: template.id,
     privacy_preset: privacy,
     gw_engine: data.get("engine") !== "Chromium (compatibilidad)",
     compat_mode: data.get("mode") === "compatibilidad",
@@ -244,7 +263,6 @@ function createProfile(event) {
 async function openProfile(id, options = {}) {
   const profile = profileById(id);
   if (!profile) return;
-  if (profile.gw_engine) forceFirefoxFingerprint(profile);
   const proxy = profile.proxy_id ? proxyById(profile.proxy_id) : null;
 
   if (options.openWindow && native?.profiles?.openWindow) {
@@ -273,7 +291,7 @@ async function openProfile(id, options = {}) {
       p.warmup = Math.max(p.warmup || 0, Math.floor(20 + Math.random() * 35));
     }
     if (options.createTab && p) {
-      const startUrl = p.url || (p.tor_mode ? "https://check.torproject.org/" : "https://duckduckgo.com/");
+      const startUrl = p.url || "";
       let tab = s.browserTabs.find((item) => item.profileId === id && item.url === startUrl);
       if (!tab) {
         tab = { id: uid("tab"), profileId: id, url: startUrl, title: safeHost(startUrl) };
@@ -708,7 +726,7 @@ async function browserNewTab() {
   if (!profileId) return alert("Crea un perfil primero (Ctrl+N)");
   ui.browserProfileId = profileId;
   const profile = profileById(profileId);
-  ui.browserUrl = profile?.url || "https://duckduckgo.com/";
+  ui.browserUrl = profile?.url || "";
   await browserGo();
 }
 
@@ -716,10 +734,10 @@ async function browserGo() {
   const prevProfileId = state.browserTabs.find((t) => t.id === state.activeTabId)?.profileId;
   const profileId = ui.browserProfileId || state.selectedId;
   if (!profileId) return alert("elige perfil...");
-  let url = normalizeUrl(ui.browserUrl || profileById(profileId)?.url || "https://duckduckgo.com/");
-  if (url.includes(" ") || !url.includes(".")) url = `https://duckduckgo.com/?q=${encodeURIComponent(ui.browserUrl)}`;
+  const rawUrl = String(ui.browserUrl || profileById(profileId)?.url || "").trim();
+  let url = rawUrl ? normalizeUrl(rawUrl) : "";
+  if (rawUrl && (rawUrl.includes(" ") || !rawUrl.includes("."))) url = `https://duckduckgo.com/?q=${encodeURIComponent(rawUrl)}`;
   const profile = profileById(profileId);
-  if (profile?.gw_engine) forceFirefoxFingerprint(profile);
   if (profile) {
     if (native?.browse?.prepareSession) {
       if (prevProfileId && prevProfileId !== profileId) {

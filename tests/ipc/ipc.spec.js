@@ -292,6 +292,80 @@ test('profiles:isWindowOpen devuelve open:false para perfil sin ventana', async 
   expect(result.open).toBe(false);
 });
 
+test('perfil sin URL abre el navegador controlado en una pestaña realmente vacía', async () => {
+  const profile = {
+    id: 'shell-blank',
+    name: 'Perfil sin URL',
+    url: '',
+    gw_engine: true,
+    fingerprint: {
+      userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:135.0) Gecko/20100101 Firefox/135.0',
+      locale: 'es-MX',
+      resolution: { width: 1280, height: 800 }
+    }
+  };
+  const windowPromise = electronApp.waitForEvent('window');
+  const opened = await ipc('profiles:openWindow', profile, null, '');
+  const profileWindow = await windowPromise;
+
+  expect(opened.ok).toBe(true);
+  expect(opened.mode).toBe('camoufox');
+  await profileWindow.waitForLoadState('domcontentloaded');
+  expect(profileWindow.url()).toContain('profile-browser.html');
+  await expect(profileWindow.locator('#tabTitle')).toHaveText('New Tab');
+  await expect(profileWindow.locator('#addressInput')).toHaveValue('');
+  await expect(profileWindow.locator('#blankSurface')).toBeVisible();
+  await expect(profileWindow.locator('webview')).toHaveCount(0);
+
+  expect((await ipc('profiles:isWindowOpen', profile.id)).open).toBe(true);
+  await ipc('profiles:closeWindow', profile.id);
+});
+
+test('perfil con URL abre la URL y conserva la identidad Chromium seleccionada', async () => {
+  const server = require('http').createServer((_request, response) => {
+    response.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+    response.end('<!doctype html><title>Perfil listo</title><h1 id="ready">listo</h1>');
+  });
+  await new Promise((resolve, reject) => {
+    server.once('error', reject);
+    server.listen(0, '127.0.0.1', resolve);
+  });
+  const url = `http://127.0.0.1:${server.address().port}/inicio`;
+  const profile = {
+    id: 'shell-url',
+    name: 'Perfil Chromium',
+    url,
+    gw_engine: false,
+    fingerprint: {
+      userAgent: 'Gestor-Chromium-Template/126',
+      vendor: 'Google Inc.',
+      browser: 'Chrome 126',
+      locale: 'es-MX',
+      resolution: { width: 1280, height: 800 }
+    }
+  };
+  try {
+    const windowPromise = electronApp.waitForEvent('window');
+    const opened = await ipc('profiles:openWindow', profile, null, '');
+    const profileWindow = await windowPromise;
+
+    expect(opened.ok).toBe(true);
+    expect(opened.mode).toBe('chromium');
+    await profileWindow.waitForLoadState('domcontentloaded');
+    await expect(profileWindow.locator('#engineLabel')).toHaveText('Chromium identity');
+    await expect(profileWindow.locator('webview')).toHaveCount(1);
+
+    await expect.poll(() => electronApp.evaluate(async ({ webContents }, expectedUrl) => {
+      const guest = webContents.getAllWebContents().find((item) => item.getURL() === expectedUrl);
+      if (!guest) return null;
+      return guest.executeJavaScript('({ userAgent: navigator.userAgent, vendor: navigator.vendor, title: document.title })');
+    }, url)).toEqual({ userAgent: profile.fingerprint.userAgent, vendor: 'Google Inc.', title: 'Perfil listo' });
+  } finally {
+    await ipc('profiles:closeWindow', profile.id);
+    await new Promise((resolve) => server.close(resolve));
+  }
+});
+
 // ── Validación de seguridad ───────────────────────────────────────────────────
 test('app:openExternal rechaza URL con protocolo no permitido', async () => {
   const result = await ipc('app:openExternal', 'javascript:alert(1)');

@@ -109,7 +109,7 @@ function renderTab(tab) {
 function renderWebview(tab) {
   const p = tab.profileId ? profileById(tab.profileId) : null;
   const partition = tab.profileId ? `persist:gw-${safePartition(tab.profileId)}` : "persist:gw-browser-default";
-  return `<webview class="gw-webview" data-gw-webview="${attr(tab.id)}" src="${attr(tab.url || HOME)}" partition="${attr(partition)}" allowpopups="true" useragent="${attr(p?.fingerprint?.userAgent || "")}"></webview>`;
+  return `<webview class="gw-webview" data-gw-webview="${attr(tab.id)}" src="${attr(tab.url || "about:blank")}" partition="${attr(partition)}" allowpopups="true" useragent="${attr(p?.fingerprint?.userAgent || "")}"></webview>`;
 }
 
 function renderEmpty() {

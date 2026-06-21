@@ -117,6 +117,11 @@ function writeFingerprintPreload(profile) {
   const payload = JSON.stringify({
     ua: fp.userAgent || "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:135.0) Gecko/20100101 Firefox/135.0",
     platform: fp.platform || "Win32",
+    vendor: fp.vendor == null ? "" : fp.vendor,
+    browser: fp.browser || "Firefox",
+    os: fp.os || "Windows",
+    mobile: !!fp.mobile,
+    touchPoints: Number(fp.touchPoints || 0),
     locale: fp.locale || "es-MX",
     timezone: fp.timezone || "America/Mexico_City",
     width: fp.resolution?.width || 1920,
@@ -136,6 +141,8 @@ function writeFingerprintPreload(profile) {
   };
   define(Navigator.prototype, 'userAgent', fp.ua);
   define(Navigator.prototype, 'platform', fp.platform);
+  define(Navigator.prototype, 'vendor', fp.vendor);
+  define(Navigator.prototype, 'maxTouchPoints', fp.touchPoints);
   define(Navigator.prototype, 'language', fp.locale);
   define(Navigator.prototype, 'languages', [fp.locale, fp.locale.split('-')[0], 'en-US', 'en']);
   define(Navigator.prototype, 'hardwareConcurrency', fp.cores);
@@ -143,6 +150,25 @@ function writeFingerprintPreload(profile) {
   define(Navigator.prototype, 'webdriver', false);
   define(Navigator.prototype, 'doNotTrack', '1');
   define(Navigator.prototype, 'globalPrivacyControl', true);
+  if (/Chrome/i.test(fp.browser)) {
+    const platformName = fp.os === 'Android' ? 'Android' : fp.os === 'macOS' ? 'macOS' : 'Windows';
+    const uaData = {
+      brands: [{ brand: 'Chromium', version: '126' }, { brand: 'Google Chrome', version: '126' }, { brand: 'Not/A)Brand', version: '99' }],
+      mobile: fp.mobile,
+      platform: platformName,
+      getHighEntropyValues: async (hints) => Object.fromEntries((hints || []).map((hint) => [hint, ({
+        architecture: fp.mobile ? 'arm' : 'x86',
+        bitness: fp.mobile ? '64' : '64',
+        model: fp.mobile ? 'Pixel 8' : '',
+        platformVersion: fp.os === 'Android' ? '14.0.0' : fp.os === 'Windows' ? '10.0.0' : '14.4.0',
+        uaFullVersion: '126.0.0.0',
+        fullVersionList: [{ brand: 'Chromium', version: '126.0.0.0' }, { brand: 'Google Chrome', version: '126.0.0.0' }]
+      })[hint]]))
+    };
+    define(Navigator.prototype, 'userAgentData', uaData);
+  } else {
+    define(Navigator.prototype, 'userAgentData', undefined);
+  }
   define(screen, 'width', fp.width);
   define(screen, 'height', fp.height);
   define(screen, 'availWidth', fp.width);

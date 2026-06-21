@@ -8,26 +8,27 @@ function freeProxies() {
   return state.proxies.filter((proxy) => !usedProxyIds.has(proxy.id));
 }
 
-export function renderProfileAdvancedFields() {
+export function renderProfileAdvancedFields(template) {
+  const selectedResolution = `${template.width}x${template.height}`;
   return `
     <div class="metric stack">
       <div class="grid-3">
         <div>
           <label class="label">Resolucion</label>
           <select class="select" name="resolution">
-            ${resolutions.map((r) => `<option value="${attr(r)}" ${r === "1920x1080" ? "selected" : ""}>${esc(r)}</option>`).join("")}
+            ${resolutions.map((r) => `<option value="${attr(r)}" ${r.startsWith(selectedResolution) ? "selected" : ""}>${esc(r)}</option>`).join("")}
           </select>
         </div>
         <div>
           <label class="label">Timezone</label>
           <select class="select" name="timezone">
-            ${timezones.map((t) => `<option value="${attr(t)}" ${t === "America/Monterrey" ? "selected" : ""}>${esc(t)}</option>`).join("")}
+            ${timezones.map((t) => `<option value="${attr(t)}" ${t === template.timezone ? "selected" : ""}>${esc(t)}</option>`).join("")}
           </select>
         </div>
         <div>
           <label class="label">Idioma</label>
           <select class="select" name="locale">
-            ${locales.map((l) => `<option value="${attr(l)}" ${l === "es-MX" ? "selected" : ""}>${esc(l)}</option>`).join("")}
+            ${locales.map((l) => `<option value="${attr(l)}" ${l === template.locale ? "selected" : ""}>${esc(l)}</option>`).join("")}
           </select>
         </div>
       </div>
@@ -45,6 +46,10 @@ export function renderProfileAdvancedFields() {
 }
 
 export function renderNewProfileModal() {
+  const selectedTemplate = templates.find((template) => template.id === ui.profileTemplateId) || templates[0];
+  const engineDefault = selectedTemplate.browser.includes("Firefox")
+    ? "Firefox / Camoufox (indetectable)"
+    : "Chromium (compatibilidad)";
   const availableProxies = freeProxies();
   const proxyNote = state.proxies.length
     ? "Aparecen todos los proxies libres. El test real es recomendado, pero no obligatorio."
@@ -72,10 +77,8 @@ export function renderNewProfileModal() {
           <div>
             <label class="label">Plantilla de fingerprint</label>
             <select class="select" name="template_id">
-              <option value="win_firefox_mx">Windows / Firefox 135 (MX)</option>
               ${templates
-                .filter((t) => t.id !== "win_firefox_mx")
-                .map((t) => `<option value="${attr(t.id)}">${esc(t.label)}</option>`)
+                .map((t) => `<option value="${attr(t.id)}" ${t.id === selectedTemplate.id ? "selected" : ""}>${esc(t.label)}</option>`)
                 .join("")}
             </select>
           </div>
@@ -96,8 +99,8 @@ export function renderNewProfileModal() {
           </div>
           <div>
             <label class="label">Motor</label>
-            ${radioSegments("engine", ["Firefox / Camoufox (indetectable)", "Chromium (compatibilidad)"], "Firefox / Camoufox (indetectable)", 2)}
-            <div class="small-note" id="engine-subtitle">spoofing a nivel de motor estilo Dolphin, maxima indetectabilidad, recomendado para pagos</div>
+            ${radioSegments("engine", ["Firefox / Camoufox (indetectable)", "Chromium (compatibilidad)"], engineDefault, 2)}
+            <div class="small-note" id="engine-subtitle">identidad ${engineDefault.startsWith("Firefox") ? "Firefox / Camoufox" : "Chromium"} aplicada a la sesion aislada del perfil</div>
           </div>
           <div>
             <label class="label">Modo</label>
@@ -107,7 +110,7 @@ export function renderNewProfileModal() {
           <button class="btn btn-ghost" type="button" data-action="toggle-profile-advanced">
             ${ui.profileAdvanced ? "ocultar" : "mostrar"} avanzado
           </button>
-          ${ui.profileAdvanced ? renderProfileAdvancedFields() : ""}
+          ${ui.profileAdvanced ? renderProfileAdvancedFields(selectedTemplate) : ""}
         </div>
         <div class="modal-foot between">
           <button class="btn btn-ghost" type="button" data-action="close-modal">cancelar</button>

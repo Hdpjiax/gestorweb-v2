@@ -24,6 +24,10 @@
       "app.js",
       "main.js",
       "preload.js",
+      "profile-browser.html",
+      "profile-browser.css",
+      "profile-browser.js",
+      "profile-browser-preload.js",
       "package.json",
       "src/**"
     ],

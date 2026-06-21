@@ -2,15 +2,20 @@ import { shortId } from "./helpers.js";
 import { ICONS } from "./icons.js";
 
 export function makeFingerprint(template, overrides) {
-  const browser = template.browser.includes("Safari") ? "Safari/17.4" : template.browser.includes("Firefox") ? "Firefox/135.0" : "Chrome/124.0";
-  const platform = template.os === "macOS" ? "MacIntel" : template.os === "Android" ? "Linux armv8" : template.os === "iOS" ? "iPhone" : "Win32";
-  const ua = template.os === "iOS"
-    ? "Mozilla/5.0 (iPhone; CPU iPhone OS 17_4 like Mac OS X) AppleWebKit/605.1.15 Mobile/15E148 Safari/604.1"
-    : template.os === "Android"
-      ? "Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 Chrome/124.0 Mobile Safari/537.36"
-      : template.browser === "Firefox"
-        ? "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:135.0) Gecko/20100101 Firefox/135.0"
-        : `Mozilla/5.0 (${template.os === "macOS" ? "Macintosh; Intel Mac OS X 14_4" : "Windows NT 10.0; Win64; x64"}) AppleWebKit/537.36 ${browser} Safari/537.36`;
+  const isMobile = template.os === "Android" || template.os === "iOS";
+  const platform = template.os === "macOS" ? "MacIntel" : template.os === "Android" ? "Linux armv8l" : template.os === "iOS" ? "iPhone" : "Win32";
+  let ua;
+  if (template.os === "iOS") {
+    ua = "Mozilla/5.0 (iPhone; CPU iPhone OS 17_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Mobile/15E148 Safari/604.1";
+  } else if (template.os === "Android") {
+    ua = "Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Mobile Safari/537.36";
+  } else if (template.browser.includes("Firefox")) {
+    ua = "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:135.0) Gecko/20100101 Firefox/135.0";
+  } else if (template.browser.includes("Safari")) {
+    ua = "Mozilla/5.0 (Macintosh; Intel Mac OS X 14_4) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Safari/605.1.15";
+  } else {
+    ua = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36";
+  }
   const gpus = [
     "ANGLE (NVIDIA, NVIDIA GeForce GTX 980 Direct3D11 vs_5_0 ps_5_0), or similar",
     "ANGLE (NVIDIA, NVIDIA GeForce GTX 1070 Direct3D11 vs_5_0 ps_5_0), or similar",
@@ -24,17 +29,21 @@ export function makeFingerprint(template, overrides) {
   ];
   const gpu = gpus[Math.floor(Math.random() * gpus.length)];
   return {
+    templateId: template.id,
     os: template.os,
     browser: template.browser,
     platform,
     userAgent: ua,
+    vendor: template.browser.includes("Safari") ? "Apple Computer, Inc." : template.browser.includes("Firefox") ? "" : "Google Inc.",
+    mobile: isMobile,
+    touchPoints: isMobile ? 5 : 0,
     webgl: gpu,
     canvas: `gw-${shortId(10).toLowerCase()}`,
     audio: `gw-${shortId(10).toLowerCase()}`,
     timezone: overrides.timezone,
     locale: overrides.locale,
-    cores: [2, 4, 6, 8, 12, 16][Math.floor(Math.random() * 6)],
-    memoryGB: [4, 8, 16, 32][Math.floor(Math.random() * 4)],
+    cores: isMobile ? 8 : [4, 8, 12, 16][Math.floor(Math.random() * 4)],
+    memoryGB: isMobile ? 8 : [8, 16, 32][Math.floor(Math.random() * 3)],
     noiseSeed: Math.floor(Math.random() * 1e9),
     resolution: { width: overrides.width, height: overrides.height }
   };

@@ -7,6 +7,7 @@ export const native = window.api || null;
 export const ui = {
   newProfile: false,
   profileAdvanced: false,
+  profileTemplateId: "win_firefox_mx",
   welcome: false,
   proxyAdding: false,
   proxyBulk: false,

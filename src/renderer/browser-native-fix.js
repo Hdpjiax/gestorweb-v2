@@ -1,7 +1,6 @@
 import { state, ui, update, save, native } from "./state.js";
 import { uid } from "./helpers.js";
 import { profileById, proxyById, safeHost, activeWebview } from "./utils.js";
-import { forceFirefoxFingerprint } from "./fingerprint.js";
 
 const HOME = "https://duckduckgo.com/";
 const SEARCH = "https://duckduckgo.com/?q=";
@@ -51,7 +50,7 @@ function activeProfileName() {
 
 function toBrowserUrl(value) {
   const text = String(value || "").trim();
-  if (!text) return HOME;
+  if (!text) return "";
   if (/^[a-z][a-z0-9+.-]*:\/\//i.test(text)) return text;
   if (/^(localhost|\d{1,3}(?:\.\d{1,3}){3})(:\d+)?(\/.*)?$/i.test(text)) return `http://${text}`;
   if (/^[^\s]+\.[^\s]{2,}(\/.*)?$/i.test(text)) return `https://${text}`;
@@ -66,15 +65,14 @@ function currentProfileId() {
 async function prepareProfile(profileId) {
   const profile = profileById(profileId);
   if (!profile) return;
-  if (profile.gw_engine) forceFirefoxFingerprint(profile);
   if (native?.browse?.prepareSession) {
     await native.browse.prepareSession(profile, profile.proxy_id ? proxyById(profile.proxy_id) : null);
   }
 }
 
-async function openNewBrowserTab(profileId = currentProfileId(), rawUrl = HOME) {
+async function openNewBrowserTab(profileId = currentProfileId(), rawUrl = "") {
   const profile = profileById(profileId);
-  const url = toBrowserUrl(rawUrl || profile?.url || HOME);
+  const url = toBrowserUrl(rawUrl || profile?.url || "");
   if (profile) await prepareProfile(profile.id);
   update((s) => {
     s.browserTabs ||= [];
