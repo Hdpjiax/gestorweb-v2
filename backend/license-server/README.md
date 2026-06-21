@@ -13,11 +13,11 @@ Esto crea:
 
 - `private_key.pem`: clave privada del servidor. No se comparte ni se mete en la app.
 - `public_key.pem`: clave publica que usa la app para verificar firmas.
-- `.env.example`: ejemplo con `LICENSE_ADMIN_TOKEN`.
+- `.env`: archivo privado con `LICENSE_ADMIN_TOKEN`. Esta ignorado por git.
 
 ## 2. Configurar servidor
 
-Copia `.env.example` a `.env` y ajusta:
+`npm run keys` ya crea un `.env` funcional para pruebas locales. Para produccion ajusta:
 
 ```env
 PORT=8787
@@ -52,7 +52,13 @@ Planes soportados:
 - `30d`
 - `lifetime`
 
-Ejemplo:
+Forma rapida con script:
+
+```bash
+npm run issue -- GW-ABCD-1234-5678 30d standard
+```
+
+Tambien puedes usar HTTP:
 
 ```bash
 curl -X POST http://127.0.0.1:8787/admin/licenses \
@@ -88,6 +94,14 @@ El payload incluye:
 
 ## 5. Revocar licencia
 
+Forma rapida con script:
+
+```bash
+npm run revoke -- GW-20260621-ABCDEF123456 "pago vencido"
+```
+
+Tambien puedes usar HTTP:
+
 ```bash
 curl -X POST http://127.0.0.1:8787/admin/revoke \
   -H "content-type: application/json" \
@@ -111,7 +125,7 @@ curl http://127.0.0.1:8787/admin/licenses \
 
 La app necesita la clave publica y la URL del servidor.
 
-En desarrollo:
+En desarrollo Windows:
 
 ```bash
 set GW_LICENSE_PUBLIC_KEY_FILE=C:\ruta\public_key.pem
