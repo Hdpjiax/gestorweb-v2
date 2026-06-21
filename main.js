@@ -1,6 +1,7 @@
 const { app, BrowserWindow } = require("electron");
 const path = require("path");
 const { registerIpc } = require("./src/main/ipc");
+const { registerLicenseIpc } = require("./src/main/license-ipc");
 const { readJson, stateFile, sessionFor } = require("./src/main/utils");
 const { profileProxyRuntime } = require("./src/main/proxy-runtime");
 const proxyTrustedSessions = require("./src/main/proxy-trust");
@@ -68,6 +69,7 @@ app.on("certificate-error", (event, webContents, _url, _error, _certificate, cal
 
 app.whenReady().then(() => {
   registerIpc(getMainWindow);
+  registerLicenseIpc();
   createWindow();
   app.on("activate", () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
