@@ -2,6 +2,7 @@ const path = require("path");
 
 const tests = [
   ["main/security", "../tests/main/security.test.js"],
+  ["main/license", "../tests/main/license.test.js"],
   ["main/state-schema", "../tests/main/state-schema.test.js"],
   ["main/proxy-runtime", "../tests/main/proxy-runtime.test.js"],
   ["main/profile-browser", "../tests/main/profile-browser.test.js"],
