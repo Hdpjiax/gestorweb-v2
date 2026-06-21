@@ -279,27 +279,19 @@ function writeFingerprintPreload(profile) {
       }
     } catch {}
   }
-  function installCursorFollower() {
+  function installThemedCursor() {
     const attach = () => {
-      if (!document.documentElement || document.getElementById('gw-cursor-follower')) return;
-      const pointer = document.createElement('div');
-      pointer.id = 'gw-cursor-follower';
-      pointer.setAttribute('aria-hidden', 'true');
-      pointer.style.cssText = 'position:fixed!important;z-index:2147483647!important;top:0!important;left:0!important;width:16px!important;height:16px!important;border-radius:50%!important;background:#ef4444!important;box-shadow:0 0 0 4px rgba(239,68,68,.24),0 2px 8px rgba(0,0,0,.5)!important;opacity:0;pointer-events:none!important;will-change:transform!important;transition:opacity 80ms linear!important;';
-      document.documentElement.appendChild(pointer);
-      document.addEventListener('mousemove', (event) => {
-        pointer.style.setProperty('transform', 'translate3d(' + (event.clientX - 8) + 'px,' + (event.clientY + 4) + 'px,0)', 'important');
-        pointer.style.setProperty('opacity', '1', 'important');
-      }, true);
-      document.addEventListener('mouseout', (event) => {
-        if (!event.relatedTarget) pointer.style.setProperty('opacity', '0', 'important');
-      }, true);
-      window.addEventListener('blur', () => pointer.style.setProperty('opacity', '0', 'important'));
+      if (!document.documentElement || document.getElementById('gw-themed-cursor')) return;
+      const style = document.createElement('style');
+      style.id = 'gw-themed-cursor';
+      const cursor = 'url("data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20width=%2728%27%20height=%2732%27%20viewBox=%270%200%2028%2032%27%3E%3Cpath%20d=%27M3%202v24l6-6%205%2010%206-3-5-9h9z%27%20fill=%27%238b5cf6%27%20stroke=%27%23060a12%27%20stroke-width=%272%27%20stroke-linejoin=%27round%27/%3E%3Cpath%20d=%27M5%205v15l4-4h9z%27%20fill=%27%2367e8f9%27%20opacity=%27.78%27/%3E%3C/svg%3E") 3 2, auto';
+      style.textContent = 'html,body,body *{cursor:' + cursor + '!important;}';
+      document.documentElement.appendChild(style);
     };
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', attach, { once: true });
     else attach();
   }
-  installCursorFollower();
+  installThemedCursor();
 })();`;
 
   fs.writeFileSync(file, code, "utf8");

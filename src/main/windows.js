@@ -32,6 +32,49 @@ function notifyProfileClosed(profileId) {
   } catch {}
 }
 
+function sendMainEvent(channel, payload) {
+  try {
+    const win = typeof _mainWindowRef === "function" ? _mainWindowRef() : _mainWindowRef;
+    if (win && !win.isDestroyed() && win.webContents) win.webContents.send(channel, payload);
+  } catch {}
+}
+
+function capturedRequestId(profileId, requestId) {
+  return `${profileId}:${requestId}`;
+}
+
+function capturedHeaders(headers) {
+  const result = {};
+  for (const [name, value] of Object.entries(headers || {})) {
+    result[name] = Array.isArray(value) ? value.join("\n") : String(value ?? "");
+  }
+  return result;
+}
+
+function capturedUploadBody(uploadData) {
+  const chunks = [];
+  for (const item of Array.isArray(uploadData) ? uploadData : []) {
+    if (!item?.bytes) continue;
+    try { chunks.push(Buffer.from(item.bytes)); } catch {}
+  }
+  if (!chunks.length) return "";
+  const body = Buffer.concat(chunks);
+  return body.subarray(0, 64 * 1024).toString("utf8");
+}
+
+function notifyNetworkEvent(profile, details, patch = {}) {
+  if (!profile?.id || !/^https?:/i.test(details?.url || "")) return;
+  sendMainEvent("network:event", {
+    id: capturedRequestId(profile.id, details.id),
+    profileId: profile.id,
+    profileName: profile.name || "Perfil",
+    method: details.method || "GET",
+    url: details.url,
+    resourceType: details.resourceType || "other",
+    ...patch
+  });
+}
+
 // ─── Firefox user.js ───────────────────────────────────────────────────────────
 function writeFirefoxProfilePrefs(profile, proxy) {
   const fp = profile.fingerprint || {};
@@ -449,13 +492,22 @@ async function prepareSession(profile, proxy) {
     _sessionHandlersRegistered.add(ses);
 
     ses.webRequest.onBeforeRequest((details, callback) => {
+      const runtime = _sessionRuntimeState.get(ses) || {};
+      const activeProfile = runtime.profile || profile;
+      notifyNetworkEvent(activeProfile, details, {
+        phase: "request",
+        ts: Date.now(),
+        body: capturedUploadBody(details.uploadData)
+      });
       try {
-        const runtime = _sessionRuntimeState.get(ses) || {};
-        const activeProfile = runtime.profile || profile;
         const url = new URL(details.url);
         if (activeProfile.block_trackers && TRACKER_HOSTS.some((host) =>
           details.url.includes(host) || url.hostname.includes(host)
-        )) { callback({ cancel: true }); return; }
+        )) {
+          notifyNetworkEvent(activeProfile, details, { phase: "error", status: 0, error: "bloqueado por el perfil", completedAt: Date.now() });
+          callback({ cancel: true });
+          return;
+        }
         if (activeProfile.strip_tracking_params) {
           const before = url.toString();
           ["utm_source", "utm_medium", "utm_campaign", "utm_term", "utm_content",
@@ -480,7 +532,44 @@ async function prepareSession(profile, proxy) {
       if (activeProfile.strict_referer) {
         Object.keys(headers).forEach((k) => { if (k.toLowerCase() === "referer") delete headers[k]; });
       }
+      notifyNetworkEvent(activeProfile, details, {
+        phase: "request_headers",
+        requestHeaders: capturedHeaders(headers)
+      });
       callback({ requestHeaders: headers });
+    });
+
+    ses.webRequest.onHeadersReceived((details, callback) => {
+      const runtime = _sessionRuntimeState.get(ses) || {};
+      const activeProfile = runtime.profile || profile;
+      notifyNetworkEvent(activeProfile, details, {
+        phase: "response_headers",
+        status: details.statusCode || 0,
+        statusLine: details.statusLine || "",
+        responseHeaders: capturedHeaders(details.responseHeaders)
+      });
+      callback({ responseHeaders: details.responseHeaders });
+    });
+
+    ses.webRequest.onCompleted((details) => {
+      const runtime = _sessionRuntimeState.get(ses) || {};
+      notifyNetworkEvent(runtime.profile || profile, details, {
+        phase: "completed",
+        status: details.statusCode || 0,
+        fromCache: !!details.fromCache,
+        remoteIp: details.ip || "",
+        completedAt: Date.now()
+      });
+    });
+
+    ses.webRequest.onErrorOccurred((details) => {
+      const runtime = _sessionRuntimeState.get(ses) || {};
+      notifyNetworkEvent(runtime.profile || profile, details, {
+        phase: "error",
+        status: 0,
+        error: details.error || "error de red",
+        completedAt: Date.now()
+      });
     });
   }
 

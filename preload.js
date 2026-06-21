@@ -5,7 +5,8 @@ const invoke = (channel, ...args) => ipcRenderer.invoke(channel, ...args);
 // Canales permitidos para escuchar eventos push desde main → renderer.
 // Solo se permite suscribirse a canales explícitamente whitelisted.
 const ALLOWED_LISTEN_CHANNELS = [
-  "profiles:windowClosed"
+  "profiles:windowClosed",
+  "network:event"
 ];
 
 contextBridge.exposeInMainWorld("api", Object.freeze({
@@ -40,6 +41,7 @@ contextBridge.exposeInMainWorld("api", Object.freeze({
     closeWindow: (profileId) => invoke("profiles:closeWindow", profileId),
     focusWindow: (profileId) => invoke("profiles:focusWindow", profileId),
     isWindowOpen: (profileId) => invoke("profiles:isWindowOpen", profileId),
+    capturePreview: (profileId) => invoke("profiles:capturePreview", profileId),
     openPath: (profileId) => invoke("profiles:openPath", profileId)
   }),
   proxies: Object.freeze({

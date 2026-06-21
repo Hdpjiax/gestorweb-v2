@@ -133,7 +133,7 @@ export function renderProxiesView() {
         <div>
           <div class="label">Proxy pool</div>
           <h2>Red de salida</h2>
-          <p class="muted">Pruebas reales por proxy con HTTP CONNECT, SOCKS5 y SOCKS4. Cada fila se actualiza cuando termina su test.</p>
+          <p class="muted">Pruebas HTTPS reales por HTTP CONNECT, SOCKS5 y SOCKS4. Un proxy solo queda vivo si puede abrir un tunel TLS completo.</p>
         </div>
         <div class="proxy-stats">
           <div class="proxy-stat"><span>Total</span><strong>${state.proxies.length}</strong></div>

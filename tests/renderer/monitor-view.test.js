@@ -14,6 +14,7 @@ module.exports = async function monitorViewTests() {
   assert.match(monitor, /export function renderMonitorView/);
   assert.match(monitor, /state\.liveIds\.includes/);
   assert.match(monitor, /Sin perfiles activos/);
+  assert.match(monitor, /data-profile-preview/);
 
   assert.match(router, /renderMonitorView/);
   assert.match(router, /view === "monitor"/);

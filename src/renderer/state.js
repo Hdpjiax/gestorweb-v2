@@ -25,7 +25,10 @@ export const ui = {
   browserIp: null,
   browserIpProfileId: null,
   browserIpStatus: "sin perfil",
-  repeaterOutput: ""
+  repeaterOutput: "",
+  repeaterDraft: null,
+  networkSelectedId: null,
+  profilePreviews: {}
 };
 
 export const defaults = {

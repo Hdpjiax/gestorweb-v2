@@ -27,10 +27,11 @@ module.exports = async function proxyAssignmentTests() {
   assert.match(newProfileModal, /freeProxies/);
   assert.match(newProfileModal, /test real es recomendado/);
 
-  assert.match(proxies, /http:\/\/api\.ipify\.org/);
+  assert.match(proxies, /https:\/\/api\.ipify\.org/);
   assert.match(proxies, /ProfileProxyBridge/);
   assert.match(proxies, /protocolCandidates/);
-  assert.doesNotMatch(proxies, /rejectUnauthorized/);
+  assert.match(proxies, /proxy sin tunel HTTPS/);
+  assert.match(proxies, /https_tunnel: true/);
 
   assert.match(runtime, /class ProfileProxyBridge/);
   assert.match(runtime, /connectSocks5Tunnel/);

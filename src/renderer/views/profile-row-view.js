@@ -1,5 +1,5 @@
 import { esc, attr } from "../helpers.js";
-import { state, liveSet } from "../state.js";
+import { state, liveSet, ui } from "../state.js";
 import { ICONS } from "../icons.js";
 import { proxyById } from "../utils.js";
 
@@ -22,7 +22,12 @@ export function renderProfileRow(p) {
   return `
     <div class="row-grid ${state.selectedId === p.id ? "selected" : ""}" data-action="select-profile" data-id="${p.id}">
       <input type="checkbox" aria-label="seleccionar perfil" />
-      <div class="pill ${isMobile ? "accent" : "dim"}">${isMobile ? "MOB" : "WEB"}</div>
+      <div class="profile-mini-preview ${isLive ? "is-live" : ""}">
+        ${isLive
+          ? `<img data-profile-preview="${attr(p.id)}" ${ui.profilePreviews[p.id] ? `src="${attr(ui.profilePreviews[p.id])}"` : ""} alt="Vista en vivo de ${attr(p.name)}" />`
+          : `<span class="pill ${isMobile ? "accent" : "dim"}">${isMobile ? "MOB" : "WEB"}</span>`
+        }
+      </div>
       <div>
         <div class="between">
           <strong>${esc(p.name)}</strong>

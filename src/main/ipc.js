@@ -341,6 +341,24 @@ function registerIpc(mainWindowRef) {
   ipcMain.handle("profiles:openPath", (_event, profileId) => shell.openPath(profileDir(assertProfileId(profileId))));
   ipcMain.handle("profiles:focusWindow", (_event, profileId) => focusProfileWindow(assertProfileId(profileId)));
   ipcMain.handle("profiles:isWindowOpen", (_event, profileId) => ({ open: profileWindows.has(assertProfileId(profileId)) }));
+  ipcMain.handle("profiles:capturePreview", async (_event, profileId) => {
+    const id = assertProfileId(profileId);
+    const item = profileWindows.get(id);
+    if (!item || item.type !== "electron" || item.win.isDestroyed()) return { ok: false };
+    try {
+      const bounds = item.win.getContentBounds();
+      const image = await item.win.webContents.capturePage({
+        x: 0,
+        y: Math.min(62, Math.max(0, bounds.height - 1)),
+        width: Math.max(1, bounds.width),
+        height: Math.max(1, bounds.height - 62)
+      });
+      const preview = image.resize({ width: 360, quality: "good" });
+      return { ok: true, dataUrl: preview.toDataURL(), width: preview.getSize().width, height: preview.getSize().height };
+    } catch (error) {
+      return { ok: false, error: error.message || "capture failed" };
+    }
+  });
 
   // ── Proxies ─────────────────────────────────────────────────────────────────
   ipcMain.handle("proxies:check", (_event, proxy) => checkProxy(proxy));
@@ -355,7 +373,9 @@ function registerIpc(mainWindowRef) {
   // ── Repeater ─────────────────────────────────────────────────────────────────
   ipcMain.handle("repeater:send", async (_event, request) => {
     try {
-      return await repeaterSend(request);
+      const profileId = request?.profileId ? assertProfileId(request.profileId) : null;
+      const response = await requestWithNet(request, profileId ? sessionFor(profileId) : null);
+      return { ...response, profileId };
     } catch (error) {
       return { status: 0, headers: {}, body: error.message || "invalid request", ms: 0 };
     }

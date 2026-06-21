@@ -17,27 +17,14 @@ const reloadButton = document.getElementById("reloadButton");
 const securityIcon = document.getElementById("securityIcon");
 const routeBadge = document.getElementById("routeBadge");
 const engineLabel = document.getElementById("engineLabel");
-const cursorFollower = document.getElementById("cursorFollower");
 
 let webview = null;
 let currentUrl = "";
+const themedCursorCss = `html,body,body * { cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='32' viewBox='0 0 28 32'%3E%3Cpath d='M3 2v24l6-6 5 10 6-3-5-9h9z' fill='%238b5cf6' stroke='%23060a12' stroke-width='2' stroke-linejoin='round'/%3E%3Cpath d='M5 5v15l4-4h9z' fill='%2367e8f9' opacity='.78'/%3E%3C/svg%3E") 3 2, auto !important; }`;
 
 document.title = `${profileName} — Gestor Browser`;
 engineLabel.textContent = engineMode === "camoufox" ? "Camoufox identity" : "Chromium identity";
 routeBadge.textContent = profileName;
-
-function moveCursorFollower(event) {
-  // clientX/clientY son las coordenadas exactas de la punta del cursor.
-  // El círculo empieza 4 px debajo y queda centrado horizontalmente en la punta.
-  cursorFollower.style.transform = `translate3d(${event.clientX - 8}px, ${event.clientY + 4}px, 0)`;
-  cursorFollower.style.opacity = "1";
-}
-
-document.addEventListener("mousemove", moveCursorFollower, true);
-document.addEventListener("mouseout", (event) => {
-  if (!event.relatedTarget || event.relatedTarget.tagName === "WEBVIEW") cursorFollower.style.opacity = "0";
-}, true);
-window.addEventListener("blur", () => { cursorFollower.style.opacity = "0"; });
 
 function searchUrl(query) {
   return `https://duckduckgo.com/?q=${encodeURIComponent(query)}`;
@@ -87,8 +74,10 @@ function showBlank() {
 }
 
 function bindWebview(view) {
-  view.addEventListener("mouseenter", () => { cursorFollower.style.opacity = "0"; });
-  view.addEventListener("dom-ready", syncWebviewBounds);
+  view.addEventListener("dom-ready", () => {
+    syncWebviewBounds();
+    view.insertCSS(themedCursorCss).catch(() => {});
+  });
   view.addEventListener("did-start-loading", () => {
     reloadButton.classList.add("loading");
     errorSurface.hidden = true;

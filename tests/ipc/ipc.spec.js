@@ -34,6 +34,8 @@ test.beforeAll(async () => {
       GW_LICENSE_SECRET: ''
     }
   });
+  const mainWindow = await electronApp.firstWindow();
+  await mainWindow.waitForLoadState('domcontentloaded');
 });
 
 test.afterAll(async () => {
@@ -316,11 +318,10 @@ test('perfil sin URL abre el navegador controlado en una pestaÃ±a realmente vacÃ
   await expect(profileWindow.locator('#addressInput')).toHaveValue('');
   await expect(profileWindow.locator('#blankSurface')).toBeVisible();
   await expect(profileWindow.locator('webview')).toHaveCount(0);
-  await profileWindow.mouse.move(240, 180);
-  await expect.poll(() => profileWindow.locator('#cursorFollower').evaluate((element) => ({
-    opacity: element.style.opacity,
-    transform: element.style.transform
-  }))).toEqual({ opacity: '1', transform: 'translate3d(232px, 184px, 0px)' });
+  await expect(profileWindow.locator('#cursorFollower')).toHaveCount(0);
+  const preview = await ipc('profiles:capturePreview', profile.id);
+  expect(preview.ok).toBe(true);
+  expect(preview.dataUrl).toMatch(/^data:image\/png;base64,/);
 
   expect((await ipc('profiles:isWindowOpen', profile.id)).open).toBe(true);
   await ipc('profiles:closeWindow', profile.id);
@@ -350,6 +351,15 @@ test('perfil con URL abre la URL y conserva la identidad Chromium seleccionada',
     }
   };
   try {
+    const mainWindow = electronApp.windows()[0];
+    const capturedEvent = mainWindow.evaluate((expectedUrl) => new Promise((resolve) => {
+      const off = window.api.on('network:event', (entry) => {
+        if (entry.url === expectedUrl && entry.phase === 'completed') {
+          off();
+          resolve({ profileId: entry.profileId, method: entry.method, status: entry.status });
+        }
+      });
+    }), url);
     const windowPromise = electronApp.waitForEvent('window');
     const opened = await ipc('profiles:openWindow', profile, null, '');
     const profileWindow = await windowPromise;
@@ -374,12 +384,10 @@ test('perfil con URL abre la URL y conserva la identidad Chromium seleccionada',
     await expect.poll(() => electronApp.evaluate(async ({ webContents }, expectedUrl) => {
       const guest = webContents.getAllWebContents().find((item) => item.getURL() === expectedUrl);
       if (!guest) return null;
-      return guest.executeJavaScript(`(() => {
-        document.dispatchEvent(new MouseEvent('mousemove', { clientX: 321, clientY: 123, bubbles: true }));
-        const pointer = document.getElementById('gw-cursor-follower');
-        return pointer && { opacity: pointer.style.opacity, transform: pointer.style.transform };
-      })()`);
-    }, url)).toEqual({ opacity: '1', transform: 'translate3d(313px, 127px, 0px)' });
+      return guest.executeJavaScript('getComputedStyle(document.body).cursor');
+    }, url)).toContain('data:image/svg+xml');
+
+    expect(await capturedEvent).toEqual({ profileId: profile.id, method: 'GET', status: 200 });
   } finally {
     await ipc('profiles:closeWindow', profile.id);
     await new Promise((resolve) => server.close(resolve));

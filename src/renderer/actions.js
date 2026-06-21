@@ -191,6 +191,13 @@ function handleClick(event) {
     "browser-reload": () => activeWebview()?.reload(),
     "toggle-chromium": () => update((s) => { s.settings.chromiumReady = true; logEvent("chromium_installed", null, "simulado"); }),
     "toggle-tor": () => detectTor(),
+    "load-network-entry": () => loadNetworkEntry(id),
+    "clear-network-log": () => {
+      ui.networkSelectedId = null;
+      ui.repeaterDraft = null;
+      ui.repeaterOutput = "";
+      update((s) => { s.netEntries = []; });
+    },
     "open-data-dir": () => native?.app?.openDataDir?.(),
     "export-vault": () => exportVault(),
     "import-vault": () => importVault(),
@@ -263,10 +270,29 @@ function createProfile(event) {
 async function openProfile(id, options = {}) {
   const profile = profileById(id);
   if (!profile) return;
-  const proxy = profile.proxy_id ? proxyById(profile.proxy_id) : null;
+  let proxy = profile.proxy_id ? proxyById(profile.proxy_id) : null;
+
+  if (proxy && native?.proxies?.check) {
+    const checked = await native.proxies.check(proxy).catch((error) => ({ ...proxy, healthy: false, https_tunnel: false, last_error: error?.message || "test HTTPS fallido" }));
+    update((s) => {
+      const index = s.proxies.findIndex((item) => item.id === proxy.id);
+      if (index >= 0) s.proxies[index] = { ...s.proxies[index], ...checked, id: proxy.id };
+    });
+    if (!checked.healthy || !checked.https_tunnel) {
+      alert(`El proxy ${proxy.host}:${proxy.port} responde, pero no puede crear un tunel HTTPS.\n\n${checked.last_error || "CONNECT rechazado"}\n\nSelecciona otro proxy para evitar ERR_TUNNEL_CONNECTION_FAILED.`);
+      return;
+    }
+    proxy = { ...proxy, ...checked };
+  }
 
   if (options.openWindow && native?.profiles?.openWindow) {
-    const result = await native.profiles.openWindow(profile, proxy, profile.url || null);
+    let result;
+    try {
+      result = await native.profiles.openWindow(profile, proxy, profile.url || null);
+    } catch (error) {
+      alert(`No se pudo abrir el perfil: ${error?.message || "error de red"}`);
+      return;
+    }
     if (result?.ok) {
       update((s) => {
         if (!s.liveIds.includes(id)) s.liveIds.push(id);
@@ -769,6 +795,7 @@ async function sendRepeater(event) {
   }
   const data = new FormData(event.currentTarget);
   const method = data.get("method");
+  const profileId = String(data.get("profileId") || "");
   const url = data.get("url") || "https://example.com";
   const headers = Object.fromEntries(
     String(data.get("headers") || "").split(/\r?\n/)
@@ -779,12 +806,28 @@ async function sendRepeater(event) {
         return index === -1 ? [line, ""] : [line.slice(0, index).trim(), line.slice(index + 1).trim()];
       })
   );
-  const response = await native.repeater.send({ method, url, headers, body: data.get("body") || "" });
+  const body = data.get("body") || "";
+  ui.repeaterDraft = { profileId, method, url: String(url), headers: String(data.get("headers") || ""), body: String(body) };
+  const response = await native.repeater.send({ profileId, method, url, headers, body });
   ui.repeaterOutput = JSON.stringify(response, null, 2);
   update((s) => {
-    s.netEntries.unshift({ id: uid("net"), method, url, status: response.status, ts: Date.now() });
-    s.netEntries = s.netEntries.slice(0, 50);
+    s.netEntries.unshift({ id: uid("net"), profileId, profileName: profileById(profileId)?.name || "Repeater", method, url, requestHeaders: headers, body, status: response.status, phase: "repeater", ts: Date.now(), completedAt: Date.now() });
+    s.netEntries = s.netEntries.slice(0, 500);
   });
+}
+
+function loadNetworkEntry(id) {
+  const entry = state.netEntries.find((item) => item.id === id);
+  if (!entry) return;
+  ui.networkSelectedId = id;
+  ui.repeaterDraft = {
+    profileId: entry.profileId || "",
+    method: entry.method || "GET",
+    url: entry.url || "",
+    headers: Object.entries(entry.requestHeaders || {}).map(([name, value]) => `${name}: ${value}`).join("\n"),
+    body: entry.body || ""
+  };
+  rerender();
 }
 
 async function detectTor() {
