@@ -88,4 +88,4 @@ function registerLicenseIpc() {
   ipcMain.handle("license:install", (_event, text) => claimLicense(text));
 }
 
-module.exports = { registerLicenseIpc };
+module.exports = { registerLicenseIpc, currentLicenseStatus };

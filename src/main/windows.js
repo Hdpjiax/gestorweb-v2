@@ -17,6 +17,7 @@ const {
   profileProxyRuntime
 } = require("./proxy-runtime");
 const proxyTrustedSessions = require("./proxy-trust");
+const { isEconomy } = require("./resource-mode");
 
 const profileWindows = new Map();
 
@@ -224,6 +225,7 @@ async function openChromiumWindowLegacy(profile, proxy, startUrl) {
     title: profile.name || "Gestor Web Session",
     backgroundColor: "#0a0e14",
     webPreferences: {
+      backgroundThrottling: isEconomy(),
       partition: partitionFor(profile.id),
       contextIsolation: true,
       nodeIntegration: false,
@@ -334,6 +336,7 @@ async function openManagedProfileWindow(profile, proxy, startUrl, engineMode) {
     title: profile.name || "Gestor Browser",
     backgroundColor: "#1b1a21",
     webPreferences: {
+      backgroundThrottling: isEconomy(),
       partition,
       preload: path.join(__dirname, "..", "..", "profile-browser-preload.js"),
       contextIsolation: true,
@@ -347,6 +350,7 @@ async function openManagedProfileWindow(profile, proxy, startUrl, engineMode) {
   });
 
   win.webContents.on("will-attach-webview", (_event, webPreferences) => {
+    webPreferences.backgroundThrottling = isEconomy();
     webPreferences.partition = partition;
     webPreferences.contextIsolation = true;
     webPreferences.nodeIntegration = false;

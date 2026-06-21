@@ -4,6 +4,9 @@ import { bind, startScheduler, initKeyboard, closeProfile } from "./actions.js";
 import { renderShell, renderNetworkEntryList } from "./views/index.js";
 
 let previewRefreshBusy = false;
+let globalIpBusy = false;
+let previewTimer = null;
+let ipTimer = null;
 
 function mergeNetworkEvent(event) {
   if (!event?.id) return;
@@ -21,7 +24,11 @@ async function refreshLivePreviews() {
   if (previewRefreshBusy || !native?.profiles?.capturePreview || !state.liveIds.length) return;
   previewRefreshBusy = true;
   try {
-    await Promise.all(state.liveIds.map(async (profileId) => {
+    const economy = (state.settings.resourceMode || "economy") === "economy";
+    const previewIds = economy
+      ? [state.liveIds.find((id) => id === state.selectedId) || state.liveIds[0]].filter(Boolean)
+      : state.liveIds;
+    await Promise.all(previewIds.map(async (profileId) => {
       const result = await native.profiles.capturePreview(profileId).catch(() => null);
       if (!result?.ok || !result.dataUrl) return;
       ui.profilePreviews[profileId] = result.dataUrl;
@@ -34,11 +41,61 @@ async function refreshLivePreviews() {
   }
 }
 
+function activeRouteContext() {
+  const activeTab = state.browserTabs.find((tab) => tab.id === state.activeTabId);
+  const profileId = activeTab?.profileId || state.liveIds.find((id) => id === state.selectedId) || state.liveIds[0] || null;
+  const profile = state.profiles.find((item) => item.id === profileId) || null;
+  const proxy = profile?.proxy_id ? state.proxies.find((item) => item.id === profile.proxy_id) : null;
+  const route = profile?.tor_mode ? "TOR" : proxy ? `${proxy.scheme || "proxy"}://${proxy.host}:${proxy.port}` : "directo";
+  return { profileId, route };
+}
+
+async function refreshGlobalIp() {
+  if (globalIpBusy) return;
+  globalIpBusy = true;
+  try {
+    const context = activeRouteContext();
+    const result = context.profileId && native?.browse?.ipcheck
+      ? await native.browse.ipcheck(context.profileId).catch(() => null)
+      : await native?.license?.ipcheck?.().catch(() => null);
+    ui.globalIp = result?.ip || "sin conexion";
+    ui.globalIpRoute = context.route;
+    const element = document.getElementById("globalIpValue");
+    if (element) {
+      element.textContent = ui.globalIp;
+      element.parentElement.title = `Ruta: ${context.route}`;
+    }
+  } finally {
+    globalIpBusy = false;
+  }
+}
+
+function schedulePreviewRefresh() {
+  clearTimeout(previewTimer);
+  const economy = (state.settings.resourceMode || "economy") === "economy";
+  previewTimer = setTimeout(async () => {
+    await refreshLivePreviews();
+    schedulePreviewRefresh();
+  }, economy ? 4000 : 900);
+}
+
+function scheduleIpRefresh(delay = 150) {
+  clearTimeout(ipTimer);
+  ipTimer = setTimeout(async () => {
+    await refreshGlobalIp();
+    const economy = (state.settings.resourceMode || "economy") === "economy";
+    scheduleIpRefresh(economy ? 30000 : 10000);
+  }, delay);
+}
+
 async function init() {
   const stored = await load();
   setState(normalize({ ...clone(defaults), ...stored }));
   setRenderFn(renderShell);
   setBindFn(bind);
+  const economy = (state.settings.resourceMode || "economy") === "economy";
+  document.body.classList.toggle("resource-economy", economy);
+  await native?.app?.setResourceMode?.(economy ? "economy" : "normal").catch(() => {});
   render();
   startScheduler();
   initKeyboard();
@@ -52,9 +109,18 @@ async function init() {
       closeProfile(id).catch(() => {});
     });
     native.on("network:event", mergeNetworkEvent);
+    native.on("license:invalidated", (status) => {
+      update((next) => {
+        next.license = { ...next.license, ...status, active: false };
+        next.liveIds = [];
+        next.browserTabs = [];
+        next.activeTabId = null;
+        next.view = "all";
+      });
+    });
   }
-  setInterval(refreshLivePreviews, 900);
-  refreshLivePreviews();
+  schedulePreviewRefresh();
+  scheduleIpRefresh();
 }
 
 init();

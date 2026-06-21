@@ -11,6 +11,8 @@ module.exports = async function topbarAlwaysTests() {
   const index = read("index.html");
   const shell = read("src/renderer/views/shell-view.js");
   const topbarView = read("src/renderer/views/topbar-view.js");
+  const globalBar = read("src/renderer/views/global-bar-view.js");
+  const globalCss = read("src/renderer/global-topbar.css");
 
   assert.match(css, /\.app-shell \.topbar/);
   assert.match(css, /visibility: visible/);
@@ -18,5 +20,11 @@ module.exports = async function topbarAlwaysTests() {
   assert.match(css, /\.app-shell \.content/);
   assert.match(index, /topbar-always\.css/);
   assert.match(shell, /renderTopbar/);
+  assert.match(shell, /renderGlobalBar/);
+  assert.match(shell, /application-frame/);
   assert.match(topbarView, /renderTopbar/);
+  assert.match(globalBar, /global-app-bar/);
+  assert.match(globalBar, /globalIpValue/);
+  assert.match(globalBar, /toggle-resource-mode/);
+  assert.match(globalCss, /grid-template-rows: 34px minmax\(0, 1fr\)/);
 };

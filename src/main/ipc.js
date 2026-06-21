@@ -12,6 +12,7 @@ const {
   dataDir
 } = require("./utils");
 const { profileWindows, setMainWindowRef } = require("./windows");
+const { setMode: setResourceMode, applyToWindow } = require("./resource-mode");
 
 const {
   openProfileWindow,
@@ -219,6 +220,15 @@ function registerIpc(mainWindowRef) {
     };
   });
   ipcMain.handle("app:healthcheck", () => ({ ok: true, electron: process.versions.electron, chrome: process.versions.chrome }));
+  ipcMain.handle("app:setResourceMode", (_event, requestedMode) => {
+    const mode = setResourceMode(requestedMode);
+    const throttled = mode === "economy";
+    const windows = [resolveWindow(mainWindowRef), ...[...profileWindows.values()].map((item) => item?.win)].filter(Boolean);
+    for (const win of windows) {
+      applyToWindow(win);
+    }
+    return { ok: true, mode, backgroundThrottling: throttled };
+  });
   ipcMain.handle("profile-browser:window-action", (event, action) => {
     const win = BrowserWindow.fromWebContents(event.sender);
     if (!win || win.isDestroyed()) return { ok: false };

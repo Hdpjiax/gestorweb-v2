@@ -2,6 +2,7 @@ import { state } from "../state.js";
 import { profileById } from "../utils.js";
 import { renderSidebar } from "./sidebar-view.js";
 import { renderTopbar } from "./topbar-view.js";
+import { renderGlobalBar } from "./global-bar-view.js";
 import { renderView } from "./view-router.js";
 import { renderInfoView } from "./info-view-router.js";
 import { renderLegacyOverlays } from "./overlay-view.js";
@@ -50,13 +51,16 @@ export function renderShellFrame({
   viewClass = ""
 } = {}) {
   return `
-    <div class="app-shell ${showInspector ? "" : "no-inspector"} ${viewClass}">
-      ${sidebar}
-      <div class="workspace">
-        ${topbar}
-        <main class="content">${main}</main>
+    <div class="application-frame ${viewClass}">
+      ${renderGlobalBar()}
+      <div class="app-shell ${showInspector ? "" : "no-inspector"}">
+        ${sidebar}
+        <div class="workspace">
+          ${topbar}
+          <main class="content">${main}</main>
+        </div>
+        ${showInspector ? inspector : ""}
       </div>
-      ${showInspector ? inspector : ""}
     </div>
     ${overlays}
   `;

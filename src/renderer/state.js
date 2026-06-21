@@ -29,7 +29,14 @@ export const ui = {
   repeaterOutput: "",
   repeaterDraft: null,
   networkSelectedId: null,
-  profilePreviews: {}
+  profilePreviews: {},
+  globalIp: null,
+  globalIpRoute: "directo",
+  adminAuthenticated: false,
+  adminLicenses: [],
+  adminError: "",
+  adminServerUrl: "",
+  adminGeneratedKey: ""
 };
 
 export const defaults = {
@@ -47,7 +54,7 @@ export const defaults = {
   browserTabs: [],
   activeTabId: null,
   netEntries: [],
-  settings: { theme: "midnight", chromiumReady: false, torReady: false, vaultToken: shortId(24) },
+  settings: { theme: "midnight", resourceMode: "economy", chromiumReady: false, torReady: false, vaultToken: shortId(24) },
   meta: { createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() }
 };
 
@@ -67,7 +74,7 @@ export function normalize(next) {
   next.liveIds ||= [];
   next.browserTabs ||= [];
   next.netEntries ||= [];
-  next.settings ||= clone(defaults.settings);
+  next.settings = { ...clone(defaults.settings), ...(next.settings || {}) };
   next.meta ||= clone(defaults.meta);
   next.meta.updatedAt = new Date().toISOString();
   if (next.profiles.length && !next.selectedId) next.selectedId = next.profiles[0].id;
@@ -160,7 +167,7 @@ export function update(fn) {
   fn(state);
   state = normalize(state);
   save();
-  if (_renderFn) root.innerHTML = state.license?.active ? _renderFn() : renderLicense();
+  if (_renderFn) root.innerHTML = state.license?.active || state.view === "admin" ? _renderFn() : renderLicense();
   if (_bindFn) _bindFn();
   window.scrollTo(0, sy);
 }
@@ -175,7 +182,7 @@ export function rerender() {
 }
 
 export function render() {
-  if (_renderFn) root.innerHTML = state.license?.active ? _renderFn() : renderLicense();
+  if (_renderFn) root.innerHTML = state.license?.active || state.view === "admin" ? _renderFn() : renderLicense();
   if (_bindFn) _bindFn();
 }
 
@@ -187,8 +194,18 @@ function renderLicense() {
     ? `${reason} · vence: ${new Date(state.license.expiresAt).toLocaleString()}`
     : reason;
 
+  const economy = (state.settings?.resourceMode || "economy") === "economy";
   return `
-    <div class="screen">
+    <div class="application-frame">
+      <header class="global-app-bar">
+        <div class="global-brand"><span class="global-brand-dot"></span><strong>Gestor Web</strong><span>v1.5.0</span><span class="mono global-license-id">SIN-LICENCIA</span></div>
+        <div class="global-status">
+          <span class="global-ip"><small>IP</small><b id="globalIpValue">${esc(ui.globalIp || "detectando...")}</b></span>
+          <span class="pill accent">midnight</span>
+          <button class="resource-mode-toggle ${economy ? "economy" : "normal"}" type="button" data-action="toggle-resource-mode"><span class="dot"></span><span>modo ${economy ? "ahorro" : "normal"} activo</span></button>
+        </div>
+      </header>
+      <div class="screen">
       <form id="licenseForm" class="license-card">
         <div class="card-head">
           <h1 class="title">Activacion</h1>
@@ -218,6 +235,7 @@ function renderLicense() {
           <span>HWID generado desde el dispositivo local</span>
         </div>
       </form>
+      </div>
     </div>
   `;
 }

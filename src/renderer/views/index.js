@@ -2,6 +2,7 @@
 export { renderShell, renderShellFrame }          from "./shell-view.js";
 export { renderSidebar }                          from "./sidebar-view.js";
 export { renderTopbar }                           from "./topbar-view.js";
+export { renderGlobalBar }                        from "./global-bar-view.js";
 export { renderView }                             from "./view-router.js";
 export { renderInfoView }                         from "./info-view-router.js";
 export { renderInspectorView }                    from "./inspector-view.js";
@@ -26,3 +27,4 @@ export { renderInspectorActions }                 from "./inspector-actions-view
 export { renderNetworkView, renderNetworkEntryList } from "./network-view.js";
 export { renderCommandPalette }                   from "./command-palette-view.js";
 export { renderCookieEditor }                     from "./cookie-editor-view.js";
+export { renderAdminLicensesView }                from "./admin-licenses-view.js";

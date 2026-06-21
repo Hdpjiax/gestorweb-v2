@@ -4,7 +4,7 @@
 @import url("./profile-final-fixes.css");
 
 .app-shell .workspace {
-  height: 100vh;
+  height: 100%;
   display: flex;
   flex-direction: column;
   overflow: hidden;

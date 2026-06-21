@@ -1,0 +1,45 @@
+services:
+  database:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: gestor_licenses
+      POSTGRES_USER: gestor
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?define POSTGRES_PASSWORD}
+    volumes:
+      - license_database:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U gestor -d gestor_licenses"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      database:
+        condition: service_healthy
+    ports:
+      - "8787:8787"
+    environment:
+      NODE_ENV: production
+      PORT: 8787
+      DATABASE_URL: postgres://gestor:${POSTGRES_PASSWORD}@database:5432/gestor_licenses
+      DATABASE_SSL: "false"
+      LICENSE_ADMIN_TOKEN: ${LICENSE_ADMIN_TOKEN:?define LICENSE_ADMIN_TOKEN}
+      PUBLIC_LICENSE_SERVER_URL: ${PUBLIC_LICENSE_SERVER_URL:?define PUBLIC_LICENSE_SERVER_URL}
+      PRIVATE_KEY_FILE: /run/secrets/license_private_key
+      PUBLIC_KEY_FILE: /run/secrets/license_public_key
+    secrets:
+      - license_private_key
+      - license_public_key
+
+secrets:
+  license_private_key:
+    file: ./private_key.pem
+  license_public_key:
+    file: ./public_key.pem
+
+volumes:
+  license_database:

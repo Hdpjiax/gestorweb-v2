@@ -3,6 +3,7 @@ const fs = require("fs");
 const http = require("http");
 const path = require("path");
 const { URL } = require("url");
+const { createLicenseStore } = require("./database");
 
 loadDotEnv(path.join(__dirname, ".env"));
 loadDotEnv(path.join(__dirname, ".env.example"));
@@ -15,6 +16,11 @@ const PUBLIC_KEY_FILE = path.resolve(__dirname, process.env.PUBLIC_KEY_FILE || "
 const PUBLIC_LICENSE_SERVER_URL = String(process.env.PUBLIC_LICENSE_SERVER_URL || `http://127.0.0.1:${PORT}`).replace(/\/+$/, "");
 const APP_ID = "gestor-web";
 const LICENSE_PREFIX = "GW-LIC-V1";
+const licenseStore = createLicenseStore({ dbFile: DB_FILE });
+
+if (process.env.NODE_ENV === "production" && ADMIN_TOKEN === "dev-admin-change-me") {
+  throw new Error("LICENSE_ADMIN_TOKEN seguro es obligatorio en produccion");
+}
 
 const PLANS = {
   "1d": { label: "1 dia", days: 1 },
@@ -164,9 +170,11 @@ function normalizeFeatures(features) {
   return features.map((item) => String(item).trim()).filter(Boolean).slice(0, 25);
 }
 
-function adminCreateLicense(body) {
+async function adminCreateLicense(body) {
   const hwid = String(body.hwid || "").trim();
   if (!hwid) throw new Error("hwid requerido");
+  const platform = String(body.platform || "any").trim().toLowerCase();
+  if (!new Set(["windows", "android", "any"]).has(platform)) throw new Error("platform debe ser windows, android o any");
   const plan = String(body.plan || "30d").trim();
   if (!PLANS[plan]) throw new Error(`plan invalido. Usa: ${Object.keys(PLANS).join(", ")}`);
 
@@ -177,6 +185,7 @@ function adminCreateLicense(body) {
     v: 1,
     id,
     hwid,
+    platform,
     app: APP_ID,
     plan,
     type: PLANS[plan].label,
@@ -189,10 +198,10 @@ function adminCreateLicense(body) {
     sig_alg: "RSA-SHA256"
   };
   const licenseText = createLicenseText(payload);
-  const db = loadDb();
-  db.licenses.unshift({
+  const record = await licenseStore.create({
     id,
     hwid,
+    platform,
     app: APP_ID,
     plan,
     tier: payload.tier,
@@ -205,35 +214,30 @@ function adminCreateLicense(body) {
     license_hash: licenseHash(licenseText),
     license_text: licenseText
   });
-  saveDb(db);
-  return { ok: true, license: db.licenses[0], licenseText };
+  return { ok: true, license: record, licenseText };
 }
 
-function adminRevoke(body) {
+async function adminRevoke(body) {
   const id = String(body.id || body.licenseId || "").trim();
   if (!id) throw new Error("id requerido");
-  const db = loadDb();
-  const item = db.licenses.find((license) => license.id === id);
+  const item = await licenseStore.revoke(id, String(body.reason || "revocada por admin"), Date.now());
   if (!item) throw new Error("licencia no encontrada");
-  item.revoked = true;
-  item.revoke_reason = String(body.reason || "revocada por admin");
-  item.revoked_at = new Date().toISOString();
-  saveDb(db);
   return { ok: true, license: item };
 }
 
-function verifyOnline(body) {
+async function verifyOnline(body) {
   const hwid = String(body.hwid || "").trim();
+  const platform = String(body.platform || "unknown").trim().toLowerCase();
   const licenseText = String(body.licenseText || "").trim();
   const payload = verifySignature(licenseText);
   const now = Date.now();
 
   if (payload.app !== APP_ID) return { active: false, reason: "app invalida", serverTime: now };
   if (payload.hwid && payload.hwid !== hwid) return { active: false, reason: "HWID no coincide", serverTime: now };
+  if (payload.platform && payload.platform !== "any" && payload.platform !== platform) return { active: false, reason: `licencia exclusiva para ${payload.platform}`, serverTime: now };
 
-  const db = loadDb();
   const id = String(payload.id || payload.license_id || "");
-  const item = db.licenses.find((license) => license.id === id);
+  const item = await licenseStore.findById(id);
   if (!item) return { active: false, reason: "licencia no registrada en servidor", serverTime: now };
   if (item.license_hash !== licenseHash(licenseText)) return { active: false, reason: "licencia no coincide con registro", serverTime: now };
   if (item.revoked) return { active: false, revoked: true, reason: item.revoke_reason || "licencia revocada", serverTime: now };
@@ -241,9 +245,7 @@ function verifyOnline(body) {
   const expiresAt = Number(payload.expires_at || 0) || null;
   if (expiresAt && now > expiresAt) return { active: false, reason: "licencia expirada", expiresAt, serverTime: now };
 
-  item.last_check_at = new Date(now).toISOString();
-  item.last_hwid = hwid;
-  saveDb(db);
+  await licenseStore.touch(id, hwid, platform, now);
 
   return {
     active: true,
@@ -270,17 +272,22 @@ async function route(req, res) {
     if (url.pathname.startsWith("/admin/")) {
       if (!isAdmin(req)) return send(res, 401, { ok: false, error: "admin token invalido" });
       if (req.method === "GET" && url.pathname === "/admin/licenses") {
-        const db = loadDb();
-        return send(res, 200, { ok: true, licenses: db.licenses.map(({ license_text, ...item }) => item) });
+        const now = Date.now();
+        const licenses = (await licenseStore.list()).map(({ license_text, license_hash, ...item }) => ({
+          ...item,
+          licenseText: license_text,
+          status: item.revoked ? "revoked" : item.expires_at && now > Number(item.expires_at) ? "expired" : "active"
+        }));
+        return send(res, 200, { ok: true, licenses });
       }
       const body = await readBody(req);
-      if (req.method === "POST" && url.pathname === "/admin/licenses") return send(res, 200, adminCreateLicense(body));
-      if (req.method === "POST" && url.pathname === "/admin/revoke") return send(res, 200, adminRevoke(body));
+      if (req.method === "POST" && url.pathname === "/admin/licenses") return send(res, 200, await adminCreateLicense(body));
+      if (req.method === "POST" && url.pathname === "/admin/revoke") return send(res, 200, await adminRevoke(body));
     }
 
     if (req.method === "POST" && url.pathname === "/v1/verify") {
       const body = await readBody(req);
-      return send(res, 200, verifyOnline(body));
+      return send(res, 200, await verifyOnline(body));
     }
 
     return send(res, 404, { ok: false, error: "ruta no encontrada" });
@@ -293,8 +300,13 @@ const server = http.createServer((req, res) => {
   route(req, res).catch((error) => send(res, 500, { ok: false, error: error?.message || "error interno" }));
 });
 
-server.listen(PORT, () => {
-  console.log(`License server listo en http://127.0.0.1:${PORT}`);
-  console.log(`Public URL usada en licencias: ${PUBLIC_LICENSE_SERVER_URL}`);
-  console.log(`DB: ${DB_FILE}`);
+licenseStore.init().then(() => {
+  server.listen(PORT, () => {
+    console.log(`License server listo en http://127.0.0.1:${PORT}`);
+    console.log(`Public URL usada en licencias: ${PUBLIC_LICENSE_SERVER_URL}`);
+    console.log(`Storage: ${process.env.DATABASE_URL ? "PostgreSQL" : DB_FILE}`);
+  });
+}).catch((error) => {
+  console.error(`No se pudo iniciar license server: ${error.message}`);
+  process.exitCode = 1;
 });

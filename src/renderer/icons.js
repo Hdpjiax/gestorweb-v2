@@ -69,7 +69,8 @@ export const titles = {
   schedules: ["automatizacion", "tareas programadas"],
   history: ["eventos", "historial"],
   stats: ["analytics", "estadisticas"],
-  settings: ["sistema", "ajustes"]
+  settings: ["sistema", "ajustes"],
+  admin: ["privado", "administracion de licencias"]
 };
 
 export const privacyFlags = [

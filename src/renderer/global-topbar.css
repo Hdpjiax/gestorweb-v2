@@ -1,21 +1,100 @@
-.app-shell .topbar {
-  flex: 0 0 74px;
-  min-height: 74px;
-  position: sticky;
-  top: 0;
-  z-index: 20;
-}
-
-.app-shell .workspace {
-  min-height: 0;
+.application-frame {
+  width: 100%;
+  height: 100vh;
+  min-width: 0;
+  display: grid;
+  grid-template-rows: 34px minmax(0, 1fr);
   overflow: hidden;
+  background: var(--bg-base);
 }
 
-.app-shell .content {
+.application-frame > .app-shell {
+  height: 100%;
   min-height: 0;
 }
 
-.browse-shell .topbar {
+.global-app-bar {
+  position: relative;
+  z-index: 1000;
+  width: 100%;
+  height: 34px;
   display: flex;
-  visibility: visible;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 0 10px 0 14px;
+  border-bottom: 1px solid #1f2a39;
+  background: #0b111a;
+  color: #708097;
+  font-size: 11px;
+  user-select: none;
+}
+
+.global-brand,
+.global-status,
+.global-ip {
+  display: flex;
+  align-items: center;
+}
+
+.global-brand { gap: 10px; }
+.global-brand strong { color: #f4f7fb; font-size: 12px; }
+.global-brand-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #8057ff;
+  box-shadow: 0 0 13px rgb(128 87 255 / .72);
+}
+.global-license-id { color: #60718a; letter-spacing: .03em; }
+
+.global-status { gap: 8px; }
+.global-ip { gap: 7px; }
+.global-ip small { color: #60a5fa; font-size: 9px; letter-spacing: .08em; }
+.global-ip b {
+  max-width: 150px;
+  overflow: hidden;
+  color: #cbd7e8;
+  font: 600 10px "JetBrains Mono", Consolas, monospace;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.resource-mode-toggle {
+  height: 22px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 10px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 700;
+}
+.resource-mode-toggle.economy { background: rgb(34 197 94 / .14); color: #26e075; }
+.resource-mode-toggle.normal { background: rgb(96 165 250 / .14); color: #7dd3fc; }
+.resource-mode-toggle .dot { background: currentColor; }
+
+.application-frame.browse-shell .topbar { display: flex; visibility: visible; }
+.application-frame.browse-shell .content { overflow: hidden; }
+
+body.gw-browser-mode .global-app-bar,
+body.native-browser-mode .global-app-bar { display: flex !important; }
+body.gw-browser-mode .gw-browser-top,
+body.native-browser-mode .browser-brandbar { display: none !important; }
+body.gw-browser-mode .gw-browser-shell { height: 100%; grid-template-rows: 38px 43px 1fr !important; }
+
+body.resource-economy *,
+body.resource-economy *::before,
+body.resource-economy *::after {
+  animation-duration: .001ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: .001ms !important;
+  scroll-behavior: auto !important;
+}
+
+@media (max-width: 780px) {
+  .global-license-id { display: none; }
+  .global-status .pill.accent { display: none; }
+  .global-ip b { max-width: 100px; }
 }

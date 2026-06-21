@@ -1,6 +1,6 @@
 # Servidor de licencias Gestor Web
 
-Backend online, autohospedable y sin dependencias externas de npm. Usa Node.js puro, claves RSA y un archivo JSON como base de datos inicial.
+Backend online autohospedable para Windows y Android. Usa claves RSA, PostgreSQL en produccion y JSON solamente para desarrollo local.
 
 ## 1. Generar claves
 
@@ -24,11 +24,24 @@ PORT=8787
 LICENSE_ADMIN_TOKEN=CAMBIA_ESTE_TOKEN
 PUBLIC_LICENSE_SERVER_URL=http://TU-SERVIDOR:8787
 DB_FILE=./licenses-db.json
+DATABASE_URL=postgres://usuario:password@host:5432/gestor_licenses
+DATABASE_SSL=true
+NODE_ENV=production
 PRIVATE_KEY_FILE=./private_key.pem
 PUBLIC_KEY_FILE=./public_key.pem
 ```
 
-`PUBLIC_LICENSE_SERVER_URL` debe ser la URL que la app del cliente pueda alcanzar. En pruebas locales puede ser `http://127.0.0.1:8787`.
+`PUBLIC_LICENSE_SERVER_URL` debe ser la URL que la app del cliente pueda alcanzar. En pruebas locales puede ser `http://127.0.0.1:8787`. En produccion debe ser HTTPS y `DATABASE_URL` es obligatoria.
+
+### Despliegue con Docker
+
+Copia `.env.example` a `.env`, define `POSTGRES_PASSWORD`, `LICENSE_ADMIN_TOKEN` y una `PUBLIC_LICENSE_SERVER_URL` HTTPS. Luego ejecuta:
+
+```bash
+docker compose -f docker-compose.production.yml up -d --build
+```
+
+Pon Caddy, Nginx o el proxy TLS de tu proveedor delante del puerto 8787. Conserva las claves y el volumen `license_database` fuera de cualquier repositorio publico.
 
 ## 3. Iniciar servidor
 

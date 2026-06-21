@@ -23,6 +23,10 @@ export function bind() {
   if (totp) totp.onsubmit = saveTotp;
   const repeater = document.getElementById("repeaterForm");
   if (repeater) repeater.onsubmit = sendRepeater;
+  const adminLogin = document.getElementById("adminLoginForm");
+  if (adminLogin) adminLogin.onsubmit = loginAdmin;
+  const adminCreate = document.getElementById("adminCreateLicenseForm");
+  if (adminCreate) adminCreate.onsubmit = createAdminLicense;
   bindInput("searchInput", (el) => update((s) => { s.filters.search = el.value; }));
   bindInput("proxyFilter", (el) => update((s) => { s.filters.proxyState = el.value; }));
   bindInput("groupFilter", (el) => update((s) => { s.filters.group = el.value; }));
@@ -191,6 +195,12 @@ function handleClick(event) {
     "browser-reload": () => activeWebview()?.reload(),
     "toggle-chromium": () => update((s) => { s.settings.chromiumReady = true; logEvent("chromium_installed", null, "simulado"); }),
     "toggle-tor": () => detectTor(),
+    "toggle-resource-mode": () => toggleResourceMode(),
+    "refresh-admin-licenses": () => refreshAdminLicenses(),
+    "logout-admin": () => logoutAdmin(),
+    "copy-admin-license": () => copyAdminLicense(id),
+    "copy-generated-license": () => navigator.clipboard?.writeText(ui.adminGeneratedKey || ""),
+    "revoke-admin-license": () => revokeAdminLicense(id),
     "load-network-entry": () => loadNetworkEntry(id),
     "clear-network-log": () => {
       ui.networkSelectedId = null;
@@ -519,6 +529,79 @@ function removeProxySet(ids, eventKind, payload) {
   syncProfilesWithoutProxy(affectedProfileIds);
 }
 
+async function loginAdmin(event) {
+  event.preventDefault();
+  const data = new FormData(event.currentTarget);
+  ui.adminError = "";
+  try {
+    const result = await native?.admin?.login?.(data.get("serverUrl"), data.get("credential"));
+    ui.adminAuthenticated = !!result?.ok;
+    ui.adminServerUrl = result?.serverUrl || String(data.get("serverUrl") || "");
+    ui.adminLicenses = result?.licenses || [];
+  } catch (error) {
+    ui.adminAuthenticated = false;
+    ui.adminError = error?.message || "no se pudo iniciar sesion admin";
+  }
+  rerender();
+}
+
+async function refreshAdminLicenses() {
+  try {
+    const result = await native?.admin?.list?.();
+    ui.adminLicenses = result?.licenses || [];
+    ui.adminError = "";
+  } catch (error) {
+    ui.adminError = error?.message || "no se pudieron cargar las licencias";
+  }
+  rerender();
+}
+
+async function createAdminLicense(event) {
+  event.preventDefault();
+  const data = new FormData(event.currentTarget);
+  const payload = {
+    hwid: String(data.get("hwid") || "").trim(),
+    platform: data.get("platform"),
+    plan: data.get("plan"),
+    tier: data.get("tier"),
+    features: String(data.get("features") || "standard").split(",").map((item) => item.trim()).filter(Boolean)
+  };
+  try {
+    const result = await native?.admin?.create?.(payload);
+    ui.adminGeneratedKey = result?.licenseText || "";
+    ui.adminError = "";
+    await refreshAdminLicenses();
+  } catch (error) {
+    ui.adminError = error?.message || "no se pudo generar la licencia";
+    rerender();
+  }
+}
+
+function copyAdminLicense(id) {
+  const license = ui.adminLicenses.find((item) => item.id === id);
+  if (license?.licenseText) navigator.clipboard?.writeText(license.licenseText);
+}
+
+async function revokeAdminLicense(id) {
+  if (!confirm(`Revocar ${id}? El equipo quedara bloqueado en su siguiente validacion.`)) return;
+  const reason = prompt("Motivo de revocacion:", "revocada por administrador") || "revocada por administrador";
+  try {
+    await native?.admin?.revoke?.(id, reason);
+    await refreshAdminLicenses();
+  } catch (error) {
+    ui.adminError = error?.message || "no se pudo revocar";
+    rerender();
+  }
+}
+
+async function logoutAdmin() {
+  await native?.admin?.logout?.().catch(() => {});
+  ui.adminAuthenticated = false;
+  ui.adminLicenses = [];
+  ui.adminGeneratedKey = "";
+  update((s) => { s.view = "settings"; });
+}
+
 function syncProfilesWithoutProxy(profileIds) {
   if (!native?.proxies?.updateSession) return;
   for (const profileId of profileIds) {
@@ -838,6 +921,13 @@ async function detectTor() {
   });
 }
 
+async function toggleResourceMode() {
+  const nextMode = (state.settings.resourceMode || "economy") === "economy" ? "normal" : "economy";
+  document.body.classList.toggle("resource-economy", nextMode === "economy");
+  await native?.app?.setResourceMode?.(nextMode).catch(() => {});
+  update((s) => { s.settings.resourceMode = nextMode; });
+}
+
 async function exportVault() {
   if (native?.vault?.exportFile) {
     const result = await native.vault.exportFile(state);
@@ -947,6 +1037,11 @@ export function startScheduler() {
 export function initKeyboard() {
   document.addEventListener("keydown", (event) => {
     const key = event.key.toLowerCase();
+    if (event.ctrlKey && event.shiftKey && key === "a") {
+      event.preventDefault();
+      update((s) => { s.view = "admin"; });
+      return;
+    }
     if (event.key === "Escape") {
       if (ui.newProfile || ui.command || ui.cookieProfileId) {
         ui.newProfile = false;

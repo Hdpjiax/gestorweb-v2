@@ -20,6 +20,8 @@ function configuredPublicKey() {
   const localFile = path.join(__dirname, "license-public-key.pem");
   if (fs.existsSync(localFile)) return fs.readFileSync(localFile, "utf8");
 
+  try { return require("./license-public-key"); } catch {}
+
   const devServerFile = path.resolve(__dirname, "..", "..", "backend", "license-server", "public_key.pem");
   if (fs.existsSync(devServerFile)) return fs.readFileSync(devServerFile, "utf8");
 
@@ -119,6 +121,12 @@ function getLicenseServerUrl(payload) {
   ).trim().replace(/\/+$/, "");
 }
 
+function currentPlatform(options = {}) {
+  if (options.platform) return String(options.platform).toLowerCase();
+  if (process.platform === "win32") return "windows";
+  return process.platform;
+}
+
 function verifySignedLicense(text, hwid, options = {}) {
   const parsed = parseLicenseText(text);
   const payload = parsed.payload;
@@ -150,6 +158,11 @@ function verifySignedLicense(text, hwid, options = {}) {
 
   if (payload.hwid && String(payload.hwid) !== String(hwid)) {
     return { active: false, reason: `licencia emitida para otro HWID (${payload.hwid})`, parsed };
+  }
+
+  const platform = currentPlatform(options);
+  if (payload.platform && payload.platform !== "any" && payload.platform !== platform) {
+    return { active: false, reason: `licencia exclusiva para ${payload.platform}`, parsed };
   }
 
   const expiresAt = getExpiresAt(payload);
@@ -207,7 +220,7 @@ async function postJson(url, body, timeoutMs = 8000) {
   }
 }
 
-async function verifyOnline(text, hwid, localStatus) {
+async function verifyOnline(text, hwid, localStatus, options = {}) {
   const payload = localStatus?.parsed?.payload || parseLicenseText(text).payload;
   const serverUrl = getLicenseServerUrl(payload);
   const onlineRequired = payload.online_required !== false;
@@ -220,6 +233,7 @@ async function verifyOnline(text, hwid, localStatus) {
   const response = await postJson(`${serverUrl}/v1/verify`, {
     app: DEFAULT_APP_ID,
     hwid,
+    platform: currentPlatform(options),
     licenseText: text
   });
 
@@ -262,7 +276,7 @@ async function checkLicense(text, hwid, options = {}) {
     };
   }
 
-  const online = await verifyOnline(text, hwid, local);
+  const online = await verifyOnline(text, hwid, local, options);
   if (!online.active) {
     return {
       ...local,

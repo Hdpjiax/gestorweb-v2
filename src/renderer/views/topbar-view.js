@@ -59,9 +59,6 @@ export function renderTopbar() {
       </div>
       <div class="top-actions">
         ${renderProfileFilters()}
-        ${renderBrowserIpPill()}
-        <span class="pill accent">midnight</span>
-        <span class="pill live"><span class="dot"></span>modo ahorro activo</span>
         <button class="btn btn-primary" data-action="new-profile">+ nuevo perfil</button>
       </div>
     </header>

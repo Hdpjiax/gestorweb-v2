@@ -6,7 +6,8 @@ const invoke = (channel, ...args) => ipcRenderer.invoke(channel, ...args);
 // Solo se permite suscribirse a canales explícitamente whitelisted.
 const ALLOWED_LISTEN_CHANNELS = [
   "profiles:windowClosed",
-  "network:event"
+  "network:event",
+  "license:invalidated"
 ];
 
 contextBridge.exposeInMainWorld("api", Object.freeze({
@@ -16,6 +17,7 @@ contextBridge.exposeInMainWorld("api", Object.freeze({
     openDataDir: () => invoke("app:openDataDir"),
     dbStats: () => invoke("app:dbStats"),
     healthcheck: () => invoke("app:healthcheck"),
+    setResourceMode: (mode) => invoke("app:setResourceMode", mode),
     openExternal: (url) => invoke("app:openExternal", url)
   }),
   browse: Object.freeze({
@@ -35,6 +37,13 @@ contextBridge.exposeInMainWorld("api", Object.freeze({
     claimByKey: (key) => invoke("license:claimByKey", key),
     install: (text) => invoke("license:install", text),
     ipcheck: () => invoke("license:ipcheck")
+  }),
+  admin: Object.freeze({
+    login: (serverUrl, credential) => invoke("admin:login", serverUrl, credential),
+    list: () => invoke("admin:list"),
+    create: (license) => invoke("admin:create", license),
+    revoke: (id, reason) => invoke("admin:revoke", id, reason),
+    logout: () => invoke("admin:logout")
   }),
   profiles: Object.freeze({
     openWindow: (profile, proxy, url) => invoke("profiles:openWindow", profile, proxy, url),

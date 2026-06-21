@@ -9,6 +9,7 @@ import { renderStatsView }     from "./stats-view.js";
 import { renderSettingsView }  from "./settings-view.js";
 import { renderMonitorView }   from "./monitor-view.js";
 import { renderNetworkView }   from "./network-view.js";
+import { renderAdminLicensesView } from "./admin-licenses-view.js";
 
 /**
  * Router principal de vistas.
@@ -25,5 +26,6 @@ export function renderView() {
   if (state.view === "settings")                  return renderSettingsView();
   if (state.view === "monitor")                   return renderMonitorView();
   if (state.view === "network")                   return renderNetworkView();
+  if (state.view === "admin")                     return renderAdminLicensesView();
   return renderProfileViewWithRow(renderProfileRow); // fallback
 }

@@ -11,6 +11,8 @@
     "test": "node scripts/run-tests.js",
     "test:ipc": "playwright test --config=playwright.config.js",
     "qa": "npm run check && npm test",
+    "license:server": "npm start --prefix backend/license-server",
+    "android:assemble": "cd android && gradlew.bat assembleRelease",
     "pack:win": "electron-builder --win --dir",
     "dist:win": "electron-builder --win nsis"
   },
