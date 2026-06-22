@@ -12,9 +12,11 @@
     "test:ipc": "playwright test --config=playwright.config.js",
     "qa": "npm run check && npm test",
     "license:server": "npm start --prefix backend/license-server",
-    "android:assemble": "cd android && gradlew.bat assembleRelease",
+    "android:assemble": "node scripts/build-apk.js",
     "pack:win": "electron-builder --win --dir",
-    "dist:win": "electron-builder --win nsis"
+    "dist:win": "electron-builder --win nsis",
+    "dist:setup": "electron-builder --win nsis --publish never && node scripts/keep-single-artifact.js exe",
+    "dist:apk": "node scripts/build-apk.js"
   },
   "build": {
     "appId": "local.gestorweb.rebuild",
@@ -36,6 +38,7 @@
       "package.json",
       "src/**"
     ],
+    "publish": null,
     "win": {
       "target": "nsis",
       "icon": "build/icon.ico",
@@ -45,7 +48,8 @@
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
       "installerIcon": "build/icon.ico",
-      "uninstallerIcon": "build/icon.ico"
+      "uninstallerIcon": "build/icon.ico",
+      "differentialPackage": false
     }
   },
   "devDependencies": {
