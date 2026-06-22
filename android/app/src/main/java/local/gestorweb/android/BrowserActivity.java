@@ -51,7 +51,7 @@ public final class BrowserActivity extends AppCompatActivity {
                         licenses.clearLicense();
                         startActivity(new Intent(BrowserActivity.this, MainActivity.class).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP));
                         finish();
-                    } else handler.postDelayed(this, 60_000);
+                    } else handler.postDelayed(this, 15_000);
                 });
             }).start();
         }
@@ -108,7 +108,7 @@ public final class BrowserActivity extends AppCompatActivity {
         root.addView(webView, new LinearLayout.LayoutParams(-1, 0, 1));
         setContentView(root);
         applyProxyAndOpen();
-        handler.postDelayed(licenseCheck, 60_000);
+        handler.postDelayed(licenseCheck, 15_000);
     }
 
     private void configureWebView() {
