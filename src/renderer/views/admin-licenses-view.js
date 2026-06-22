@@ -66,6 +66,25 @@ function adminLogin() {
   `;
 }
 
+function filterLicenses(licenses) {
+  const filters = ui.adminFilters || { search: "", status: "all", plan: "all", tier: "all" };
+  const q = String(filters.search || "").trim().toLowerCase();
+  return licenses.filter((license) => {
+    const status = statusLabel(license)[0];
+    const haystack = `${license.id} ${license.hwid} ${license.plan} ${license.tier} ${(license.features || []).join(" ")}`.toLowerCase();
+    if (q && !haystack.includes(q)) return false;
+    if (filters.status && filters.status !== "all" && filters.status !== status) return false;
+    if (filters.plan && filters.plan !== "all" && filters.plan !== license.plan) return false;
+    if (filters.tier && filters.tier !== "all" && filters.tier !== license.tier) return false;
+    return true;
+  });
+}
+
+function options(values, selected, allLabel) {
+  const unique = [...new Set(values.filter(Boolean))].sort();
+  return [`<option value="all">${esc(allLabel)}</option>`, ...unique.map((value) => `<option value="${attr(value)}" ${selected === value ? "selected" : ""}>${esc(value)}</option>`)].join("");
+}
+
 function licenseRow(license) {
   const [status, klass] = statusLabel(license);
   const features = Array.isArray(license.features) ? license.features.join(", ") : String(license.features || "");
@@ -77,8 +96,31 @@ function licenseRow(license) {
       <span class="mono">${license.expires_at ? esc(new Date(Number(license.expires_at)).toLocaleString()) : "permanente"}</span>
       <span class="pill ${klass}">${status}</span>
       <div class="flex right">
-        <button class="btn btn-ghost" type="button" data-action="copy-admin-license" data-id="${attr(license.id)}">copiar key</button>
-        ${status === "activa" ? `<button class="btn btn-ghost btn-danger" type="button" data-action="revoke-admin-license" data-id="${attr(license.id)}">revocar acceso</button>` : ""}
+        <button class="btn btn-ghost" type="button" data-action="copy-admin-license" data-id="${attr(license.id)}">copiar</button>
+        <button class="btn btn-ghost" type="button" data-action="show-admin-history" data-id="${attr(license.id)}">historial</button>
+        <button class="btn btn-ghost" type="button" data-action="duplicate-admin-license" data-id="${attr(license.id)}">duplicar</button>
+        ${status === "activa" ? `<button class="btn btn-ghost" type="button" data-action="renew-admin-license" data-id="${attr(license.id)}">renovar</button><button class="btn btn-ghost btn-danger" type="button" data-action="revoke-admin-license" data-id="${attr(license.id)}">revocar</button>` : ""}
+      </div>
+    </div>
+  `;
+}
+
+function historyPanel() {
+  if (!ui.adminHistoryLicenseId) return "";
+  const events = ui.adminHistoryEvents || [];
+  return `
+    <div class="metric stack admin-history-panel">
+      <div class="between">
+        <div><strong>Historial</strong><div class="small-note mono">${esc(ui.adminHistoryLicenseId)}</div></div>
+        <button class="btn btn-ghost" type="button" data-action="close-admin-history">cerrar</button>
+      </div>
+      <div class="admin-history-list">
+        ${events.map((event) => `
+          <div class="admin-history-item">
+            <span class="pill accent">${esc(event.action || "evento")}</span>
+            <div><strong>${esc(event.detail || "sin detalle")}</strong><small>${event.created_at ? esc(new Date(event.created_at).toLocaleString()) : "ahora"}</small></div>
+          </div>
+        `).join("") || `<div class="network-empty">Sin eventos registrados para esta licencia.</div>`}
       </div>
     </div>
   `;
@@ -88,6 +130,8 @@ export function renderAdminLicensesView() {
   if (!isAdminLicense()) return adminLocked();
   if (!ui.adminAuthenticated) return adminLogin();
   const licenses = ui.adminLicenses || [];
+  const filtered = filterLicenses(licenses);
+  const filters = ui.adminFilters || { search: "", status: "all", plan: "all", tier: "all" };
   const active = licenses.filter((item) => statusLabel(item)[0] === "activa").length;
   const expired = licenses.filter((item) => statusLabel(item)[0] === "expirada").length;
   const revoked = licenses.filter((item) => statusLabel(item)[0] === "revocada").length;
@@ -115,9 +159,18 @@ export function renderAdminLicensesView() {
       </form>
       ${ui.adminGeneratedKey ? `<div class="metric stack-sm"><div class="between"><strong>Licencia generada</strong><button class="btn btn-primary" type="button" data-action="copy-generated-license">copiar</button></div><pre class="mono admin-generated-key">${esc(ui.adminGeneratedKey)}</pre></div>` : ""}
       ${ui.adminError ? `<div class="pill danger">${esc(ui.adminError)}</div>` : ""}
+      <div class="metric admin-filter-bar">
+        <input class="input mono" data-admin-filter="search" value="${attr(filters.search || "")}" placeholder="Buscar por licencia, HWID, plan, tier..." />
+        <select class="select" data-admin-filter="status"><option value="all">todos los estados</option><option value="activa" ${filters.status === "activa" ? "selected" : ""}>activas</option><option value="revocada" ${filters.status === "revocada" ? "selected" : ""}>revocadas</option><option value="expirada" ${filters.status === "expirada" ? "selected" : ""}>expiradas</option></select>
+        <select class="select" data-admin-filter="plan">${options(licenses.map((item) => item.plan), filters.plan, "todos los planes")}</select>
+        <select class="select" data-admin-filter="tier">${options(licenses.map((item) => item.tier), filters.tier, "todos los tiers")}</select>
+        <button class="btn btn-ghost" type="button" data-action="reset-admin-filters">limpiar filtros</button>
+      </div>
+      <div class="small-note">Mostrando ${filtered.length} de ${licenses.length} licencias.</div>
+      ${historyPanel()}
       <div class="admin-license-table">
         <div class="admin-license-head"><span>Licencia / equipo</span><span>Tier</span><span>Plan</span><span>Vencimiento</span><span>Estado</span><span></span></div>
-        ${licenses.map(licenseRow).join("") || `<div class="network-empty">No hay licencias registradas.</div>`}
+        ${filtered.map(licenseRow).join("") || `<div class="network-empty">No hay licencias con esos filtros.</div>`}
       </div>
     </section>
   `;
