@@ -348,13 +348,28 @@
                     android:padding="@dimen/space_4"
                     android:background="@drawable/bg_card">
 
-                    <TextView
-                        android:layout_width="wrap_content"
+                    <LinearLayout
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="@string/label_new_profile"
-                        android:textSize="@dimen/text_xl"
-                        android:textColor="@color/gw_text"
-                        android:textStyle="bold" />
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical">
+                        <TextView
+                            android:id="@+id/tvFormTitle"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="@string/label_new_profile"
+                            android:textSize="@dimen/text_xl"
+                            android:textColor="@color/gw_text"
+                            android:textStyle="bold" />
+                        <Button
+                            android:id="@+id/btnCancelEdit"
+                            android:layout_width="wrap_content"
+                            android:layout_height="32dp"
+                            android:text="@string/btn_cancel"
+                            android:visibility="gone"
+                            style="@style/GW.Button.Ghost" />
+                    </LinearLayout>
 
                     <View android:layout_width="match_parent" android:layout_height="4dp" />
 

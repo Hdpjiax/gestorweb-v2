@@ -93,7 +93,17 @@
             android:text="@string/btn_open_profile"
             style="@style/GW.Button.Primary" />
 
-        <View android:layout_width="@dimen/space_2" android:layout_height="match_parent" />
+        <View android:layout_width="@dimen/space_1" android:layout_height="match_parent" />
+
+        <Button
+            android:id="@+id/btnEditProfile"
+            android:layout_width="0dp"
+            android:layout_height="@dimen/btn_height"
+            android:layout_weight="1"
+            android:text="@string/btn_edit_profile"
+            style="@style/GW.Button.Ghost" />
+
+        <View android:layout_width="@dimen/space_1" android:layout_height="match_parent" />
 
         <Button
             android:id="@+id/btnDeleteProfile"

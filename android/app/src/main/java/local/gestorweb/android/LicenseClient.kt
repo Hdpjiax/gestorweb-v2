@@ -33,32 +33,34 @@ internal object LicenseClient {
 
     // ── Public entry point ───────────────────────────────────────────────────
 
-    fun verify(context: Context, licenseText: String, deviceId: String): Result = try {
-        val parsed = parseLicense(licenseText)
-        if (!verifySignature(context, parsed)) return Result(false, "firma criptografica invalida", 0)
+    fun verify(context: Context, licenseText: String, deviceId: String): Result {
+        try {
+            val parsed = parseLicense(licenseText)
+            if (!verifySignature(context, parsed)) return Result(false, "firma criptografica invalida", 0)
 
-        val app = parsed.payload.optString("app", APP_ID)
-        if (app != APP_ID) return Result(false, "licencia emitida para otra app", 0)
+            val app = parsed.payload.optString("app", APP_ID)
+            if (app != APP_ID) return Result(false, "licencia emitida para otra app", 0)
 
-        val hwid = parsed.payload.optString("hwid", "")
-        if (hwid.isNotEmpty() && hwid != deviceId) return Result(false, "licencia emitida para otro dispositivo", 0)
+            val hwid = parsed.payload.optString("hwid", "")
+            if (hwid.isNotEmpty() && hwid != deviceId) return Result(false, "licencia emitida para otro dispositivo", 0)
 
-        val expiresAt = expiresAt(parsed.payload)
-        if (expiresAt > 0 && System.currentTimeMillis() > expiresAt) return Result(false, "licencia expirada", expiresAt)
+            val expiresAt = expiresAt(parsed.payload)
+            if (expiresAt > 0 && System.currentTimeMillis() > expiresAt) return Result(false, "licencia expirada", expiresAt)
 
-        val db = parsed.payload.optJSONObject("license_db")
-            ?: return Result(false, "licencia sin configuracion Supabase", expiresAt)
-        if (!db.optString("provider", "").equals("supabase", ignoreCase = true))
-            return Result(false, "licencia sin configuracion Supabase", expiresAt)
+            val db = parsed.payload.optJSONObject("license_db")
+                ?: return Result(false, "licencia sin configuracion Supabase", expiresAt)
+            if (!db.optString("provider", "").equals("supabase", ignoreCase = true))
+                return Result(false, "licencia sin configuracion Supabase", expiresAt)
 
-        val supabaseUrl = db.optString("url", "").trimEnd('/')
-        val anonKey    = db.optString("anon_key", "")
-        if (supabaseUrl.isEmpty() || anonKey.isEmpty())
-            return Result(false, "Supabase URL o anon key no configurados", expiresAt)
+            val supabaseUrl = db.optString("url", "").trimEnd('/')
+            val anonKey    = db.optString("anon_key", "")
+            if (supabaseUrl.isEmpty() || anonKey.isEmpty())
+                return Result(false, "Supabase URL o anon key no configurados", expiresAt)
 
-        verifySupabase(parsed, deviceId, supabaseUrl, anonKey, expiresAt)
-    } catch (e: Exception) {
-        Result(false, "No se pudo validar licencia: ${e.message}", 0)
+            return verifySupabase(parsed, deviceId, supabaseUrl, anonKey, expiresAt)
+        } catch (e: Exception) {
+            return Result(false, "No se pudo validar licencia: ${e.message}", 0)
+        }
     }
 
     // ── Parsing ───────────────────────────────────────────────────────────────
@@ -126,7 +128,7 @@ internal object LicenseClient {
         localExpiresAt: Long
     ): Result {
         var connection: HttpURLConnection? = null
-        return try {
+        try {
             val url = URL("$supabaseUrl/rest/v1/rpc/verify_license_public")
             connection = (url.openConnection() as HttpURLConnection).apply {
                 requestMethod = "POST"
@@ -158,9 +160,9 @@ internal object LicenseClient {
             val reason    = response.optString("reason", if (active) "ok" else "licencia no activa")
             val expiresAt = if (response.has("expires_at") && !response.isNull("expires_at"))
                 response.optLong("expires_at", localExpiresAt) else localExpiresAt
-            Result(active, reason, expiresAt)
+            return Result(active, reason, expiresAt)
         } catch (e: Exception) {
-            Result(false, "No se pudo validar online: ${e.message}", localExpiresAt)
+            return Result(false, "No se pudo validar online: ${e.message}", localExpiresAt)
         } finally {
             connection?.disconnect()
         }

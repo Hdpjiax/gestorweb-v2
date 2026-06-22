@@ -44,6 +44,9 @@ class BrowserActivity : AppCompatActivity() {
     private var desktopMode   = false
     private var darkModeInject = false
 
+    private var JS_SPOOF_TIMEZONE = jsTimezone("America/New_York")
+    private var JS_SPOOF_LANG     = jsLang("en-US")
+
     // JS inyectado al final de cada página
     private val spoofScript: String get() = buildString {
         if (spoofCanvas) append(JS_SPOOF_CANVAS)
@@ -205,7 +208,7 @@ class BrowserActivity : AppCompatActivity() {
         // ─ Desktop mode ─
         view.findViewById<LinearLayout>(R.id.menuItemDesktopMode).setOnClickListener {
             desktopMode = !desktopMode
-            val ua = if (desktopMode) UA_DESKTOP else (profile?.userAgent?.ifEmpty { null } ?: webView.settings.defaultUserAgent)
+            val ua = if (desktopMode) UA_DESKTOP else (profile?.userAgent?.ifEmpty { null } ?: WebSettings.getDefaultUserAgent(this))
             webView.settings.userAgentString = ua
             webView.reload()
             toast(if (desktopMode) R.string.msg_desktop_on else R.string.msg_desktop_off)
@@ -248,7 +251,8 @@ class BrowserActivity : AppCompatActivity() {
                 .setItems(tzOptions) { _, which ->
                     spoofTimezone = true
                     val tz = tzOptions[which]
-                    webView.evaluateJavascript(jsTimezone(tz), null)
+                    JS_SPOOF_TIMEZONE = jsTimezone(tz)
+                    webView.evaluateJavascript(JS_SPOOF_TIMEZONE, null)
                     toast(getString(R.string.msg_tz_set) + " $tz")
                 }
                 .setNegativeButton(getString(R.string.btn_cancel)) { _, _ ->
@@ -270,7 +274,8 @@ class BrowserActivity : AppCompatActivity() {
                 .setItems(langOptions) { _, which ->
                     spoofLang = true
                     val lang = langOptions[which]
-                    webView.evaluateJavascript(jsLang(lang), null)
+                    JS_SPOOF_LANG = jsLang(lang)
+                    webView.evaluateJavascript(JS_SPOOF_LANG, null)
                     toast(getString(R.string.msg_lang_set) + " $lang")
                 }
                 .setNegativeButton(getString(R.string.btn_cancel)) { _, _ ->

@@ -11,6 +11,7 @@
     <!-- Title bars -->
     <string name="titlebar_dashboard">Dashboard</string>
     <string name="titlebar_browser">Navegador</string>
+    <string name="titlebar_activation">Activación</string>
 
     <!-- Stats -->
     <string name="stat_profiles">Perfiles</string>
@@ -23,6 +24,10 @@
     <string name="hint_profile_url">URL de inicio</string>
     <string name="hint_proxy">Proxy (host:puerto)</string>
     <string name="hint_ua">User-Agent personalizado</string>
+    <string name="hint_license">Clave de licencia</string>
+    <string name="hint_address_bar">Buscar o introducir URL</string>
+    <string name="hint_profile_proxy">host:puerto (opcional)</string>
+    <string name="hint_profile_ua">User-Agent personalizado (opcional)</string>
     <string name="btn_create_profile">Crear perfil</string>
     <string name="btn_save_profile">Guardar cambios</string>
     <string name="btn_cancel">Cancelar</string>
@@ -38,6 +43,29 @@
     <string name="label_insecure">⚠️</string>
     <string name="label_default_profile_name">Perfil</string>
     <string name="label_ua_custom">UA personalizado</string>
+    <string name="label_brand">GESTORWEB</string>
+    <string name="label_activation_title">Activar dispositivo</string>
+    <string name="label_activation_desc">Introduce tu clave de licencia para empezar a trabajar con GestorWeb.</string>
+    <string name="label_device_id_title">Identificador único</string>
+    <string name="label_license_title">Licencia</string>
+    <string name="label_license_desc">Copia y pega aquí la clave de licencia que has recibido.</string>
+    <string name="label_loading_title">GestorWeb</string>
+    <string name="label_loading_desc">Iniciando aplicación...</string>
+    <string name="pill_online">ONLINE</string>
+    <string name="label_dashboard_brand">PANEL DE CONTROL</string>
+    <string name="label_dashboard_title">Dashboard</string>
+    <string name="label_dashboard_desc">Gestiona tus perfiles y configuraciones.</string>
+    <string name="label_stat_profiles">Perfiles creados</string>
+    <string name="label_stat_proxy">Proxies activos</string>
+    <string name="label_license_active">Licencia Activa</string>
+    <string name="label_new_profile">Nuevo Perfil</string>
+    <string name="label_new_profile_desc">Crea una nueva instancia de navegación.</string>
+    <string name="label_mode">Modo de conexión</string>
+    <string name="label_profiles_title">Tus Perfiles</string>
+    <string name="label_profiles_empty">No tienes perfiles creados todavía.</string>
+    <string name="label_android_limits_title">Límites de Android</string>
+    <string name="label_android_limits_1">El sistema puede suspender procesos en segundo plano para ahorrar energía.</string>
+    <string name="label_android_limits_2">Se recomienda excluir GestorWeb de la optimización de batería.</string>
 
     <!-- Buttons -->
     <string name="btn_copy_hwid">Copiar</string>
