@@ -1,0 +1,187 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Full-screen activation / license entry screen -->
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@color/gw_bg">
+
+    <!-- Title bar -->
+    <LinearLayout
+        android:id="@+id/titleBar"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/titlebar_height"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingStart="@dimen/space_4"
+        android:paddingEnd="@dimen/space_4"
+        android:background="@drawable/bg_titlebar">
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="@string/titlebar_activation"
+            android:textSize="@dimen/text_sm"
+            android:textColor="@color/gw_text"
+            android:textStyle="bold" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/label_brand"
+            android:textSize="@dimen/text_xs"
+            android:textColor="@color/gw_muted"
+            android:textStyle="bold"
+            android:letterSpacing="0.10"
+            android:textAllCaps="true" />
+    </LinearLayout>
+
+    <!-- Scrollable content -->
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:fillViewport="true">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="@dimen/space_4">
+
+            <!-- Header -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/label_brand"
+                android:textSize="@dimen/text_xs"
+                android:textColor="@color/gw_accent_2"
+                android:textStyle="bold"
+                android:letterSpacing="0.18"
+                android:textAllCaps="true"
+                android:layout_marginTop="@dimen/space_4" />
+
+            <View android:layout_width="match_parent" android:layout_height="6dp" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/label_activation_title"
+                android:textSize="@dimen/text_hero"
+                android:textColor="@color/gw_text"
+                android:textStyle="bold"
+                android:lineSpacingMultiplier="1.05" />
+
+            <View android:layout_width="match_parent" android:layout_height="6dp" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/label_activation_desc"
+                android:textSize="@dimen/text_sm"
+                android:textColor="@color/gw_muted" />
+
+            <!-- Device ID card -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:layout_marginTop="@dimen/space_5"
+                android:padding="@dimen/space_4"
+                android:background="@drawable/bg_card">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/label_device_id_title"
+                    style="@style/GW.SectionLabel" />
+
+                <View android:layout_width="match_parent" android:layout_height="8dp" />
+
+                <TextView
+                    android:id="@+id/tvDeviceId"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textSize="@dimen/text_sm"
+                    android:textColor="@color/gw_text"
+                    android:textStyle="bold"
+                    android:textIsSelectable="true"
+                    android:fontFamily="monospace"
+                    android:padding="@dimen/space_3"
+                    android:background="@drawable/bg_card_elevated" />
+
+                <Button
+                    android:id="@+id/btnCopyHwid"
+                    android:layout_width="match_parent"
+                    android:layout_height="@dimen/btn_height"
+                    android:layout_marginTop="@dimen/space_3"
+                    android:text="@string/btn_copy_hwid"
+                    style="@style/GW.Button.Ghost" />
+            </LinearLayout>
+
+            <!-- License input card -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:layout_marginTop="@dimen/space_3"
+                android:padding="@dimen/space_4"
+                android:background="@drawable/bg_card">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/label_license_title"
+                    android:textSize="@dimen/text_xl"
+                    android:textColor="@color/gw_text"
+                    android:textStyle="bold" />
+
+                <View android:layout_width="match_parent" android:layout_height="4dp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/label_license_desc"
+                    android:textSize="@dimen/text_sm"
+                    android:textColor="@color/gw_muted" />
+
+                <EditText
+                    android:id="@+id/etLicense"
+                    android:layout_width="match_parent"
+                    android:layout_height="120dp"
+                    android:layout_marginTop="@dimen/space_3"
+                    android:hint="@string/hint_license"
+                    android:textColorHint="@color/gw_muted"
+                    android:textColor="@color/gw_text"
+                    android:textSize="@dimen/text_sm"
+                    android:fontFamily="monospace"
+                    android:inputType="textMultiLine"
+                    android:gravity="top|start"
+                    android:padding="@dimen/space_3"
+                    android:background="@drawable/bg_input" />
+
+                <!-- Error label (hidden by default) -->
+                <TextView
+                    android:id="@+id/tvLicenseError"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/space_2"
+                    android:textSize="@dimen/text_sm"
+                    android:textColor="@color/gw_danger"
+                    android:visibility="gone" />
+
+                <Button
+                    android:id="@+id/btnActivate"
+                    android:layout_width="match_parent"
+                    android:layout_height="@dimen/btn_height"
+                    android:layout_marginTop="@dimen/space_3"
+                    android:text="@string/btn_activate"
+                    style="@style/GW.Button.Primary" />
+            </LinearLayout>
+
+            <View android:layout_width="match_parent" android:layout_height="@dimen/space_6" />
+        </LinearLayout>
+    </ScrollView>
+</LinearLayout>

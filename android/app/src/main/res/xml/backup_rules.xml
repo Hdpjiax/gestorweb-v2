@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<full-backup-content>
+    <!-- Exclude licence key and device ID from cloud backup -->
+    <exclude domain="sharedpref" path="gestorweb_license.xml" />
+    <exclude domain="sharedpref" path="gestorweb_device.xml" />
+    <!-- Include profiles -->
+    <include domain="sharedpref" path="gestorweb_profiles.xml" />
+</full-backup-content>

@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:gravity="center"
+    android:background="@color/gw_bg"
+    android:padding="@dimen/space_8">
+
+    <!-- Logo / brand mark -->
+    <TextView
+        android:id="@+id/tvBrand"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/label_brand"
+        android:textSize="@dimen/text_xs"
+        android:textColor="@color/gw_accent_2"
+        android:textStyle="bold"
+        android:letterSpacing="0.18"
+        android:textAllCaps="true" />
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="12dp" />
+
+    <TextView
+        android:id="@+id/tvTitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/label_loading_title"
+        android:textSize="@dimen/text_2xl"
+        android:textColor="@color/gw_text"
+        android:textStyle="bold" />
+
+    <View android:layout_width="match_parent" android:layout_height="8dp" />
+
+    <TextView
+        android:id="@+id/tvDesc"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/label_loading_desc"
+        android:textSize="@dimen/text_sm"
+        android:textColor="@color/gw_muted"
+        android:gravity="center" />
+
+    <!-- Subtle animated progress bar -->
+    <ProgressBar
+        android:id="@+id/progressBar"
+        style="?android:attr/progressBarStyleHorizontal"
+        android:layout_width="160dp"
+        android:layout_height="3dp"
+        android:layout_marginTop="32dp"
+        android:indeterminate="true"
+        android:progressDrawable="@drawable/bg_progress"
+        android:indeterminateTint="@color/gw_accent" />
+
+</LinearLayout>

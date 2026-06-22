@@ -3,14 +3,12 @@ package local.gestorweb.android
 import android.annotation.SuppressLint
 import android.content.Intent
 import android.graphics.Color
-import android.graphics.Typeface
-import android.graphics.drawable.GradientDrawable
 import android.net.Uri
 import android.net.http.SslError
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
-import android.view.Gravity
+import android.view.View
 import android.webkit.*
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
@@ -20,18 +18,17 @@ import androidx.webkit.WebViewFeature
 
 class BrowserActivity : AppCompatActivity() {
 
-    private val BG     get() = color(R.color.gw_bg)
-    private val PANEL  get() = color(R.color.gw_panel)
-    private val PANEL2 get() = color(R.color.gw_panel_2)
-    private val BORDER get() = color(R.color.gw_border)
-    private val TEXT   get() = color(R.color.gw_text)
-    private val MUTED  get() = color(R.color.gw_muted)
-    private val ACCENT get() = color(R.color.gw_accent)
-
     private val handler = Handler(Looper.getMainLooper())
     private val direct  = java.util.concurrent.Executor { it.run() }
-    private lateinit var webView: WebView
-    private lateinit var address: EditText
+
+    // XML view refs
+    private lateinit var webView:          WebView
+    private lateinit var etAddress:        EditText
+    private lateinit var progressBar:      ProgressBar
+    private lateinit var btnBack:          Button
+    private lateinit var btnForward:       Button
+    private lateinit var tvSecurityIcon:   TextView
+
     private lateinit var licenses: LicenseStore
     private var profile: ProfileStore.Profile? = null
 
@@ -60,68 +57,58 @@ class BrowserActivity : AppCompatActivity() {
         if (profile == null || licenses.license().isEmpty()) { finish(); return }
         val p = profile!!
 
-        val root = LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL
-            setBackgroundColor(BG)
-            setPadding(dp(8), dp(8), dp(8), dp(8))
+        // Inflate layout
+        setContentView(R.layout.activity_browser)
+
+        // Bind views
+        webView        = findViewById(R.id.webView)
+        etAddress      = findViewById(R.id.etAddress)
+        progressBar    = findViewById(R.id.browserProgress)
+        btnBack        = findViewById(R.id.btnBack)
+        btnForward     = findViewById(R.id.btnForward)
+        tvSecurityIcon = findViewById(R.id.tvSecurityIcon)
+
+        // Title bar
+        findViewById<TextView>(R.id.tvBrowserProfileName).text = p.name
+        val modeStr = getString(R.string.label_mode_prefix) + p.privacyMode +
+            if (p.proxy.isEmpty()) getString(R.string.label_direct_suffix)
+            else getString(R.string.label_proxy_suffix)
+        findViewById<TextView>(R.id.tvBrowserProfileMode).text = modeStr
+
+        // Mode pill color
+        val pill = findViewById<TextView>(R.id.tvBrowserModePill)
+        pill.text = p.privacyMode.uppercase()
+        pill.setBackgroundResource(
+            if (p.privacyMode == ProfileStore.MODE_STRICT) R.drawable.bg_pill_danger
+            else R.drawable.bg_pill_accent
+        )
+
+        // Close button
+        findViewById<Button>(R.id.btnCloseBrowser).setOnClickListener { finish() }
+
+        // Toolbar actions
+        btnBack.setOnClickListener    { if (webView.canGoBack())    webView.goBack() }
+        btnForward.setOnClickListener { if (webView.canGoForward()) webView.goForward() }
+        findViewById<Button>(R.id.btnRefresh).setOnClickListener { webView.reload() }
+        findViewById<Button>(R.id.btnMore).setOnClickListener {
+            // TODO: expandable menu (share, copy URL, clear cache)
+            Toast.makeText(this, "Próximamente", Toast.LENGTH_SHORT).show()
         }
 
-        // Profile header
-        val header = LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL
-            setPadding(dp(12), dp(10), dp(12), dp(10))
-            background = rounded(PANEL, dp(18), BORDER)
-            addView(text(p.name, 15, TEXT, true))
-            addView(text(
-                getString(R.string.label_mode_prefix) + p.privacyMode +
-                    if (p.proxy.isEmpty()) getString(R.string.label_direct_suffix)
-                    else getString(R.string.label_proxy_suffix),
-                12, MUTED, false
-            ))
-        }
-        root.addView(header, lp(height = LinearLayout.LayoutParams.WRAP_CONTENT))
+        etAddress.setOnEditorActionListener { _, _, _ -> navigate(etAddress.text.toString()); true }
 
-        // Toolbar
-        val toolbar = LinearLayout(this).apply {
-            orientation = LinearLayout.HORIZONTAL
-            gravity = Gravity.CENTER_VERTICAL
-            setPadding(0, dp(8), 0, dp(8))
-        }
-        val backBtn = navButton(getString(R.string.btn_back)).also { btn ->
-            btn.setOnClickListener { if (webView.canGoBack()) webView.goBack() }
-        }
-        val refreshBtn = navButton(getString(R.string.btn_refresh)).also { btn ->
-            btn.setOnClickListener { webView.reload() }
-        }
-        address = EditText(this).apply {
-            isSingleLine = true
-            setTextColor(TEXT)
-            setHintTextColor(MUTED)
-            hint = "https://"
-            background = rounded(PANEL2, dp(14), BORDER)
-            setPadding(dp(12), 0, dp(12), 0)
-            setOnEditorActionListener { _, _, _ -> navigate(text.toString()); true }
-        }
-        toolbar.addView(backBtn,    lp(matchParent = false, height = dp(46), width = dp(46)))
-        toolbar.addView(refreshBtn, lp(matchParent = false, height = dp(46), width = dp(46), leftMargin = dp(6)))
-        toolbar.addView(address,    lp(weight = 1f, height = dp(46), leftMargin = dp(6)))
-        root.addView(toolbar, lp(height = LinearLayout.LayoutParams.WRAP_CONTENT))
-
-        // WebView
-        webView = WebView(this).apply { setBackgroundColor(Color.rgb(10, 14, 22)) }
+        webView.setBackgroundColor(Color.rgb(10, 14, 22))
         configureWebView(p)
-        root.addView(webView, LinearLayout.LayoutParams(-1, 0, 1f))
-
-        setContentView(root)
         applyProxyAndOpen(p)
         handler.postDelayed(licenseCheck, 60_000)
     }
 
+    @SuppressLint("SetJavaScriptEnabled")
     private fun configureWebView(p: ProfileStore.Profile) {
         webView.settings.apply {
             javaScriptEnabled = true
             domStorageEnabled = true
-            databaseEnabled = true
+            databaseEnabled   = true
             setSupportMultipleWindows(true)
             setGeolocationEnabled(false)
             @Suppress("DEPRECATION") saveFormData = false
@@ -135,10 +122,29 @@ class BrowserActivity : AppCompatActivity() {
             setAcceptCookie(p.privacyMode != ProfileStore.MODE_STRICT)
             setAcceptThirdPartyCookies(webView, p.privacyMode == ProfileStore.MODE_COMPAT)
         }
-        webView.webChromeClient = WebChromeClient()
+        webView.webChromeClient = object : WebChromeClient() {
+            override fun onProgressChanged(view: WebView, newProgress: Int) {
+                if (newProgress < 100) {
+                    progressBar.visibility = View.VISIBLE
+                    progressBar.progress   = newProgress
+                } else {
+                    progressBar.visibility = View.GONE
+                }
+                // Update back / forward state
+                btnBack.alpha    = if (webView.canGoBack())    1.0f else 0.4f
+                btnForward.alpha = if (webView.canGoForward()) 1.0f else 0.4f
+            }
+        }
         webView.webViewClient = object : WebViewClient() {
             override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest) = false
-            override fun onPageFinished(view: WebView, url: String) { address.setText(url) }
+            override fun onPageFinished(view: WebView, url: String) {
+                etAddress.setText(url)
+                // Security icon
+                tvSecurityIcon.text = if (url.startsWith("https://"))
+                    getString(R.string.label_secure) else getString(R.string.label_insecure)
+                btnBack.alpha    = if (view.canGoBack())    1.0f else 0.4f
+                btnForward.alpha = if (view.canGoForward()) 1.0f else 0.4f
+            }
             override fun onReceivedSslError(view: WebView, handler: SslErrorHandler, error: SslError) {
                 handler.cancel()
             }
@@ -149,7 +155,7 @@ class BrowserActivity : AppCompatActivity() {
         if (p.proxy.isEmpty() || !WebViewFeature.isFeatureSupported(WebViewFeature.PROXY_OVERRIDE)) {
             navigate(p.url); return
         }
-        val proxy = if ("://" in p.proxy) p.proxy else "http://${p.proxy}"
+        val proxy  = if ("://" in p.proxy) p.proxy else "http://${p.proxy}"
         val config = ProxyConfig.Builder().addProxyRule(proxy).addDirect().build()
         ProxyController.getInstance().setProxyOverride(config, direct) { navigate(p.url) }
     }
@@ -157,7 +163,7 @@ class BrowserActivity : AppCompatActivity() {
     private fun navigate(raw: String?) {
         var value = raw?.trim()?.ifEmpty { "about:blank" } ?: "about:blank"
         if (value != "about:blank" && Uri.parse(value).scheme == null) value = "https://$value"
-        address.setText(value)
+        etAddress.setText(value)
         webView.loadUrl(value)
     }
 
@@ -168,36 +174,4 @@ class BrowserActivity : AppCompatActivity() {
             ProxyController.getInstance().clearProxyOverride(direct) {}
         super.onDestroy()
     }
-
-    // ── view helpers ─────────────────────────────────────────────────────────
-
-    private fun text(value: String, size: Int, color: Int, bold: Boolean) = TextView(this).apply {
-        text = value; textSize = size.toFloat(); setTextColor(color)
-        if (bold) typeface = Typeface.DEFAULT_BOLD
-    }
-
-    private fun navButton(label: String) = Button(this).apply {
-        text = label; setTextColor(Color.WHITE); textSize = 20f
-        typeface = Typeface.DEFAULT_BOLD
-        background = rounded(ACCENT, dp(14), 0)
-        gravity = Gravity.CENTER
-    }
-
-    private fun rounded(color: Int, radius: Int, strokeColor: Int) = GradientDrawable().apply {
-        setColor(color); cornerRadius = radius.toFloat()
-        if (strokeColor != 0) setStroke(dp(1), strokeColor)
-    }
-
-    private fun lp(
-        matchParent: Boolean = true,
-        height: Int = LinearLayout.LayoutParams.WRAP_CONTENT,
-        width: Int = LinearLayout.LayoutParams.MATCH_PARENT,
-        weight: Float = 0f,
-        leftMargin: Int = 0
-    ) = LinearLayout.LayoutParams(
-        if (matchParent) LinearLayout.LayoutParams.MATCH_PARENT else width, height, weight
-    ).also { it.setMargins(leftMargin, 0, 0, 0) }
-
-    private fun color(res: Int) = getColor(res)
-    private fun dp(value: Int) = Math.round(value * resources.displayMetrics.density)
 }

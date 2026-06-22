@@ -1,57 +1,89 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Gestor Web</string>
+    <string name="app_name">GestorWeb</string>
 
-    <!-- Activation screen -->
-    <string name="label_brand">GESTOR WEB</string>
-    <string name="label_activation_title">Activación Android</string>
-    <string name="label_activation_desc">Conecta este dispositivo al mismo sistema de licencias de escritorio.</string>
-    <string name="label_device_id_title">ID de este dispositivo</string>
-    <string name="btn_copy_hwid">COPIAR HWID</string>
-    <string name="label_license_title">Licencia</string>
-    <string name="label_license_desc">Pega la key GW-LIC-V1 generada desde el panel admin.</string>
-    <string name="hint_license">Pega aquí la licencia GW-LIC-V1</string>
-    <string name="btn_activate">ACTIVAR LICENCIA</string>
+    <!-- Brand -->
+    <string name="label_brand">GESTORWEB v2</string>
+    <string name="label_brand_tagline">Navegación con identidad controlada</string>
+
+    <!-- Titlebar -->
+    <string name="titlebar_dashboard">Dashboard</string>
+    <string name="titlebar_new_profile">Nuevo Perfil</string>
+    <string name="titlebar_license">Licencia</string>
+    <string name="titlebar_settings">Ajustes</string>
+    <string name="titlebar_activation">Activación</string>
+    <string name="titlebar_browser">Navegador</string>
+
+    <!-- Sidebar nav -->
+    <string name="nav_dashboard">Inicio</string>
+    <string name="nav_profiles">Perfiles</string>
+    <string name="nav_license">Licencia</string>
+    <string name="nav_settings">Ajustes</string>
 
     <!-- Loading -->
-    <string name="label_loading_title">Gestor Web</string>
-    <string name="label_loading_desc">Validando licencia y sesión segura…</string>
+    <string name="label_loading_title">Verificando…</string>
+    <string name="label_loading_desc">Validando licencia con el servidor</string>
+
+    <!-- Activation -->
+    <string name="label_activation_title">Activar GestorWeb</string>
+    <string name="label_activation_desc">Ingresa tu clave de licencia para continuar</string>
+    <string name="label_device_id_title">HARDWARE ID</string>
+    <string name="label_license_title">Clave de Licencia</string>
+    <string name="label_license_desc">Pega aquí tu licencia completa</string>
+    <string name="hint_license">XXXX-XXXX-XXXX-XXXX</string>
+    <string name="btn_activate">Activar</string>
+    <string name="btn_copy_hwid">Copiar HWID</string>
+    <string name="clipboard_hwid_label">HWID</string>
 
     <!-- Dashboard -->
-    <string name="label_dashboard_brand">GESTOR WEB ANDROID</string>
-    <string name="label_dashboard_title">Panel principal</string>
-    <string name="label_dashboard_desc">Perfiles, licencia y navegación desde una vista tipo dashboard.</string>
+    <string name="label_dashboard_brand">GESTORWEB v2</string>
+    <string name="label_dashboard_title">Dashboard</string>
+    <string name="label_dashboard_desc">Gestiona tus identidades de navegación</string>
     <string name="label_stat_profiles">Perfiles</string>
-    <string name="label_stat_proxy">Con proxy</string>
+    <string name="label_stat_proxy">Con Proxy</string>
     <string name="label_license_active">Licencia activa</string>
     <string name="pill_online">ONLINE</string>
     <string name="label_hwid_prefix">HWID: </string>
-    <string name="label_new_profile">Nuevo perfil</string>
-    <string name="label_new_profile_desc">Crea un perfil con URL, proxy, user-agent y modo de privacidad seguro.</string>
+
+    <!-- New profile -->
+    <string name="label_new_profile">Nuevo Perfil</string>
+    <string name="label_new_profile_desc">Configura una nueva identidad de navegación</string>
     <string name="hint_profile_name">Nombre del perfil</string>
-    <string name="hint_profile_url">URL inicial, ej. https://example.com</string>
-    <string name="hint_profile_proxy">Proxy opcional, ej. http://host:puerto</string>
-    <string name="hint_profile_ua">User-Agent opcional</string>
-    <string name="label_mode">Modo</string>
-    <string name="btn_create_profile">+ CREAR PERFIL</string>
-    <string name="label_profiles_title">Perfiles guardados</string>
-    <string name="label_profiles_empty">Aún no tienes perfiles. Crea uno arriba para empezar.</string>
-    <string name="label_android_limits_title">Funciones Android</string>
-    <string name="label_android_limits_1">Esta versión usa Android WebView. Comparte licencias y perfiles básicos con la lógica del sistema, pero no ejecuta Electron ni módulos internos de escritorio.</string>
-    <string name="label_android_limits_2">Modos disponibles: compatibilidad, privado y estricto. Son controles de privacidad/seguridad del WebView, no evasión encubierta.</string>
-    <string name="btn_deactivate">DESACTIVAR LICENCIA EN ESTE EQUIPO</string>
+    <string name="hint_profile_url">URL de inicio (https://…)</string>
+    <string name="hint_profile_proxy">Proxy (host:puerto, opcional)</string>
+    <string name="hint_profile_ua">User-Agent personalizado (opcional)</string>
+    <string name="label_mode">MODO DE PRIVACIDAD</string>
+    <string name="btn_create_profile">Crear Perfil</string>
     <string name="label_default_profile_name">Perfil</string>
+
+    <!-- Profiles list -->
+    <string name="label_profiles_title">Perfiles Guardados</string>
+    <string name="label_profiles_empty">Sin perfiles. Crea el primero arriba.</string>
+    <string name="btn_open_profile">Abrir</string>
+    <string name="btn_delete_profile">Eliminar</string>
     <string name="label_direct">Conexión directa</string>
     <string name="label_proxy_prefix">Proxy: </string>
-    <string name="label_ua_custom">UA personalizado</string>
-    <string name="btn_open_profile">ABRIR</string>
-    <string name="btn_delete_profile">ELIMINAR</string>
+    <string name="label_ua_custom">User-Agent personalizado</string>
+
+    <!-- Info panel -->
+    <string name="label_android_limits_title">Notas Android</string>
+    <string name="label_android_limits_1">• El aislamiento de cookies entre perfiles depende de WebView del sistema.</string>
+    <string name="label_android_limits_2">• En modo STRICT se deshabilitan cookies y caché.</string>
+    <string name="btn_deactivate">Desactivar Licencia</string>
 
     <!-- Browser -->
-    <string name="label_mode_prefix">Modo </string>
-    <string name="label_direct_suffix"> · directo</string>
-    <string name="label_proxy_suffix"> · proxy activo</string>
+    <string name="label_mode_prefix">Modo: </string>
+    <string name="label_direct_suffix"> · Directo</string>
+    <string name="label_proxy_suffix"> · Proxy</string>
     <string name="btn_back">‹</string>
-    <string name="btn_refresh">↻</string>
-    <string name="clipboard_hwid_label">HWID</string>
+    <string name="btn_refresh">↺</string>
+    <string name="btn_forward">›</string>
+    <string name="btn_home">⌂</string>
+    <string name="btn_more">⋯</string>
+    <string name="hint_address_bar">Buscar o ingresar URL</string>
+    <string name="label_loading_page">Cargando…</string>
+    <string name="label_tab_untitled">Nueva pestaña</string>
+    <string name="btn_close_browser">Cerrar</string>
+    <string name="label_secure">🔒</string>
+    <string name="label_insecure">⚠</string>
 </resources>

@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Active background -->
+    <item>
+        <shape>
+            <solid android:color="@color/gw_nav_active" />
+            <corners android:radius="@dimen/radius_md" />
+        </shape>
+    </item>
+    <!-- Left accent bar -->
+    <item android:right="54dp">
+        <shape>
+            <solid android:color="@color/gw_nav_indicator" />
+            <corners
+                android:topRightRadius="@dimen/radius_sm"
+                android:bottomRightRadius="@dimen/radius_sm" />
+        </shape>
+    </item>
+</layer-list>

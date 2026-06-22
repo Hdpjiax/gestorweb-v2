@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item>
+        <shape>
+            <solid android:color="@color/gw_titlebar" />
+        </shape>
+    </item>
+    <!-- Bottom separator -->
+    <item android:top="51dp">
+        <shape>
+            <solid android:color="@color/gw_border" />
+        </shape>
+    </item>
+</layer-list>

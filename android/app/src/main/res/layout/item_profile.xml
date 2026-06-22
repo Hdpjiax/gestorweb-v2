@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Single profile card row -->
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="@dimen/space_4"
+    android:layout_marginBottom="@dimen/space_2"
+    android:background="@drawable/bg_card_elevated">
+
+    <!-- Name + mode pill row -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical">
+
+        <TextView
+            android:id="@+id/tvProfileName"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:textSize="@dimen/text_base"
+            android:textColor="@color/gw_text"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/tvProfileModePill"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="10sp"
+            android:textColor="#FFFFFFFF"
+            android:textStyle="bold"
+            android:letterSpacing="0.06"
+            android:paddingStart="10dp"
+            android:paddingEnd="10dp"
+            android:paddingTop="4dp"
+            android:paddingBottom="4dp"
+            android:background="@drawable/bg_pill_accent" />
+    </LinearLayout>
+
+    <!-- URL -->
+    <TextView
+        android:id="@+id/tvProfileUrl"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:textSize="@dimen/text_xs"
+        android:textColor="@color/gw_muted"
+        android:singleLine="true"
+        android:ellipsize="end" />
+
+    <!-- Proxy / direct -->
+    <TextView
+        android:id="@+id/tvProfileProxy"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="2dp"
+        android:textSize="@dimen/text_xs"
+        android:textColor="@color/gw_muted" />
+
+    <!-- UA badge (visible only when custom UA set) -->
+    <TextView
+        android:id="@+id/tvProfileUa"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:text="@string/label_ua_custom"
+        android:textSize="10sp"
+        android:textColor="@color/gw_text_secondary"
+        android:visibility="gone" />
+
+    <!-- Divider -->
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:layout_marginTop="@dimen/space_3"
+        android:layout_marginBottom="@dimen/space_3"
+        android:background="@color/gw_divider" />
+
+    <!-- Action buttons -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+
+        <Button
+            android:id="@+id/btnOpenProfile"
+            android:layout_width="0dp"
+            android:layout_height="@dimen/btn_height"
+            android:layout_weight="1"
+            android:text="@string/btn_open_profile"
+            style="@style/GW.Button.Primary" />
+
+        <View android:layout_width="@dimen/space_2" android:layout_height="match_parent" />
+
+        <Button
+            android:id="@+id/btnDeleteProfile"
+            android:layout_width="0dp"
+            android:layout_height="@dimen/btn_height"
+            android:layout_weight="1"
+            android:text="@string/btn_delete_profile"
+            style="@style/GW.Button.Ghost" />
+    </LinearLayout>
+</LinearLayout>

@@ -1,21 +1,41 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Launcher -->
-    <color name="launcher_bg">#070A10</color>
+    <!-- ── Base surfaces (Windows 11 dark shell) ── -->
+    <color name="gw_bg">#FF0A0E16</color>          <!-- deepest background -->
+    <color name="gw_panel">#FF111620</color>        <!-- card / panel surface -->
+    <color name="gw_panel_2">#FF181D2A</color>      <!-- elevated surface -->
+    <color name="gw_panel_3">#FF1E2433</color>      <!-- tooltip / popup -->
+    <color name="gw_sidebar">#FF0D1119</color>      <!-- sidebar rail -->
+    <color name="gw_titlebar">#FF0A0D14</color>     <!-- top app bar -->
 
-    <!-- Backgrounds -->
-    <color name="gw_bg">#070A10</color>
-    <color name="gw_panel">#0F1724</color>
-    <color name="gw_panel_2">#141F30</color>
-    <color name="gw_border">#2A3953</color>
+    <!-- ── Borders & dividers ── -->
+    <color name="gw_border">#FF232A3A</color>       <!-- card border -->
+    <color name="gw_border_focus">#FF3A6EE8</color> <!-- focused input ring -->
+    <color name="gw_divider">#FF1A2030</color>      <!-- list dividers -->
 
-    <!-- Text -->
-    <color name="gw_text">#EEF4FC</color>
-    <color name="gw_muted">#8F9CB2</color>
+    <!-- ── Text ── -->
+    <color name="gw_text">#FFE8EAF0</color>         <!-- primary text -->
+    <color name="gw_text_secondary">#FF9AA3B8</color> <!-- secondary -->
+    <color name="gw_muted">#FF5C6580</color>        <!-- muted / placeholder -->
 
-    <!-- Accents -->
-    <color name="gw_accent">#7C5CFC</color>
-    <color name="gw_accent_2">#26C6DA</color>
-    <color name="gw_danger">#FF6780</color>
-    <color name="gw_success">#4CAF82</color>
+    <!-- ── Accent (Windows blue) ── -->
+    <color name="gw_accent">#FF3A6EE8</color>       <!-- primary CTA -->
+    <color name="gw_accent_pressed">#FF2A5BD4</color>
+    <color name="gw_accent_2">#FF6B8FFF</color>     <!-- brand label -->
+    <color name="gw_accent_surface">#1A3A6EE8</color> <!-- tinted bg -->
+
+    <!-- ── Semantic ── -->
+    <color name="gw_success">#FF2EA043</color>
+    <color name="gw_danger">#FFE8443A</color>
+    <color name="gw_warning">#FFCC7A2A</color>
+    <color name="gw_info">#FF3A9EE8</color>
+
+    <!-- ── Sidebar nav ── -->
+    <color name="gw_nav_active">#FF1C2540</color>   <!-- selected nav item bg -->
+    <color name="gw_nav_indicator">#FF3A6EE8</color><!-- left indicator bar -->
+
+    <!-- Backwards compat -->
+    <color name="colorPrimary">#FF3A6EE8</color>
+    <color name="colorPrimaryDark">#FF0A0D14</color>
+    <color name="colorAccent">#FF3A6EE8</color>
 </resources>

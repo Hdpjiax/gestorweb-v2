@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Spacing -->
+    <dimen name="space_1">4dp</dimen>
+    <dimen name="space_2">8dp</dimen>
+    <dimen name="space_3">12dp</dimen>
+    <dimen name="space_4">16dp</dimen>
+    <dimen name="space_5">20dp</dimen>
+    <dimen name="space_6">24dp</dimen>
+    <dimen name="space_8">32dp</dimen>
+    <dimen name="space_10">40dp</dimen>
+    <dimen name="space_12">48dp</dimen>
+
+    <!-- Radius -->
+    <dimen name="radius_sm">6dp</dimen>
+    <dimen name="radius_md">10dp</dimen>
+    <dimen name="radius_lg">14dp</dimen>
+    <dimen name="radius_xl">18dp</dimen>
+
+    <!-- Components -->
+    <dimen name="sidebar_width">64dp</dimen>
+    <dimen name="titlebar_height">52dp</dimen>
+    <dimen name="toolbar_height">52dp</dimen>
+    <dimen name="btn_height">48dp</dimen>
+    <dimen name="input_height">48dp</dimen>
+    <dimen name="nav_item_size">48dp</dimen>
+    <dimen name="stat_card_min_width">100dp</dimen>
+
+    <!-- Typography -->
+    <dimen name="text_xs">11sp</dimen>
+    <dimen name="text_sm">13sp</dimen>
+    <dimen name="text_base">15sp</dimen>
+    <dimen name="text_lg">18sp</dimen>
+    <dimen name="text_xl">22sp</dimen>
+    <dimen name="text_2xl">28sp</dimen>
+    <dimen name="text_hero">34sp</dimen>
+</resources>
