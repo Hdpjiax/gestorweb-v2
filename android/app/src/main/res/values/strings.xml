@@ -2,88 +2,72 @@
 <resources>
     <string name="app_name">GestorWeb</string>
 
-    <!-- Brand -->
-    <string name="label_brand">GESTORWEB v2</string>
-    <string name="label_brand_tagline">Navegación con identidad controlada</string>
-
-    <!-- Titlebar -->
-    <string name="titlebar_dashboard">Dashboard</string>
-    <string name="titlebar_new_profile">Nuevo Perfil</string>
-    <string name="titlebar_license">Licencia</string>
-    <string name="titlebar_settings">Ajustes</string>
-    <string name="titlebar_activation">Activación</string>
-    <string name="titlebar_browser">Navegador</string>
-
-    <!-- Sidebar nav -->
-    <string name="nav_dashboard">Inicio</string>
+    <!-- Nav -->
+    <string name="nav_dashboard">Dashboard</string>
     <string name="nav_profiles">Perfiles</string>
     <string name="nav_license">Licencia</string>
     <string name="nav_settings">Ajustes</string>
 
-    <!-- Loading -->
-    <string name="label_loading_title">Verificando…</string>
-    <string name="label_loading_desc">Validando licencia con el servidor</string>
+    <!-- Title bars -->
+    <string name="titlebar_dashboard">Dashboard</string>
+    <string name="titlebar_browser">Navegador</string>
 
-    <!-- Activation -->
-    <string name="label_activation_title">Activar GestorWeb</string>
-    <string name="label_activation_desc">Ingresa tu clave de licencia para continuar</string>
-    <string name="label_device_id_title">HARDWARE ID</string>
-    <string name="label_license_title">Clave de Licencia</string>
-    <string name="label_license_desc">Pega aquí tu licencia completa</string>
-    <string name="hint_license">XXXX-XXXX-XXXX-XXXX</string>
-    <string name="btn_activate">Activar</string>
-    <string name="btn_copy_hwid">Copiar HWID</string>
-    <string name="clipboard_hwid_label">HWID</string>
+    <!-- Stats -->
+    <string name="stat_profiles">Perfiles</string>
+    <string name="stat_proxy">Con Proxy</string>
 
-    <!-- Dashboard -->
-    <string name="label_dashboard_brand">GESTORWEB v2</string>
-    <string name="label_dashboard_title">Dashboard</string>
-    <string name="label_dashboard_desc">Gestiona tus identidades de navegación</string>
-    <string name="label_stat_profiles">Perfiles</string>
-    <string name="label_stat_proxy">Con Proxy</string>
-    <string name="label_license_active">Licencia activa</string>
-    <string name="pill_online">ONLINE</string>
-    <string name="label_hwid_prefix">HWID: </string>
-
-    <!-- New profile -->
-    <string name="label_new_profile">Nuevo Perfil</string>
-    <string name="label_new_profile_desc">Configura una nueva identidad de navegación</string>
+    <!-- Profile form -->
+    <string name="form_title_new_profile">Nuevo perfil</string>
+    <string name="form_title_edit_profile">Editar perfil</string>
     <string name="hint_profile_name">Nombre del perfil</string>
-    <string name="hint_profile_url">URL de inicio (https://…)</string>
-    <string name="hint_profile_proxy">Proxy (host:puerto, opcional)</string>
-    <string name="hint_profile_ua">User-Agent personalizado (opcional)</string>
-    <string name="label_mode">MODO DE PRIVACIDAD</string>
-    <string name="btn_create_profile">Crear Perfil</string>
-    <string name="label_default_profile_name">Perfil</string>
+    <string name="hint_profile_url">URL de inicio</string>
+    <string name="hint_proxy">Proxy (host:puerto)</string>
+    <string name="hint_ua">User-Agent personalizado</string>
+    <string name="btn_create_profile">Crear perfil</string>
+    <string name="btn_save_profile">Guardar cambios</string>
+    <string name="btn_cancel">Cancelar</string>
 
-    <!-- Profiles list -->
-    <string name="label_profiles_title">Perfiles Guardados</string>
-    <string name="label_profiles_empty">Sin perfiles. Crea el primero arriba.</string>
-    <string name="btn_open_profile">Abrir</string>
-    <string name="btn_delete_profile">Eliminar</string>
-    <string name="label_direct">Conexión directa</string>
+    <!-- Labels -->
+    <string name="label_hwid_prefix">HWID: </string>
+    <string name="label_direct">Sin proxy</string>
     <string name="label_proxy_prefix">Proxy: </string>
-    <string name="label_ua_custom">User-Agent personalizado</string>
-
-    <!-- Info panel -->
-    <string name="label_android_limits_title">Notas Android</string>
-    <string name="label_android_limits_1">• El aislamiento de cookies entre perfiles depende de WebView del sistema.</string>
-    <string name="label_android_limits_2">• En modo STRICT se deshabilitan cookies y caché.</string>
-    <string name="btn_deactivate">Desactivar Licencia</string>
-
-    <!-- Browser -->
     <string name="label_mode_prefix">Modo: </string>
     <string name="label_direct_suffix"> · Directo</string>
     <string name="label_proxy_suffix"> · Proxy</string>
-    <string name="btn_back">‹</string>
-    <string name="btn_refresh">↺</string>
-    <string name="btn_forward">›</string>
-    <string name="btn_home">⌂</string>
-    <string name="btn_more">⋯</string>
-    <string name="hint_address_bar">Buscar o ingresar URL</string>
-    <string name="label_loading_page">Cargando…</string>
-    <string name="label_tab_untitled">Nueva pestaña</string>
-    <string name="btn_close_browser">Cerrar</string>
     <string name="label_secure">🔒</string>
-    <string name="label_insecure">⚠</string>
+    <string name="label_insecure">⚠️</string>
+    <string name="label_default_profile_name">Perfil</string>
+    <string name="label_ua_custom">UA personalizado</string>
+
+    <!-- Buttons -->
+    <string name="btn_copy_hwid">Copiar</string>
+    <string name="btn_deactivate">Desactivar licencia</string>
+    <string name="btn_open_profile">Abrir</string>
+    <string name="btn_edit_profile">Editar</string>
+    <string name="btn_delete_profile">Eliminar</string>
+    <string name="btn_activate">Activar</string>
+    <string name="btn_back">&#x276E;</string>
+    <string name="btn_forward">&#x276F;</string>
+    <string name="btn_refresh">↺</string>
+    <string name="btn_more">⋮</string>
+    <string name="btn_close">✕</string>
+
+    <!-- Activation -->
+    <string name="label_device_id">ID de dispositivo</string>
+    <string name="hint_license_key">Clave de licencia</string>
+    <string name="clipboard_hwid_label">HWID</string>
+
+    <!-- Browser menu -->
+    <string name="menu_share">Compartir URL</string>
+    <string name="menu_copy_url">Copiar URL</string>
+    <string name="menu_clear_data">Limpiar caché y cookies</string>
+    <string name="menu_open_external">Abrir en navegador externo</string>
+
+    <!-- Toasts -->
+    <string name="msg_url_copied">URL copiada</string>
+    <string name="msg_cache_cleared">Caché y cookies eliminados</string>
+    <string name="msg_no_browser">No se encontró navegador externo</string>
+
+    <!-- Empty states -->
+    <string name="empty_profiles">No hay perfiles. Crea uno arriba.</string>
 </resources>

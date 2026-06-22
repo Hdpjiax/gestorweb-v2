@@ -1,17 +1,19 @@
 package local.gestorweb.android
 
 import android.content.Context
-import android.content.SharedPreferences
 import org.json.JSONArray
 import org.json.JSONObject
 import java.util.UUID
 
-internal class ProfileStore(context: Context) {
+class ProfileStore(ctx: Context) {
 
-    private val prefs: SharedPreferences =
-        context.getSharedPreferences("gestor_profiles", Context.MODE_PRIVATE)
-
-    // ── Model ─────────────────────────────────────────────────────────────────
+    companion object {
+        const val MODE_COMPAT   = "COMPAT"
+        const val MODE_PRIVATE  = "PRIVATE"
+        const val MODE_STRICT   = "STRICT"
+        private  const val PREF = "profiles"
+        private  const val KEY  = "list"
+    }
 
     data class Profile(
         val id:          String,
@@ -20,93 +22,60 @@ internal class ProfileStore(context: Context) {
         val proxy:       String,
         val userAgent:   String,
         val privacyMode: String
-    ) {
-        init {
-            // privacyMode is already normalised at construction time
-        }
-    }
+    )
 
-    // ── CRUD ──────────────────────────────────────────────────────────────────
+    private val prefs = ctx.getSharedPreferences(PREF, Context.MODE_PRIVATE)
 
     fun list(): List<Profile> {
-        val result = mutableListOf<Profile>()
-        try {
-            val values = JSONArray(prefs.getString("profiles", "[]") ?: "[]")
-            for (i in 0 until values.length()) {
-                val item = values.getJSONObject(i)
-                result += Profile(
-                    id          = item.getString("id"),
-                    name        = item.optString("name", "Perfil"),
-                    url         = item.optString("url", "about:blank"),
-                    proxy       = item.optString("proxy", ""),
-                    userAgent   = item.optString("userAgent", ""),
-                    privacyMode = normalizeMode(item.optString("privacyMode", MODE_COMPAT))
-                )
-            }
-        } catch (_: Exception) {}
-        return result
+        val raw = prefs.getString(KEY, "[]") ?: "[]"
+        val arr = JSONArray(raw)
+        return (0 until arr.length()).map { arr.getJSONObject(it).toProfile() }
     }
 
-    @JvmOverloads
-    fun add(
-        name: String,
-        url: String,
-        proxy: String,
-        userAgent: String,
-        privacyMode: String = MODE_COMPAT
-    ) {
-        val updated = list().toMutableList().also {
-            it += Profile(
-                id          = UUID.randomUUID().toString(),
-                name        = name,
-                url         = url.ifEmpty { "about:blank" },
-                proxy       = proxy,
-                userAgent   = userAgent,
-                privacyMode = normalizeMode(privacyMode)
-            )
+    fun add(name: String, url: String, proxy: String, ua: String, mode: String) {
+        val arr = JSONArray(prefs.getString(KEY, "[]") ?: "[]")
+        arr.put(JSONObject().apply {
+            put("id",   UUID.randomUUID().toString())
+            put("name", name); put("url", url)
+            put("proxy", proxy); put("ua", ua); put("mode", mode)
+        })
+        prefs.edit().putString(KEY, arr.toString()).apply()
+    }
+
+    fun update(id: String, name: String, url: String, proxy: String, ua: String, mode: String) {
+        val arr    = JSONArray(prefs.getString(KEY, "[]") ?: "[]")
+        val result = JSONArray()
+        for (i in 0 until arr.length()) {
+            val obj = arr.getJSONObject(i)
+            if (obj.getString("id") == id) {
+                result.put(JSONObject().apply {
+                    put("id",   id)
+                    put("name", name); put("url", url)
+                    put("proxy", proxy); put("ua", ua); put("mode", mode)
+                })
+            } else result.put(obj)
         }
-        save(updated)
+        prefs.edit().putString(KEY, result.toString()).apply()
     }
 
     fun remove(id: String) {
-        save(list().filter { it.id != id })
-    }
-
-    fun countWithProxy(): Int = list().count { it.proxy.isNotEmpty() }
-
-    // ── Persistence ───────────────────────────────────────────────────────────
-
-    private fun save(profiles: List<Profile>) {
-        val values = JSONArray()
-        profiles.forEach { profile ->
-            try {
-                values.put(JSONObject().apply {
-                    put("id",          profile.id)
-                    put("name",        profile.name)
-                    put("url",         profile.url)
-                    put("proxy",       profile.proxy)
-                    put("userAgent",   profile.userAgent)
-                    put("privacyMode", profile.privacyMode)
-                })
-            } catch (_: Exception) {}
+        val arr    = JSONArray(prefs.getString(KEY, "[]") ?: "[]")
+        val result = JSONArray()
+        for (i in 0 until arr.length()) {
+            val obj = arr.getJSONObject(i)
+            if (obj.getString("id") != id) result.put(obj)
         }
-        prefs.edit().putString("profiles", values.toString()).apply()
+        prefs.edit().putString(KEY, result.toString()).apply()
     }
 
-    // ── Utilities ─────────────────────────────────────────────────────────────
+    fun countWithProxy() = list().count { it.proxy.isNotEmpty() }
 
-    companion object {
-        const val MODE_COMPAT  = "compatibilidad"
-        const val MODE_PRIVATE = "privado"
-        const val MODE_STRICT  = "estricto"
-
-        fun normalizeMode(value: String?): String {
-            val mode = (value ?: "").trim().lowercase()
-            return when (mode) {
-                MODE_PRIVATE -> MODE_PRIVATE
-                MODE_STRICT  -> MODE_STRICT
-                else         -> MODE_COMPAT
-            }
-        }
-    }
+    private fun JSONObject.toProfile() = Profile(
+        id          = getString("id"),
+        name        = optString("name"),
+        url         = optString("url"),
+        proxy       = optString("proxy"),
+        userAgent   = optString("ua"),
+        privacyMode = optString("mode", MODE_COMPAT)
+    )
 }

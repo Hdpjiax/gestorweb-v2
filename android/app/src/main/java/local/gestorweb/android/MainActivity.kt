@@ -16,12 +16,14 @@ class MainActivity : AppCompatActivity() {
     private lateinit var licenses: LicenseStore
     private lateinit var profiles: ProfileStore
 
-    // ── XML view references (inflated in showDashboard) ──────────────────────
-    private var tvStatProfilesValue: TextView? = null
-    private var tvStatProxyValue:    TextView? = null
-    private var tvHwid:              TextView? = null
+    private var tvStatProfilesValue: TextView?  = null
+    private var tvStatProxyValue:    TextView?  = null
+    private var tvHwid:              TextView?  = null
     private var profileList:         LinearLayout? = null
-    private var tvProfilesEmpty:     TextView? = null
+    private var tvProfilesEmpty:     TextView?  = null
+
+    // Edit state
+    private var editingProfileId: String? = null
 
     override fun onCreate(state: Bundle?) {
         super.onCreate(state)
@@ -50,7 +52,7 @@ class MainActivity : AppCompatActivity() {
         }.start()
     }
 
-    // ── screens (inflate XML) ─────────────────────────────────────────────────
+    // ── screens ───────────────────────────────────────────────────────────────
 
     private fun showLoading() {
         setContentView(R.layout.activity_loading)
@@ -58,19 +60,15 @@ class MainActivity : AppCompatActivity() {
 
     private fun showActivation(error: String) {
         setContentView(R.layout.activity_activation)
-
         findViewById<TextView>(R.id.tvDeviceId).text = licenses.deviceId()
-
         val tvError = findViewById<TextView>(R.id.tvLicenseError)
         if (error.isNotEmpty()) {
             tvError.text = error
             tvError.visibility = View.VISIBLE
         }
-
         findViewById<Button>(R.id.btnCopyHwid).setOnClickListener {
             clipboard(getString(R.string.clipboard_hwid_label), licenses.deviceId())
         }
-
         val etLicense = findViewById<EditText>(R.id.etLicense)
         findViewById<Button>(R.id.btnActivate).setOnClickListener {
             val text = etLicense.text.toString().trim()
@@ -83,33 +81,22 @@ class MainActivity : AppCompatActivity() {
 
     private fun showDashboard() {
         setContentView(R.layout.activity_main)
-
-        // Cache references
         tvStatProfilesValue = findViewById(R.id.tvStatProfilesValue)
         tvStatProxyValue    = findViewById(R.id.tvStatProxyValue)
         tvHwid              = findViewById(R.id.tvHwid)
         profileList         = findViewById(R.id.profileList)
         tvProfilesEmpty     = findViewById(R.id.tvProfilesEmpty)
 
-        // Sidebar navigation
         setupSidebar()
-
-        // Static data
         tvHwid?.text = getString(R.string.label_hwid_prefix) + licenses.deviceId()
         findViewById<Button>(R.id.btnCopyHwid).setOnClickListener {
             clipboard(getString(R.string.clipboard_hwid_label), licenses.deviceId())
         }
-
-        // New profile form
-        setupNewProfileForm()
-
-        // Deactivate
+        setupProfileForm()
         findViewById<Button>(R.id.btnDeactivate).setOnClickListener {
             licenses.clearLicense()
             showActivation("")
         }
-
-        // Populate dynamic data
         refreshDashboard()
     }
 
@@ -123,85 +110,86 @@ class MainActivity : AppCompatActivity() {
     // ── sidebar ───────────────────────────────────────────────────────────────
 
     private fun setupSidebar() {
-        val navDashboard = findViewById<View>(R.id.navDashboard)
-        val navProfiles  = findViewById<View>(R.id.navProfiles)
-        val navLicense   = findViewById<View>(R.id.navLicense)
-        val navSettings  = findViewById<View>(R.id.navSettings)
-        val scroll       = findViewById<ScrollView>(R.id.scrollContent)
-        val cardNewProfile = findViewById<View>(R.id.cardNewProfile)
+        val navDashboard   = findViewById<View>(R.id.navDashboard)
+        val navProfiles    = findViewById<View>(R.id.navProfiles)
+        val navLicense     = findViewById<View>(R.id.navLicense)
+        val navSettings    = findViewById<View>(R.id.navSettings)
+        val scroll         = findViewById<ScrollView>(R.id.scrollContent)
         val cardProfiles   = findViewById<View>(R.id.cardProfiles)
         val cardLicense    = findViewById<View>(R.id.cardLicense)
         val tvTitleBar     = findViewById<TextView>(R.id.tvTitleBarTitle)
-
-        val allNavItems = listOf(navDashboard, navProfiles, navLicense, navSettings)
+        val allNavItems    = listOf(navDashboard, navProfiles, navLicense, navSettings)
 
         fun selectNav(selected: View, title: String) {
             allNavItems.forEach { nav ->
-                nav.background = if (nav == selected)
-                    getDrawable(R.drawable.bg_nav_item_active)
-                else null
-                // Update icon color
+                nav.background = if (nav == selected) getDrawable(R.drawable.bg_nav_item_active) else null
                 (nav as? LinearLayout)?.let { ll ->
                     val icon  = ll.getChildAt(0) as? TextView
                     val label = ll.getChildAt(1) as? TextView
-                    val isActive = nav == selected
-                    icon?.setTextColor(getColor(if (isActive) R.color.gw_accent else R.color.gw_text_secondary))
-                    label?.setTextColor(getColor(if (isActive) R.color.gw_accent else R.color.gw_text_secondary))
+                    val active = nav == selected
+                    icon?.setTextColor(getColor(if (active) R.color.gw_accent else R.color.gw_text_secondary))
+                    label?.setTextColor(getColor(if (active) R.color.gw_accent else R.color.gw_text_secondary))
                 }
             }
             tvTitleBar.text = title
         }
 
-        navDashboard.setOnClickListener {
-            selectNav(navDashboard, getString(R.string.titlebar_dashboard))
-            // Scroll to top, show all cards
-            scroll.smoothScrollTo(0, 0)
-        }
-
-        navProfiles.setOnClickListener {
-            selectNav(navProfiles, getString(R.string.nav_profiles))
-            // Scroll to profiles card
-            scroll.post { scroll.smoothScrollTo(0, cardProfiles.top) }
-        }
-
-        navLicense.setOnClickListener {
-            selectNav(navLicense, getString(R.string.nav_license))
-            scroll.post { scroll.smoothScrollTo(0, cardLicense.top) }
-        }
-
-        navSettings.setOnClickListener {
-            selectNav(navSettings, getString(R.string.nav_settings))
-            // Show deactivate info
-            scroll.post { scroll.smoothScrollTo(0, scroll.getChildAt(0).height) }
-        }
+        navDashboard.setOnClickListener { selectNav(navDashboard, getString(R.string.titlebar_dashboard)); scroll.smoothScrollTo(0, 0) }
+        navProfiles.setOnClickListener  { selectNav(navProfiles,  getString(R.string.nav_profiles));  scroll.post { scroll.smoothScrollTo(0, cardProfiles.top) } }
+        navLicense.setOnClickListener   { selectNav(navLicense,   getString(R.string.nav_license));   scroll.post { scroll.smoothScrollTo(0, cardLicense.top) } }
+        navSettings.setOnClickListener  { selectNav(navSettings,  getString(R.string.nav_settings));  scroll.post { scroll.smoothScrollTo(0, scroll.getChildAt(0).height) } }
     }
 
-    // ── new profile form ──────────────────────────────────────────────────────
+    // ── profile form (create + edit) ──────────────────────────────────────────
 
-    private fun setupNewProfileForm() {
-        val etName  = findViewById<EditText>(R.id.etProfileName)
-        val etUrl   = findViewById<EditText>(R.id.etProfileUrl)
-        val etProxy = findViewById<EditText>(R.id.etProfileProxy)
-        val etUa    = findViewById<EditText>(R.id.etProfileUa)
-        val spinner = findViewById<Spinner>(R.id.spinnerMode)
+    private fun setupProfileForm() {
+        val etName   = findViewById<EditText>(R.id.etProfileName)
+        val etUrl    = findViewById<EditText>(R.id.etProfileUrl)
+        val etProxy  = findViewById<EditText>(R.id.etProfileProxy)
+        val etUa     = findViewById<EditText>(R.id.etProfileUa)
+        val spinner  = findViewById<Spinner>(R.id.spinnerMode)
+        val btnSave  = findViewById<Button>(R.id.btnCreateProfile)
+        val btnCancel = findViewById<Button>(R.id.btnCancelEdit)
+        val tvFormTitle = findViewById<TextView>(R.id.tvFormTitle)
 
         val modes = arrayOf(ProfileStore.MODE_COMPAT, ProfileStore.MODE_PRIVATE, ProfileStore.MODE_STRICT)
         spinner.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, modes).also {
             it.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
         }
 
-        findViewById<Button>(R.id.btnCreateProfile).setOnClickListener {
-            profiles.add(
-                etName.text.toString().trim().ifEmpty { getString(R.string.label_default_profile_name) },
-                etUrl.text.toString().trim(),
-                etProxy.text.toString().trim(),
-                etUa.text.toString().trim(),
-                spinner.selectedItem.toString()
-            )
+        // Cancel edit
+        btnCancel.setOnClickListener {
+            editingProfileId = null
             etName.text.clear(); etUrl.text.clear()
             etProxy.text.clear(); etUa.text.clear()
+            spinner.setSelection(0)
+            btnSave.text   = getString(R.string.btn_create_profile)
+            tvFormTitle.text = getString(R.string.form_title_new_profile)
+            btnCancel.visibility = View.GONE
+        }
+
+        btnSave.setOnClickListener {
+            val name  = etName.text.toString().trim().ifEmpty { getString(R.string.label_default_profile_name) }
+            val url   = etUrl.text.toString().trim()
+            val proxy = etProxy.text.toString().trim()
+            val ua    = etUa.text.toString().trim()
+            val mode  = spinner.selectedItem.toString()
+
+            val eid = editingProfileId
+            if (eid != null) {
+                profiles.update(eid, name, url, proxy, ua, mode)
+                editingProfileId = null
+                btnSave.text   = getString(R.string.btn_create_profile)
+                tvFormTitle.text = getString(R.string.form_title_new_profile)
+                btnCancel.visibility = View.GONE
+            } else {
+                profiles.add(name, url, proxy, ua, mode)
+            }
+
+            etName.text.clear(); etUrl.text.clear()
+            etProxy.text.clear(); etUa.text.clear()
+            spinner.setSelection(0)
             refreshDashboard()
-            // Scroll to profiles list
             val scroll = findViewById<ScrollView>(R.id.scrollContent)
             val card   = findViewById<View>(R.id.cardProfiles)
             scroll.post { scroll.smoothScrollTo(0, card.top) }
@@ -214,44 +202,79 @@ class MainActivity : AppCompatActivity() {
         val container = profileList ?: return
         val emptyView = tvProfilesEmpty ?: return
         container.removeAllViews()
-
-        if (list.isEmpty()) {
-            emptyView.visibility = View.VISIBLE
-            return
-        }
+        if (list.isEmpty()) { emptyView.visibility = View.VISIBLE; return }
         emptyView.visibility = View.GONE
 
         val inflater = LayoutInflater.from(this)
         list.forEach { profile ->
             val itemView = inflater.inflate(R.layout.item_profile, container, false)
 
-            itemView.findViewById<TextView>(R.id.tvProfileName).text = profile.name
-            itemView.findViewById<TextView>(R.id.tvProfileUrl).text  = profile.url
+            itemView.findViewById<TextView>(R.id.tvProfileName).text  = profile.name
+            itemView.findViewById<TextView>(R.id.tvProfileUrl).text   = profile.url
             itemView.findViewById<TextView>(R.id.tvProfileProxy).text =
                 if (profile.proxy.isEmpty()) getString(R.string.label_direct)
                 else getString(R.string.label_proxy_prefix) + profile.proxy
 
-            // Mode pill
             val pill = itemView.findViewById<TextView>(R.id.tvProfileModePill)
             pill.text = profile.privacyMode.uppercase()
             val pillBg = (pill.background as? GradientDrawable)
                 ?: GradientDrawable().also { pill.background = it }
             pillBg.cornerRadius = 20f * resources.displayMetrics.density
             pillBg.setColor(getColor(
-                if (profile.privacyMode == ProfileStore.MODE_STRICT) R.color.gw_danger
-                else R.color.gw_accent
+                if (profile.privacyMode == ProfileStore.MODE_STRICT) R.color.gw_danger else R.color.gw_accent
             ))
 
-            // UA badge
             if (profile.userAgent.isNotEmpty())
                 itemView.findViewById<TextView>(R.id.tvProfileUa).visibility = View.VISIBLE
 
+            // Open
             itemView.findViewById<Button>(R.id.btnOpenProfile).setOnClickListener {
-                startActivity(Intent(this, BrowserActivity::class.java)
-                    .putExtra("profileId", profile.id))
+                val intent = Intent(this, BrowserActivity::class.java)
+                    .putExtra("profileId", profile.id)
+                startActivity(intent)
+                overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left)
             }
+
+            // Edit
+            itemView.findViewById<Button>(R.id.btnEditProfile).setOnClickListener {
+                editingProfileId = profile.id
+                val etName   = findViewById<EditText>(R.id.etProfileName)
+                val etUrl    = findViewById<EditText>(R.id.etProfileUrl)
+                val etProxy  = findViewById<EditText>(R.id.etProfileProxy)
+                val etUa     = findViewById<EditText>(R.id.etProfileUa)
+                val spinner  = findViewById<Spinner>(R.id.spinnerMode)
+                val btnSave  = findViewById<Button>(R.id.btnCreateProfile)
+                val btnCancel = findViewById<Button>(R.id.btnCancelEdit)
+                val tvFormTitle = findViewById<TextView>(R.id.tvFormTitle)
+
+                etName.setText(profile.name)
+                etUrl.setText(profile.url)
+                etProxy.setText(profile.proxy)
+                etUa.setText(profile.userAgent)
+                val modes = arrayOf(ProfileStore.MODE_COMPAT, ProfileStore.MODE_PRIVATE, ProfileStore.MODE_STRICT)
+                spinner.setSelection(modes.indexOf(profile.privacyMode).coerceAtLeast(0))
+
+                btnSave.text   = getString(R.string.btn_save_profile)
+                tvFormTitle.text = getString(R.string.form_title_edit_profile)
+                btnCancel.visibility = View.VISIBLE
+
+                val scroll = findViewById<ScrollView>(R.id.scrollContent)
+                val card   = findViewById<View>(R.id.cardNewProfile)
+                scroll.post { scroll.smoothScrollTo(0, card.top) }
+            }
+
+            // Delete
             itemView.findViewById<Button>(R.id.btnDeleteProfile).setOnClickListener {
                 profiles.remove(profile.id)
+                if (editingProfileId == profile.id) {
+                    editingProfileId = null
+                    val btnSave = findViewById<Button>(R.id.btnCreateProfile)
+                    val btnCancel = findViewById<Button>(R.id.btnCancelEdit)
+                    val tvFormTitle = findViewById<TextView>(R.id.tvFormTitle)
+                    btnSave.text   = getString(R.string.btn_create_profile)
+                    tvFormTitle.text = getString(R.string.form_title_new_profile)
+                    btnCancel.visibility = View.GONE
+                }
                 refreshDashboard()
             }
 

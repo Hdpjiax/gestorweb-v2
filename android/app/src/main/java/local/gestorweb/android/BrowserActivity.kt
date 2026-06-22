@@ -1,6 +1,9 @@
 package local.gestorweb.android
 
 import android.annotation.SuppressLint
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Context
 import android.content.Intent
 import android.graphics.Color
 import android.net.Uri
@@ -15,19 +18,19 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.webkit.ProxyConfig
 import androidx.webkit.ProxyController
 import androidx.webkit.WebViewFeature
+import com.google.android.material.bottomsheet.BottomSheetDialog
 
 class BrowserActivity : AppCompatActivity() {
 
     private val handler = Handler(Looper.getMainLooper())
     private val direct  = java.util.concurrent.Executor { it.run() }
 
-    // XML view refs
-    private lateinit var webView:          WebView
-    private lateinit var etAddress:        EditText
-    private lateinit var progressBar:      ProgressBar
-    private lateinit var btnBack:          Button
-    private lateinit var btnForward:       Button
-    private lateinit var tvSecurityIcon:   TextView
+    private lateinit var webView:        WebView
+    private lateinit var etAddress:      EditText
+    private lateinit var progressBar:    ProgressBar
+    private lateinit var btnBack:        Button
+    private lateinit var btnForward:     Button
+    private lateinit var tvSecurityIcon: TextView
 
     private lateinit var licenses: LicenseStore
     private var profile: ProfileStore.Profile? = null
@@ -41,6 +44,7 @@ class BrowserActivity : AppCompatActivity() {
                         licenses.clearLicense()
                         startActivity(Intent(this@BrowserActivity, MainActivity::class.java)
                             .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP))
+                        overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right)
                         finish()
                     } else handler.postDelayed(this, 60_000)
                 }
@@ -57,10 +61,8 @@ class BrowserActivity : AppCompatActivity() {
         if (profile == null || licenses.license().isEmpty()) { finish(); return }
         val p = profile!!
 
-        // Inflate layout
         setContentView(R.layout.activity_browser)
 
-        // Bind views
         webView        = findViewById(R.id.webView)
         etAddress      = findViewById(R.id.etAddress)
         progressBar    = findViewById(R.id.browserProgress)
@@ -75,7 +77,6 @@ class BrowserActivity : AppCompatActivity() {
             else getString(R.string.label_proxy_suffix)
         findViewById<TextView>(R.id.tvBrowserProfileMode).text = modeStr
 
-        // Mode pill color
         val pill = findViewById<TextView>(R.id.tvBrowserModePill)
         pill.text = p.privacyMode.uppercase()
         pill.setBackgroundResource(
@@ -83,17 +84,17 @@ class BrowserActivity : AppCompatActivity() {
             else R.drawable.bg_pill_accent
         )
 
-        // Close button
-        findViewById<Button>(R.id.btnCloseBrowser).setOnClickListener { finish() }
-
-        // Toolbar actions
+        // Botones
+        findViewById<Button>(R.id.btnCloseBrowser).setOnClickListener {
+            finish()
+            overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right)
+        }
         btnBack.setOnClickListener    { if (webView.canGoBack())    webView.goBack() }
         btnForward.setOnClickListener { if (webView.canGoForward()) webView.goForward() }
         findViewById<Button>(R.id.btnRefresh).setOnClickListener { webView.reload() }
-        findViewById<Button>(R.id.btnMore).setOnClickListener {
-            // TODO: expandable menu (share, copy URL, clear cache)
-            Toast.makeText(this, "Próximamente", Toast.LENGTH_SHORT).show()
-        }
+
+        // ── menú "más" ──────────────────────────────────────────────────────
+        findViewById<Button>(R.id.btnMore).setOnClickListener { showMoreMenu() }
 
         etAddress.setOnEditorActionListener { _, _, _ -> navigate(etAddress.text.toString()); true }
 
@@ -101,6 +102,58 @@ class BrowserActivity : AppCompatActivity() {
         configureWebView(p)
         applyProxyAndOpen(p)
         handler.postDelayed(licenseCheck, 60_000)
+    }
+
+    // ── bottom sheet menu ─────────────────────────────────────────────────────
+
+    private fun showMoreMenu() {
+        val sheet = BottomSheetDialog(this)
+        val view  = layoutInflater.inflate(R.layout.sheet_browser_menu, null)
+        sheet.setContentView(view)
+
+        // Compartir URL
+        view.findViewById<LinearLayout>(R.id.menuItemShare).setOnClickListener {
+            val url = etAddress.text.toString()
+            startActivity(Intent.createChooser(
+                Intent(Intent.ACTION_SEND).apply {
+                    type = "text/plain"
+                    putExtra(Intent.EXTRA_TEXT, url)
+                }, getString(R.string.menu_share)
+            ))
+            sheet.dismiss()
+        }
+
+        // Copiar URL
+        view.findViewById<LinearLayout>(R.id.menuItemCopy).setOnClickListener {
+            val url = etAddress.text.toString()
+            (getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager)
+                .setPrimaryClip(ClipData.newPlainText("URL", url))
+            Toast.makeText(this, getString(R.string.msg_url_copied), Toast.LENGTH_SHORT).show()
+            sheet.dismiss()
+        }
+
+        // Limpiar caché y cookies del perfil
+        view.findViewById<LinearLayout>(R.id.menuItemClearData).setOnClickListener {
+            webView.clearCache(true)
+            webView.clearHistory()
+            CookieManager.getInstance().removeAllCookies(null)
+            CookieManager.getInstance().flush()
+            Toast.makeText(this, getString(R.string.msg_cache_cleared), Toast.LENGTH_SHORT).show()
+            sheet.dismiss()
+        }
+
+        // Abrir en navegador externo
+        view.findViewById<LinearLayout>(R.id.menuItemOpenExternal).setOnClickListener {
+            val url = etAddress.text.toString()
+            try {
+                startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
+            } catch (e: Exception) {
+                Toast.makeText(this, getString(R.string.msg_no_browser), Toast.LENGTH_SHORT).show()
+            }
+            sheet.dismiss()
+        }
+
+        sheet.show()
     }
 
     @SuppressLint("SetJavaScriptEnabled")
@@ -130,7 +183,6 @@ class BrowserActivity : AppCompatActivity() {
                 } else {
                     progressBar.visibility = View.GONE
                 }
-                // Update back / forward state
                 btnBack.alpha    = if (webView.canGoBack())    1.0f else 0.4f
                 btnForward.alpha = if (webView.canGoForward()) 1.0f else 0.4f
             }
@@ -139,7 +191,6 @@ class BrowserActivity : AppCompatActivity() {
             override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest) = false
             override fun onPageFinished(view: WebView, url: String) {
                 etAddress.setText(url)
-                // Security icon
                 tvSecurityIcon.text = if (url.startsWith("https://"))
                     getString(R.string.label_secure) else getString(R.string.label_insecure)
                 btnBack.alpha    = if (view.canGoBack())    1.0f else 0.4f

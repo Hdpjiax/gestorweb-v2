@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:background="@color/gw_panel"
+    android:paddingTop="8dp"
+    android:paddingBottom="24dp">
+
+    <!-- Handle -->
+    <View
+        android:layout_width="40dp"
+        android:layout_height="4dp"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginBottom="12dp"
+        android:background="@color/gw_border"
+        android:backgroundTintMode="src_over" />
+
+    <!-- Compartir -->
+    <LinearLayout
+        android:id="@+id/menuItemShare"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingStart="20dp"
+        android:paddingEnd="20dp"
+        android:background="?attr/selectableItemBackground">
+        <TextView
+            android:layout_width="28dp"
+            android:layout_height="28dp"
+            android:gravity="center"
+            android:text="&#xF08E;"
+            android:fontFamily="@font/fontawesome"
+            android:textSize="16sp"
+            android:textColor="@color/gw_accent"/>
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:text="@string/menu_share"
+            android:textColor="@color/gw_text"
+            android:textSize="15sp"/>
+    </LinearLayout>
+
+    <!-- Copiar URL -->
+    <LinearLayout
+        android:id="@+id/menuItemCopy"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingStart="20dp"
+        android:paddingEnd="20dp"
+        android:background="?attr/selectableItemBackground">
+        <TextView
+            android:layout_width="28dp"
+            android:layout_height="28dp"
+            android:gravity="center"
+            android:text="&#xF0C5;"
+            android:fontFamily="@font/fontawesome"
+            android:textSize="16sp"
+            android:textColor="@color/gw_accent"/>
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:text="@string/menu_copy_url"
+            android:textColor="@color/gw_text"
+            android:textSize="15sp"/>
+    </LinearLayout>
+
+    <!-- Limpiar datos -->
+    <LinearLayout
+        android:id="@+id/menuItemClearData"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingStart="20dp"
+        android:paddingEnd="20dp"
+        android:background="?attr/selectableItemBackground">
+        <TextView
+            android:layout_width="28dp"
+            android:layout_height="28dp"
+            android:gravity="center"
+            android:text="&#xF12D;"
+            android:fontFamily="@font/fontawesome"
+            android:textSize="16sp"
+            android:textColor="@color/gw_danger"/>
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:text="@string/menu_clear_data"
+            android:textColor="@color/gw_text"
+            android:textSize="15sp"/>
+    </LinearLayout>
+
+    <!-- Abrir en navegador externo -->
+    <LinearLayout
+        android:id="@+id/menuItemOpenExternal"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingStart="20dp"
+        android:paddingEnd="20dp"
+        android:background="?attr/selectableItemBackground">
+        <TextView
+            android:layout_width="28dp"
+            android:layout_height="28dp"
+            android:gravity="center"
+            android:text="&#xF35D;"
+            android:fontFamily="@font/fontawesome"
+            android:textSize="16sp"
+            android:textColor="@color/gw_text_secondary"/>
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:text="@string/menu_open_external"
+            android:textColor="@color/gw_text"
+            android:textSize="15sp"/>
+    </LinearLayout>
+
+</LinearLayout>
