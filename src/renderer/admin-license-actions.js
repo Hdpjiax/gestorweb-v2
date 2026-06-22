@@ -1,4 +1,5 @@
 import { ui, native, rerender, update, root, state } from "./state.js";
+import { appDialog } from "./app-dialog.js";
 
 function formText(data, name) {
   return String(data.get(name) || "").trim();
@@ -90,14 +91,28 @@ async function revokeAdminLicense(id) {
     return;
   }
 
-  if (!confirm(`Revocar acceso de ${id}?\n\nHWID: ${license.hwid}\n\nEl equipo quedara bloqueado en su siguiente validacion online.`)) return;
-  const reason = prompt("Motivo de revocacion:", "revocada por administrador") || "revocada por administrador";
+  const reason = await appDialog({
+    title: "Revocar acceso",
+    message: "Esta licencia dejará de validar en Windows y Android cuando el equipo haga su siguiente verificación online.",
+    detail: `${id}\nHWID: ${license.hwid}`,
+    confirmText: "Revocar acceso",
+    cancelText: "Cancelar",
+    tone: "danger",
+    input: {
+      label: "Motivo de revocación",
+      value: "revocada por administrador",
+      placeholder: "Escribe el motivo",
+      multiline: true,
+      rows: 3
+    }
+  });
+  if (reason === null) return;
 
   ui.adminError = "revocando licencia...";
   rerender();
 
   try {
-    const result = await native?.admin?.revoke?.(id, reason);
+    const result = await native?.admin?.revoke?.(id, reason || "revocada por administrador");
     if (!result?.ok) throw new Error(result?.reason || "Supabase no confirmo la revocacion");
 
     const revokedRow = result.license || { id, revoked: true, revoke_reason: reason, revoked_at: new Date().toISOString() };
@@ -149,7 +164,15 @@ async function resumeAdminSession({ force = false } = {}) {
 }
 
 async function forgetAdminConfig() {
-  if (!confirm("Borrar la configuracion admin guardada en este equipo?")) return;
+  const confirmed = await appDialog({
+    title: "Borrar configuración guardada",
+    message: "Se eliminarán del equipo las credenciales admin cifradas. La próxima vez tendrás que pegarlas de nuevo.",
+    confirmText: "Borrar guardado",
+    cancelText: "Cancelar",
+    tone: "danger"
+  });
+  if (!confirmed) return;
+
   await native?.admin?.forgetConfig?.().catch(() => {});
   ui.adminConfig = null;
   ui.adminAuthenticated = false;
