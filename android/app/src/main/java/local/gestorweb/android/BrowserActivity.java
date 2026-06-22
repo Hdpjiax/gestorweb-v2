@@ -8,7 +8,6 @@ import android.net.http.SslError;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
-import android.view.View;
 import android.webkit.SslErrorHandler;
 import android.webkit.WebChromeClient;
 import android.webkit.WebResourceRequest;
@@ -34,7 +33,7 @@ public final class BrowserActivity extends AppCompatActivity {
     private final Runnable licenseCheck = new Runnable() {
         @Override public void run() {
             new Thread(() -> {
-                LicenseClient.Result result = LicenseClient.verify(licenses.license(), licenses.deviceId());
+                LicenseClient.Result result = LicenseClient.verify(BrowserActivity.this, licenses.license(), licenses.deviceId());
                 runOnUiThread(() -> {
                     if (!result.active) {
                         licenses.clearLicense();
@@ -71,9 +70,7 @@ public final class BrowserActivity extends AppCompatActivity {
         webView.setWebViewClient(new WebViewClient() {
             @Override public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) { return false; }
             @Override public void onPageFinished(WebView view, String url) { address.setText(url); }
-            @Override public void onReceivedSslError(WebView view, SslErrorHandler sslHandler, SslError error) {
-                if (!profile.proxy.isEmpty()) sslHandler.proceed(); else sslHandler.cancel();
-            }
+            @Override public void onReceivedSslError(WebView view, SslErrorHandler sslHandler, SslError error) { sslHandler.cancel(); }
         });
         root.addView(webView, new LinearLayout.LayoutParams(-1, 0, 1)); setContentView(root);
         applyProxyAndOpen();
