@@ -1,8 +1,9 @@
 const { ipcMain } = require("electron");
 const crypto = require("crypto");
 const { currentLicenseStatus } = require("./license-ipc");
+const adminConfigStore = require("./admin-config-store");
 
-const CHANNELS = ["admin:login", "admin:list", "admin:create", "admin:revoke", "admin:logout"];
+const CHANNELS = ["admin:login", "admin:resume", "admin:config", "admin:forgetConfig", "admin:list", "admin:create", "admin:revoke", "admin:logout"];
 const APP_ID = "gestor-web";
 const LICENSE_PREFIX = "GW-LIC-V1";
 const PLANS = {
@@ -27,9 +28,7 @@ async function assertAdminLicense() {
 }
 
 function normalizeSupabaseUrl(value) {
-  const url = new URL(String(value || "").trim());
-  if (url.protocol !== "https:") throw new Error("Supabase debe usar HTTPS");
-  return url.toString().replace(/\/+$/, "");
+  return adminConfigStore.normalizeUrl(value);
 }
 
 function requireText(value, label, min = 1) {
@@ -123,28 +122,28 @@ function publicRow(row) {
 async function listLicenses() {
   await assertAdminLicense();
   const rows = await supabaseRequest("/rest/v1/licenses?select=id,hwid,app,plan,tier,features,issued_at,expires_at,revoked,revoke_reason,created_at,revoked_at,last_check_at,last_hwid,license_text&order=created_at.desc&limit=200", { prefer: "" });
-  return { ok: true, provider: "supabase", supabaseUrl: session.supabaseUrl, licenses: (Array.isArray(rows) ? rows : []).map(publicRow) };
+  return { ok: true, provider: "supabase", supabaseUrl: session.supabaseUrl, licenses: (Array.isArray(rows) ? rows : []).map(publicRow), config: adminConfigStore.info(session) };
 }
 
 async function login(config = {}) {
   await assertAdminLicense();
-  const supabaseUrl = normalizeSupabaseUrl(config.supabaseUrl || config.url);
-  const anonKey = requireText(config.anonKey, "anon key", 20);
-  const serviceRoleKey = requireText(config.serviceRoleKey, "service role key", 20);
-  const privateKeyPem = requireText(config.privateKeyPem, "clave privada", 100);
-
-  if (!privateKeyPem.includes("BEGIN") || !privateKeyPem.includes("PRIVATE KEY")) {
-    throw new Error("clave privada PEM invalida");
-  }
-
-  session = { supabaseUrl, anonKey, serviceRoleKey, privateKeyPem };
+  const clean = adminConfigStore.normalizeConfig(config);
+  session = clean;
   try {
     const result = await listLicenses();
+    if (config.remember !== false) adminConfigStore.saveConfig(clean);
     return { ok: true, ...result };
   } catch (error) {
     session = null;
     throw error;
   }
+}
+
+async function resumeSavedLogin() {
+  await assertAdminLicense();
+  const saved = adminConfigStore.loadConfig();
+  if (!saved) return { ok: false, reason: "sin configuracion admin guardada", config: adminConfigStore.info(null) };
+  return login({ ...saved, remember: true });
 }
 
 async function createLicense(license = {}) {
@@ -200,7 +199,7 @@ async function createLicense(license = {}) {
 async function revokeLicense(id, reason) {
   await assertAdminLicense();
   const licenseId = requireText(id, "ID de licencia", 6);
-  await supabaseRequest(`/rest/v1/licenses?id=eq.${encodeURIComponent(licenseId)}`, {
+  const updated = await supabaseRequest(`/rest/v1/licenses?id=eq.${encodeURIComponent(licenseId)}`, {
     method: "PATCH",
     body: {
       revoked: true,
@@ -208,7 +207,10 @@ async function revokeLicense(id, reason) {
       revoked_at: new Date().toISOString()
     }
   });
-  return { ok: true };
+  const rows = Array.isArray(updated) ? updated : [];
+  if (!rows.length) throw new Error("no se encontro la licencia para revocar");
+  const currentStatus = await currentLicenseStatus().catch(() => null);
+  return { ok: true, license: publicRow(rows[0]), currentStatus };
 }
 
 function registerLicenseAdminIpc() {
@@ -216,10 +218,13 @@ function registerLicenseAdminIpc() {
     try { ipcMain.removeHandler(channel); } catch {}
   }
   ipcMain.handle("admin:login", (_event, config) => login(config));
+  ipcMain.handle("admin:resume", () => resumeSavedLogin());
+  ipcMain.handle("admin:config", () => adminConfigStore.info());
+  ipcMain.handle("admin:forgetConfig", () => adminConfigStore.forgetConfig());
   ipcMain.handle("admin:list", () => listLicenses());
   ipcMain.handle("admin:create", (_event, license) => createLicense(license));
   ipcMain.handle("admin:revoke", (_event, id, reason) => revokeLicense(id, reason));
-  ipcMain.handle("admin:logout", () => { session = null; return { ok: true }; });
+  ipcMain.handle("admin:logout", () => { session = null; return { ok: true, config: adminConfigStore.info() }; });
 }
 
 module.exports = { registerLicenseAdminIpc, normalizeSupabaseUrl };
