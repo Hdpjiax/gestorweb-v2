@@ -27,4 +27,4 @@ export { renderInspectorActions }                 from "./inspector-actions-view
 export { renderNetworkView, renderNetworkEntryList } from "./network-view.js";
 export { renderCommandPalette }                   from "./command-palette-view.js";
 export { renderCookieEditor }                     from "./cookie-editor-view.js";
-export { renderAdminLicensesView }                from "./admin-licenses-view.js";
+export { renderAdminLicensesView }                from "./admin-licenses-secure-view.js";
