@@ -1,17 +1,33 @@
 .admin-filter-bar {
   display: grid;
-  grid-template-columns: minmax(240px, 1.4fr) 180px 160px 160px auto;
+  grid-template-columns: minmax(260px, 1.4fr) 190px 170px auto;
   gap: 10px;
   align-items: center;
 }
 
+.admin-filter-bar.days-only,
+.admin-license-form.days-only {
+  grid-template-columns: minmax(260px, 1fr) 180px auto;
+}
+
 .admin-license-row {
-  grid-template-columns: minmax(260px, 1.5fr) 95px 90px minmax(150px, 1fr) 95px minmax(430px, auto);
+  grid-template-columns: minmax(300px, 1.5fr) 90px minmax(150px, 1fr) 110px minmax(160px, 1fr) minmax(520px, auto);
+}
+
+.admin-license-head.days-only {
+  grid-template-columns: minmax(300px, 1.5fr) 90px minmax(150px, 1fr) 110px minmax(160px, 1fr) minmax(520px, auto);
 }
 
 .admin-license-row .right {
   justify-content: flex-end;
   flex-wrap: wrap;
+}
+
+.admin-license-row small {
+  display: block;
+  margin-top: 3px;
+  color: var(--dim);
+  font-size: 10px;
 }
 
 .admin-history-panel {
@@ -46,16 +62,20 @@
 }
 
 .admin-history-item small {
+  display: block;
   color: var(--dim);
   font-size: 11px;
 }
 
-@media (max-width: 1300px) {
-  .admin-filter-bar {
+@media (max-width: 1400px) {
+  .admin-filter-bar,
+  .admin-filter-bar.days-only,
+  .admin-license-form.days-only {
     grid-template-columns: 1fr 1fr;
   }
 
-  .admin-license-row {
+  .admin-license-row,
+  .admin-license-head.days-only {
     grid-template-columns: 1fr;
   }
 
