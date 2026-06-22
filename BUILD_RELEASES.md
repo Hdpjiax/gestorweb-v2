@@ -8,7 +8,7 @@ Requisitos:
 - Node.js 18+
 - `npm install` ejecutado
 - `build/icon.ico` existente
-- `src/main/license-public-key.pem` incluido para licencias firmadas en produccion
+- clave publica disponible en `backend/license-server/public_key.pem`, `src/main/license-public-key.pem` o `GW_LICENSE_PUBLIC_KEY_FILE`
 
 Comando:
 
@@ -22,22 +22,22 @@ Salida esperada:
 dist/Gestor-Web-Setup-1.5.0.exe
 ```
 
-El script ejecuta Electron Builder y despues limpia `dist` para dejar solo el `.exe` mas reciente.
+Antes de compilar, el script copia automaticamente la clave publica a:
+
+```txt
+src/main/license-public-key.pem
+```
+
+Si esa clave no existe, el build falla. Esto evita que el setup instalado marque como invalidas las licencias firmadas aunque esten registradas en Supabase.
 
 ## Android: unico APK
 
 Ya existe un proyecto Android nativo en `/android`.
 
-Antes de compilar, reemplaza el placeholder de clave publica en:
+El script tambien prepara automaticamente la clave publica en:
 
 ```txt
 android/app/src/main/assets/license-public-key.pem
-```
-
-con el contenido real de:
-
-```txt
-backend/license-server/public_key.pem
 ```
 
 Comando desde la raiz del repo:
