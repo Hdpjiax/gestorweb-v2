@@ -8,7 +8,8 @@ const androidDir = path.join(root, "android");
 const isWindows = process.platform === "win32";
 const gradlew = path.join(androidDir, isWindows ? "gradlew.bat" : "gradlew");
 const wrapperJar = path.join(androidDir, "gradle", "wrapper", "gradle-wrapper.jar");
-const task = process.argv[2] === "debug" ? "assembleDebug" : "assembleRelease";
+const buildTask = process.argv[2] === "debug" ? "assembleDebug" : "assembleRelease";
+const tasks = process.argv[2] === "no-clean" ? [buildTask] : ["clean", buildTask];
 
 if (!fs.existsSync(androidDir)) {
   console.error("No existe la carpeta android.");
@@ -104,7 +105,7 @@ function runGradle() {
   if (hasWrapper && isWindows) {
     // Ejecutar desde cwd evita problemas con rutas como C:\Users\Antonio Garcia\...
     // Usamos CALL porque gradlew.bat es un archivo batch.
-    return spawnSync("cmd.exe", ["/d", "/c", "call", "gradlew.bat", task], {
+    return spawnSync("cmd.exe", ["/d", "/c", "call", "gradlew.bat", ...tasks], {
       cwd: androidDir,
       stdio: "inherit",
       shell: false
@@ -112,7 +113,7 @@ function runGradle() {
   }
 
   if (hasWrapper) {
-    return spawnSync(gradlew, [task], {
+    return spawnSync(gradlew, tasks, {
       cwd: androidDir,
       stdio: "inherit",
       shell: false
@@ -120,7 +121,7 @@ function runGradle() {
   }
 
   console.warn("No se encontro gradle-wrapper.jar. Usando Gradle instalado en el sistema.");
-  return spawnSync("gradle", [task], {
+  return spawnSync("gradle", tasks, {
     cwd: androidDir,
     stdio: "inherit",
     shell: isWindows
