@@ -69,6 +69,60 @@ async function refreshAdminConfigInfo() {
   } catch {}
 }
 
+async function refreshAdminLicenses() {
+  try {
+    const result = await native?.admin?.list?.();
+    ui.adminLicenses = result?.licenses || [];
+    ui.adminServerUrl = result?.supabaseUrl || ui.adminServerUrl;
+    ui.adminConfig = result?.config || ui.adminConfig;
+    ui.adminError = "";
+  } catch (error) {
+    ui.adminError = error?.message || "no se pudieron cargar las licencias";
+  }
+  rerender();
+}
+
+async function revokeAdminLicense(id) {
+  const license = ui.adminLicenses.find((item) => item.id === id);
+  if (!license) {
+    ui.adminError = `No se encontro la licencia ${id} en la tabla local.`;
+    rerender();
+    return;
+  }
+
+  if (!confirm(`Revocar acceso de ${id}?\n\nHWID: ${license.hwid}\n\nEl equipo quedara bloqueado en su siguiente validacion online.`)) return;
+  const reason = prompt("Motivo de revocacion:", "revocada por administrador") || "revocada por administrador";
+
+  ui.adminError = "revocando licencia...";
+  rerender();
+
+  try {
+    const result = await native?.admin?.revoke?.(id, reason);
+    if (!result?.ok) throw new Error(result?.reason || "Supabase no confirmo la revocacion");
+
+    const revokedRow = result.license || { id, revoked: true, revoke_reason: reason, revoked_at: new Date().toISOString() };
+    ui.adminLicenses = ui.adminLicenses.map((item) => item.id === id ? { ...item, ...revokedRow, revoked: true } : item);
+    ui.adminError = `Licencia ${id} revocada correctamente.`;
+
+    const current = result.currentStatus;
+    if (current?.id && state.license?.id === current.id && !current.active) {
+      update((next) => {
+        next.license = { ...next.license, ...current, active: false };
+        next.liveIds = [];
+        next.browserTabs = [];
+        next.activeTabId = null;
+        next.view = "all";
+      });
+      return;
+    }
+
+    await refreshAdminLicenses();
+  } catch (error) {
+    ui.adminError = error?.message || "no se pudo revocar";
+    rerender();
+  }
+}
+
 async function resumeAdminSession({ force = false } = {}) {
   if (!native?.admin?.resume || ui.adminAuthenticated || ui.adminResumeBusy) return;
   if (!force && ui.adminResumeTried) return;
@@ -127,16 +181,33 @@ export function initAdminLicenseActions() {
   document.addEventListener("click", (event) => {
     const target = event.target.closest("[data-action]");
     if (!target) return;
+
     if (target.dataset.action === "admin-resume") {
       event.preventDefault();
       event.stopImmediatePropagation();
       ui.adminResumeTried = false;
       resumeAdminSession({ force: true });
+      return;
     }
+
     if (target.dataset.action === "admin-forget-config") {
       event.preventDefault();
       event.stopImmediatePropagation();
       forgetAdminConfig();
+      return;
+    }
+
+    if (target.dataset.action === "refresh-admin-licenses") {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      refreshAdminLicenses();
+      return;
+    }
+
+    if (target.dataset.action === "revoke-admin-license") {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      revokeAdminLicense(target.dataset.id);
     }
   }, true);
 }
