@@ -66,12 +66,7 @@ async function handleLicenseActivation(event) {
   ui.welcome = true;
   ui.adminResumeTried = false;
   update((state) => {
-    state.license = {
-      ...nativeStatus,
-      active: true,
-      text,
-      activatedAt: Date.now()
-    };
+    state.license = { ...nativeStatus, active: true, text, activatedAt: Date.now() };
   });
 }
 
@@ -123,17 +118,12 @@ async function createAdminLicense(event) {
   event.preventDefault();
   event.stopImmediatePropagation();
   const data = new FormData(event.target);
-  const payload = {
-    hwid: formText(data, "hwid"),
-    plan: formText(data, "plan") || "30d",
-    tier: formText(data, "tier") || "standard",
-    features: formText(data, "features").split(",").map((item) => item.trim()).filter(Boolean)
-  };
+  const payload = { hwid: formText(data, "hwid"), plan: formText(data, "plan") || "30d" };
   try {
     const result = await native?.admin?.create?.(payload);
     ui.adminGeneratedKey = result?.licenseText || "";
     ui.adminError = result?.license?.id ? `Licencia ${result.license.id} generada correctamente.` : "Licencia generada correctamente.";
-    if (result?.license?.id) addLocalHistory(result.license.id, "creada", `Licencia ${payload.plan} creada`, { plan: payload.plan, tier: payload.tier });
+    if (result?.license?.id) addLocalHistory(result.license.id, "creada", `Licencia ${payload.plan} creada`, { plan: payload.plan });
     await refreshAdminLicenses();
   } catch (error) {
     ui.adminError = error?.message || "no se pudo generar la licencia";
@@ -156,13 +146,7 @@ async function revokeAdminLicense(id) {
     confirmText: "Revocar acceso",
     cancelText: "Cancelar",
     tone: "danger",
-    input: {
-      label: "Motivo de revocación",
-      value: "revocada por administrador",
-      placeholder: "Escribe el motivo",
-      multiline: true,
-      rows: 3
-    }
+    input: { label: "Motivo de revocación", value: "revocada por administrador", placeholder: "Escribe el motivo", multiline: true, rows: 3 }
   });
   if (reason === null) return;
 
@@ -172,27 +156,64 @@ async function revokeAdminLicense(id) {
   try {
     const result = await native?.admin?.revoke?.(id, reason || "revocada por administrador");
     if (!result?.ok) throw new Error(result?.reason || "Supabase no confirmo la revocacion");
-
     const revokedRow = result.license || { id, revoked: true, revoke_reason: reason, revoked_at: new Date().toISOString() };
     ui.adminLicenses = ui.adminLicenses.map((item) => item.id === id ? { ...item, ...revokedRow, revoked: true } : item);
     addLocalHistory(id, "revocada", reason || "revocada por administrador");
     ui.adminError = `Licencia ${id} revocada correctamente.`;
-
     const current = result.currentStatus;
     if (current?.id && state.license?.id === current.id && !current.active) {
-      update((next) => {
-        next.license = { ...next.license, ...current, active: false };
-        next.liveIds = [];
-        next.browserTabs = [];
-        next.activeTabId = null;
-        next.view = "all";
-      });
+      update((next) => { next.license = { ...next.license, ...current, active: false }; next.liveIds = []; next.browserTabs = []; next.activeTabId = null; next.view = "all"; });
       return;
     }
-
     await refreshAdminLicenses();
   } catch (error) {
     ui.adminError = error?.message || "no se pudo revocar";
+    rerender();
+  }
+}
+
+async function suspendAdminLicense(id) {
+  const license = licenseById(id);
+  if (!license) return;
+  const reason = await appDialog({
+    title: "Suspender licencia",
+    message: "La licencia quedará bloqueada temporalmente, pero podrá reactivarse después.",
+    detail: `${id}\nHWID: ${license.hwid}`,
+    confirmText: "Suspender",
+    cancelText: "Cancelar",
+    tone: "danger",
+    input: { label: "Motivo de suspensión", value: "suspendida por revisión", placeholder: "Escribe el motivo", multiline: true, rows: 3 }
+  });
+  if (reason === null) return;
+  try {
+    const result = await native?.admin?.suspend?.(id, reason || "suspendida por revisión");
+    if (!result?.ok) throw new Error(result?.reason || "no se confirmó la suspensión");
+    addLocalHistory(id, "suspendida", reason || "suspendida por revisión");
+    ui.adminError = `Licencia ${id} suspendida.`;
+    await refreshAdminLicenses();
+  } catch (error) {
+    ui.adminError = error?.message || "no se pudo suspender";
+    rerender();
+  }
+}
+
+async function reactivateAdminLicense(id) {
+  const confirmed = await appDialog({
+    title: "Reactivar licencia",
+    message: "La licencia volverá a validar si no está vencida.",
+    detail: id,
+    confirmText: "Reactivar",
+    cancelText: "Cancelar"
+  });
+  if (!confirmed) return;
+  try {
+    const result = await native?.admin?.reactivate?.(id, "reactivada por administrador");
+    if (!result?.ok) throw new Error(result?.reason || "no se confirmó la reactivación");
+    addLocalHistory(id, "reactivada", "reactivada por administrador");
+    ui.adminError = `Licencia ${id} reactivada.`;
+    await refreshAdminLicenses();
+  } catch (error) {
+    ui.adminError = error?.message || "no se pudo reactivar";
     rerender();
   }
 }
@@ -202,7 +223,7 @@ async function duplicateAdminLicense(id) {
   if (!source) return;
   const plan = await appDialog({
     title: "Duplicar licencia",
-    message: "Se generará una nueva key para el mismo HWID, tier y features.",
+    message: "Se generará una nueva key para el mismo HWID.",
     detail: `${source.id}\nHWID: ${source.hwid}`,
     confirmText: "Duplicar",
     cancelText: "Cancelar",
@@ -211,7 +232,7 @@ async function duplicateAdminLicense(id) {
   if (plan === null) return;
   try {
     const nextPlan = normalizePlanInput(plan, source.plan || "30d");
-    const result = await native?.admin?.create?.({ hwid: source.hwid, plan: nextPlan, tier: source.tier, features: source.features || [] });
+    const result = await native?.admin?.create?.({ hwid: source.hwid, plan: nextPlan });
     ui.adminGeneratedKey = result?.licenseText || "";
     if (result?.license?.id) {
       addLocalHistory(result.license.id, "duplicada", `Duplicada desde ${source.id}`, { source_id: source.id });
@@ -230,7 +251,7 @@ async function renewAdminLicense(id) {
   if (!source) return;
   const plan = await appDialog({
     title: "Renovar licencia",
-    message: "Se generará una nueva key para el mismo HWID y se revocará la licencia anterior para evitar doble uso.",
+    message: "Se generará una nueva key para el mismo HWID y se revocará la anterior.",
     detail: `${source.id}\nHWID: ${source.hwid}`,
     confirmText: "Renovar",
     cancelText: "Cancelar",
@@ -240,7 +261,7 @@ async function renewAdminLicense(id) {
   if (plan === null) return;
   try {
     const nextPlan = normalizePlanInput(plan, "30d");
-    const result = await native?.admin?.create?.({ hwid: source.hwid, plan: nextPlan, tier: source.tier, features: source.features || [] });
+    const result = await native?.admin?.create?.({ hwid: source.hwid, plan: nextPlan });
     if (!result?.license?.id) throw new Error("se generó la renovación, pero no se obtuvo ID de licencia");
     ui.adminGeneratedKey = result.licenseText || "";
     await native?.admin?.revoke?.(source.id, `renovada con nueva licencia ${result.license.id}`);
@@ -272,7 +293,6 @@ async function resumeAdminSession({ force = false } = {}) {
   if (!state.license?.active) return;
   const isAdmin = state.license?.tier === "admin" || (Array.isArray(state.license?.features) && state.license.features.includes("admin"));
   if (!isAdmin) return;
-
   ui.adminResumeTried = true;
   ui.adminResumeBusy = true;
   rerender();
@@ -300,7 +320,6 @@ async function forgetAdminConfig() {
     tone: "danger"
   });
   if (!confirmed) return;
-
   await native?.admin?.forgetConfig?.().catch(() => {});
   ui.adminConfig = null;
   ui.adminAuthenticated = false;
@@ -313,30 +332,19 @@ async function forgetAdminConfig() {
 
 export function initAdminLicenseActions() {
   refreshAdminConfigInfo().then(() => rerender());
-
-  const observer = new MutationObserver(() => {
-    if (document.getElementById("adminLoginForm")) resumeAdminSession();
-  });
+  const observer = new MutationObserver(() => { if (document.getElementById("adminLoginForm")) resumeAdminSession(); });
   observer.observe(root, { childList: true, subtree: true });
 
   document.addEventListener("submit", (event) => {
-    if (event.target?.id === "licenseForm") {
-      handleLicenseActivation(event);
-      return;
-    }
-    if (event.target?.id === "adminLoginForm") {
-      handleAdminLogin(event);
-      return;
-    }
-    if (event.target?.id === "adminCreateLicenseForm") {
-      createAdminLicense(event);
-    }
+    if (event.target?.id === "licenseForm") { handleLicenseActivation(event); return; }
+    if (event.target?.id === "adminLoginForm") { handleAdminLogin(event); return; }
+    if (event.target?.id === "adminCreateLicenseForm") createAdminLicense(event);
   }, true);
 
   document.addEventListener("input", (event) => {
     const key = event.target?.dataset?.adminFilter;
     if (!key) return;
-    ui.adminFilters ||= { search: "", status: "all", plan: "all", tier: "all" };
+    ui.adminFilters ||= { search: "", status: "all", plan: "all" };
     ui.adminFilters[key] = event.target.value;
     rerender();
   }, true);
@@ -344,7 +352,7 @@ export function initAdminLicenseActions() {
   document.addEventListener("change", (event) => {
     const key = event.target?.dataset?.adminFilter;
     if (!key) return;
-    ui.adminFilters ||= { search: "", status: "all", plan: "all", tier: "all" };
+    ui.adminFilters ||= { search: "", status: "all", plan: "all" };
     ui.adminFilters[key] = event.target.value;
     rerender();
   }, true);
@@ -352,71 +360,21 @@ export function initAdminLicenseActions() {
   document.addEventListener("click", (event) => {
     const target = event.target.closest("[data-action]");
     if (!target) return;
-
-    if (target.dataset.action === "admin-resume") {
+    const action = target.dataset.action;
+    if (["admin-resume", "admin-forget-config", "refresh-admin-licenses", "reset-admin-filters", "show-admin-history", "close-admin-history", "duplicate-admin-license", "renew-admin-license", "suspend-admin-license", "reactivate-admin-license", "revoke-admin-license"].includes(action)) {
       event.preventDefault();
       event.stopImmediatePropagation();
-      ui.adminResumeTried = false;
-      resumeAdminSession({ force: true });
-      return;
     }
-
-    if (target.dataset.action === "admin-forget-config") {
-      event.preventDefault();
-      event.stopImmediatePropagation();
-      forgetAdminConfig();
-      return;
-    }
-
-    if (target.dataset.action === "refresh-admin-licenses") {
-      event.preventDefault();
-      event.stopImmediatePropagation();
-      refreshAdminLicenses();
-      return;
-    }
-
-    if (target.dataset.action === "reset-admin-filters") {
-      event.preventDefault();
-      event.stopImmediatePropagation();
-      ui.adminFilters = { search: "", status: "all", plan: "all", tier: "all" };
-      rerender();
-      return;
-    }
-
-    if (target.dataset.action === "show-admin-history") {
-      event.preventDefault();
-      event.stopImmediatePropagation();
-      showAdminHistory(target.dataset.id);
-      return;
-    }
-
-    if (target.dataset.action === "close-admin-history") {
-      event.preventDefault();
-      event.stopImmediatePropagation();
-      ui.adminHistoryLicenseId = null;
-      ui.adminHistoryEvents = [];
-      rerender();
-      return;
-    }
-
-    if (target.dataset.action === "duplicate-admin-license") {
-      event.preventDefault();
-      event.stopImmediatePropagation();
-      duplicateAdminLicense(target.dataset.id);
-      return;
-    }
-
-    if (target.dataset.action === "renew-admin-license") {
-      event.preventDefault();
-      event.stopImmediatePropagation();
-      renewAdminLicense(target.dataset.id);
-      return;
-    }
-
-    if (target.dataset.action === "revoke-admin-license") {
-      event.preventDefault();
-      event.stopImmediatePropagation();
-      revokeAdminLicense(target.dataset.id);
-    }
+    if (action === "admin-resume") { ui.adminResumeTried = false; resumeAdminSession({ force: true }); return; }
+    if (action === "admin-forget-config") { forgetAdminConfig(); return; }
+    if (action === "refresh-admin-licenses") { refreshAdminLicenses(); return; }
+    if (action === "reset-admin-filters") { ui.adminFilters = { search: "", status: "all", plan: "all" }; rerender(); return; }
+    if (action === "show-admin-history") { showAdminHistory(target.dataset.id); return; }
+    if (action === "close-admin-history") { ui.adminHistoryLicenseId = null; ui.adminHistoryEvents = []; rerender(); return; }
+    if (action === "duplicate-admin-license") { duplicateAdminLicense(target.dataset.id); return; }
+    if (action === "renew-admin-license") { renewAdminLicense(target.dataset.id); return; }
+    if (action === "suspend-admin-license") { suspendAdminLicense(target.dataset.id); return; }
+    if (action === "reactivate-admin-license") { reactivateAdminLicense(target.dataset.id); return; }
+    if (action === "revoke-admin-license") revokeAdminLicense(target.dataset.id);
   }, true);
 }
