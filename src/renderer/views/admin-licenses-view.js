@@ -27,6 +27,22 @@ function adminLocked() {
   `;
 }
 
+function savedConfigBox() {
+  const config = ui.adminConfig;
+  if (!config?.configured) return "";
+  return `
+    <div class="callout stack-sm">
+      <strong>Configuracion admin guardada</strong>
+      <span class="muted">${esc(config.supabaseUrl || "Supabase")}</span>
+      <span class="small-note">Se usa cifrado local del sistema operativo. No se muestra la service key ni la clave privada.</span>
+      <div class="flex">
+        <button class="btn btn-primary" type="button" data-action="admin-resume">usar configuracion guardada</button>
+        <button class="btn btn-ghost btn-danger" type="button" data-action="admin-forget-config">borrar guardado</button>
+      </div>
+    </div>
+  `;
+}
+
 function adminLogin() {
   return `
     <section class="section admin-login-shell">
@@ -34,16 +50,17 @@ function adminLogin() {
         <div>
           <div class="label">Panel privado</div>
           <h2>Conectar administrador Supabase</h2>
-          <p class="muted">La service role key y la clave privada permanecen en memoria durante esta sesion. No se guardan en el vault.</p>
+          <p class="muted">La configuracion se guarda cifrada en este equipo para no volver a escribirla en cada inicio.</p>
         </div>
+        ${ui.adminResumeBusy ? `<div class="pill accent">conectando con configuracion guardada...</div>` : savedConfigBox()}
         <div class="grid-2">
-          <label class="stack-sm"><span class="label">Supabase URL</span><input class="input mono" name="supabaseUrl" value="${attr(ui.adminServerUrl || "https://TU_PROJECT_REF.supabase.co")}" required /></label>
+          <label class="stack-sm"><span class="label">Supabase URL</span><input class="input mono" name="supabaseUrl" value="${attr(ui.adminServerUrl || ui.adminConfig?.supabaseUrl || "https://TU_PROJECT_REF.supabase.co")}" required /></label>
           <label class="stack-sm"><span class="label">Anon / publishable key</span><input class="input mono" name="anonKey" autocomplete="off" required /></label>
         </div>
         <label class="stack-sm"><span class="label">Service role key solo admin</span><input class="input mono" type="password" name="serviceRoleKey" autocomplete="off" required /></label>
         <label class="stack-sm"><span class="label">Clave privada PEM</span><textarea class="textarea mono" name="privateKeyPem" rows="8" placeholder="-----BEGIN PRIVATE KEY-----" required></textarea></label>
         ${ui.adminError ? `<div class="pill danger">${esc(ui.adminError)}</div>` : ""}
-        <button class="btn btn-primary" type="submit">entrar al panel de licencias</button>
+        <button class="btn btn-primary" type="submit">entrar y guardar configuracion cifrada</button>
       </form>
     </section>
   `;
@@ -61,7 +78,7 @@ function licenseRow(license) {
       <span class="pill ${klass}">${status}</span>
       <div class="flex right">
         <button class="btn btn-ghost" data-action="copy-admin-license" data-id="${attr(license.id)}">copiar key</button>
-        ${status === "activa" ? `<button class="btn btn-ghost btn-danger" data-action="revoke-admin-license" data-id="${attr(license.id)}">revocar</button>` : ""}
+        ${status === "activa" ? `<button class="btn btn-ghost btn-danger" data-action="revoke-admin-license" data-id="${attr(license.id)}">revocar acceso</button>` : ""}
       </div>
     </div>
   `;
