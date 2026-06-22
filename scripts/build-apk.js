@@ -18,11 +18,12 @@ const hasWrapper = fs.existsSync(gradlew) && fs.existsSync(wrapperJar);
 
 function runGradle() {
   if (hasWrapper && isWindows) {
-    const command = `"${gradlew}" ${task}`;
-    return spawnSync("cmd.exe", ["/d", "/s", "/c", command], {
+    // Ejecutar desde cwd evita problemas con rutas como C:\Users\Antonio Garcia\...
+    // Usamos CALL porque gradlew.bat es un archivo batch.
+    return spawnSync("cmd.exe", ["/d", "/c", "call", "gradlew.bat", task], {
       cwd: androidDir,
       stdio: "inherit",
-      windowsVerbatimArguments: false
+      shell: false
     });
   }
 
