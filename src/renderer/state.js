@@ -40,7 +40,7 @@ export const ui = {
   adminConfig: null,
   adminResumeTried: false,
   adminResumeBusy: false,
-  adminFilters: { search: "", status: "all", plan: "all", tier: "all" },
+  adminFilters: { search: "", status: "all", plan: "all" },
   adminHistoryLicenseId: null,
   adminHistoryEvents: []
 };
