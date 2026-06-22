@@ -55,8 +55,7 @@ function licenseRow(license) {
   return `
     <div class="admin-license-row">
       <div><strong class="mono">${esc(license.id)}</strong><small>${esc(license.hwid)}</small></div>
-      <span class="pill accent">${esc(license.tier || "standard")}</span>
-      <span class="small-note">${esc(features || "standard")}</span>
+      <span class="pill accent" title="${attr(features || "standard")}">${esc(license.tier || "standard")}</span>
       <span>${esc(license.plan)}</span>
       <span class="mono">${license.expires_at ? esc(new Date(Number(license.expires_at)).toLocaleString()) : "permanente"}</span>
       <span class="pill ${klass}">${status}</span>
@@ -93,14 +92,14 @@ export function renderAdminLicensesView() {
           <input class="input mono" name="hwid" placeholder="HWID Windows o Device Install ID Android" required />
           <select class="select" name="plan"><option>1d</option><option>7d</option><option>15d</option><option selected>30d</option><option value="lifetime">permanente</option></select>
           <select class="select" name="tier"><option>standard</option><option>pro</option><option>enterprise</option><option>admin</option></select>
+          <input class="input" name="features" value="standard" placeholder="features: standard, admin" />
           <button class="btn btn-primary" type="submit">generar licencia</button>
         </div>
-        <input class="input" name="features" value="standard" placeholder="features separadas por coma. Para admin usa: admin" />
       </form>
       ${ui.adminGeneratedKey ? `<div class="metric stack-sm"><div class="between"><strong>Licencia generada</strong><button class="btn btn-primary" data-action="copy-generated-license">copiar</button></div><pre class="mono admin-generated-key">${esc(ui.adminGeneratedKey)}</pre></div>` : ""}
       ${ui.adminError ? `<div class="pill danger">${esc(ui.adminError)}</div>` : ""}
       <div class="admin-license-table">
-        <div class="admin-license-head"><span>Licencia / equipo</span><span>Tier</span><span>Features</span><span>Plan</span><span>Vencimiento</span><span>Estado</span><span></span></div>
+        <div class="admin-license-head"><span>Licencia / equipo</span><span>Tier</span><span>Plan</span><span>Vencimiento</span><span>Estado</span><span></span></div>
         ${licenses.map(licenseRow).join("") || `<div class="network-empty">No hay licencias registradas.</div>`}
       </div>
     </section>
