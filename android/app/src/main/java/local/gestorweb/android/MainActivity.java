@@ -41,7 +41,7 @@ public final class MainActivity extends AppCompatActivity {
         if (text.isEmpty()) { renderActivation(""); return; }
         renderLoading();
         new Thread(() -> {
-            LicenseClient.Result result = LicenseClient.verify(text, licenses.deviceId());
+            LicenseClient.Result result = LicenseClient.verify(this, text, licenses.deviceId());
             runOnUiThread(() -> {
                 if (result.active) renderDashboard();
                 else { licenses.clearLicense(); renderActivation(result.reason); }
@@ -76,7 +76,7 @@ public final class MainActivity extends AppCompatActivity {
         root.addView(text("ID de este dispositivo", 13, MUTED));
         TextView hwid = text(licenses.deviceId(), 14, TEXT); hwid.setTextIsSelectable(true); root.addView(hwid);
         Button copy = button("COPIAR ID"); copy.setOnClickListener(v -> ((ClipboardManager)getSystemService(Context.CLIPBOARD_SERVICE)).setPrimaryClip(ClipData.newPlainText("HWID", licenses.deviceId()))); root.addView(copy);
-        EditText license = input("Pega aquí la key GW-LIC-V1"); license.setSingleLine(false); license.setMinLines(5); root.addView(license, new LinearLayout.LayoutParams(-1, dp(150)));
+        EditText license = input("Pega aquí la licencia GW-LIC-V1"); license.setSingleLine(false); license.setMinLines(5); root.addView(license, new LinearLayout.LayoutParams(-1, dp(150)));
         if (!error.isEmpty()) root.addView(text(error, 13, Color.rgb(255, 103, 128)));
         Button activate = button("ACTIVAR"); activate.setOnClickListener(v -> { if (!license.getText().toString().trim().isEmpty()) { licenses.saveLicense(license.getText().toString()); validateAndRender(); } }); root.addView(activate);
         setContentView(root);
