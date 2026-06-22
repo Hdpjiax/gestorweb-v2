@@ -14,6 +14,40 @@ if (!fs.existsSync(androidDir)) {
   process.exit(1);
 }
 
+function javaMajor(versionOutput) {
+  const text = String(versionOutput || "");
+  const match = text.match(/version\s+"([^"]+)"/i) || text.match(/openjdk\s+version\s+"([^"]+)"/i);
+  if (!match) return 0;
+  const version = match[1];
+  if (version.startsWith("1.")) return Number(version.split(".")[1]) || 0;
+  return Number(version.split(/[.+-]/)[0]) || 0;
+}
+
+function assertJava17() {
+  const result = spawnSync("java", ["-version"], { encoding: "utf8", shell: isWindows });
+  const output = `${result.stdout || ""}\n${result.stderr || ""}`;
+  const major = javaMajor(output);
+  if (major >= 17) return;
+
+  console.error([
+    "Java invalido para compilar Android.",
+    "",
+    `Version detectada: ${major ? `Java ${major}` : "no detectada"}`,
+    "Android Gradle Plugin 8.x requiere Java 17 o superior.",
+    "",
+    "Solucion rapida en PowerShell si tienes Android Studio:",
+    "$env:JAVA_HOME=\"C:\\Program Files\\Android\\Android Studio\\jbr\"",
+    "$env:Path=\"$env:JAVA_HOME\\bin;$env:Path\"",
+    "java -version",
+    "npm run dist:apk",
+    "",
+    "Tambien puedes instalar Temurin/JDK 17 y apuntar JAVA_HOME a esa carpeta."
+  ].join("\n"));
+  process.exit(1);
+}
+
+assertJava17();
+
 const hasWrapper = fs.existsSync(gradlew) && fs.existsSync(wrapperJar);
 
 function runGradle() {
