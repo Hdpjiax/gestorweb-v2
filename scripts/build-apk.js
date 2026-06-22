@@ -6,30 +6,26 @@ const root = path.resolve(__dirname, "..");
 const androidDir = path.join(root, "android");
 const isWindows = process.platform === "win32";
 const gradlew = path.join(androidDir, isWindows ? "gradlew.bat" : "gradlew");
+const wrapperJar = path.join(androidDir, "gradle", "wrapper", "gradle-wrapper.jar");
+const task = process.argv[2] === "debug" ? "assembleDebug" : "assembleRelease";
 
-if (!fs.existsSync(androidDir) || !fs.existsSync(gradlew)) {
-  console.error([
-    "No existe un proyecto Android funcional todavia.",
-    "",
-    "El programa actual es Electron y no se puede convertir directamente a APK.",
-    "Para generar un APK unico se debe crear el port Android en /android y reemplazar las funciones Electron IPC por implementaciones Android.",
-    "",
-    "Pendiente tecnico:",
-    "1. Crear proyecto Android/Capacitor o Android nativo en /android.",
-    "2. Implementar deviceInstallId como HWID Android.",
-    "3. Implementar validacion de licencia GW-LIC-V1 contra Supabase.",
-    "4. Adaptar WebView/perfiles/cookies/proxies a Android.",
-    "5. Firmar release APK/AAB.",
-    "",
-    "Cuando /android exista, este comando ejecutara gradlew assembleRelease y dejara el APK unico en /dist."
-  ].join("\n"));
+if (!fs.existsSync(androidDir)) {
+  console.error("No existe la carpeta android.");
   process.exit(1);
 }
 
-const result = spawnSync(gradlew, ["assembleRelease"], {
+const command = fs.existsSync(gradlew) && fs.existsSync(wrapperJar)
+  ? gradlew
+  : "gradle";
+
+if (command === "gradle") {
+  console.warn("No se encontro gradle-wrapper.jar. Usando Gradle instalado en el sistema.");
+}
+
+const result = spawnSync(command, [task], {
   cwd: androidDir,
   stdio: "inherit",
-  shell: isWindows
+  shell: isWindows || command === "gradle"
 });
 
 if (result.status !== 0) process.exit(result.status || 1);
