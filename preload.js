@@ -40,6 +40,9 @@ contextBridge.exposeInMainWorld("api", Object.freeze({
   }),
   admin: Object.freeze({
     login: (config) => invoke("admin:login", config),
+    resume: () => invoke("admin:resume"),
+    config: () => invoke("admin:config"),
+    forgetConfig: () => invoke("admin:forgetConfig"),
     list: () => invoke("admin:list"),
     create: (license) => invoke("admin:create", license),
     revoke: (id, reason) => invoke("admin:revoke", id, reason),
