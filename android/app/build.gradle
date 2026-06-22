@@ -1,7 +1,4 @@
-plugins {
-    id "com.android.application"
-    id "org.jetbrains.kotlin.android"
-}
+plugins { id "com.android.application" }
 
 android {
     namespace "local.gestorweb.android"
@@ -11,18 +8,17 @@ android {
         applicationId "local.gestorweb.android"
         minSdk 26
         targetSdk 35
-        versionCode 150
-        versionName "1.5.0"
+        versionCode 160
+        versionName "1.6.0"
     }
 
     buildFeatures { buildConfig true }
 
     buildTypes {
         release {
-            // APK instalable sin configurar keystore aun. Para Play Store o venta formal,
-            // reemplazar por una signingConfig propia de produccion.
             signingConfig signingConfigs.debug
             minifyEnabled false
+            shrinkResources false
             proguardFiles getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro"
         }
     }
@@ -31,16 +27,19 @@ android {
         sourceCompatibility JavaVersion.VERSION_17
         targetCompatibility JavaVersion.VERSION_17
     }
-
-    kotlinOptions {
-        jvmTarget = "17"
-    }
 }
 
 dependencies {
-    implementation "com.google.android.material:material:1.12.0"
     implementation "androidx.appcompat:appcompat:1.7.0"
     implementation "androidx.webkit:webkit:1.11.0"
     implementation "androidx.security:security-crypto:1.1.0-alpha06"
-    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.9.24"
+
+    // Material Design — necesario para BottomSheetDialogFragment
+    implementation "com.google.android.material:material:1.12.0"
+
+    // Cronet vía Google Play Services (red-level HTTP/SOCKS5 proxy).
+    // Opcional: si no está en el dispositivo BrowserEngineFactory
+    // hace fallback silencioso a WebView nativo.
+    // Para activarlo descomenta la línea siguiente:
+    // implementation "com.google.android.gms:play-services-cronet:18.0.1"
 }
