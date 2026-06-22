@@ -12,11 +12,12 @@
     "test:ipc": "playwright test --config=playwright.config.js",
     "qa": "npm run check && npm test",
     "license:server": "npm start --prefix backend/license-server",
-    "android:assemble": "node scripts/build-apk.js",
-    "pack:win": "electron-builder --win --dir",
-    "dist:win": "electron-builder --win nsis",
-    "dist:setup": "electron-builder --win nsis --publish never && node scripts/keep-single-artifact.js exe",
-    "dist:apk": "node scripts/build-apk.js"
+    "prepare:license-assets": "node scripts/prepare-license-assets.js all",
+    "android:assemble": "node scripts/prepare-license-assets.js android && node scripts/build-apk.js",
+    "pack:win": "node scripts/prepare-license-assets.js windows && electron-builder --win --dir",
+    "dist:win": "node scripts/prepare-license-assets.js windows && electron-builder --win nsis",
+    "dist:setup": "node scripts/prepare-license-assets.js windows && electron-builder --win nsis --publish never && node scripts/keep-single-artifact.js exe",
+    "dist:apk": "node scripts/prepare-license-assets.js android && node scripts/build-apk.js"
   },
   "build": {
     "appId": "local.gestorweb.rebuild",
