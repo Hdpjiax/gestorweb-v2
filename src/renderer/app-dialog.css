@@ -1,0 +1,118 @@
+.app-dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background:
+    radial-gradient(circle at 20% 20%, rgb(124 92 255 / 0.18), transparent 35%),
+    radial-gradient(circle at 80% 10%, rgb(34 197 94 / 0.08), transparent 30%),
+    rgb(3 7 18 / 0.78);
+  backdrop-filter: blur(14px);
+  animation: app-dialog-fade 140ms ease-out;
+}
+
+.app-dialog-card {
+  width: min(560px, 100%);
+  overflow: hidden;
+  border: 1px solid var(--bg-border);
+  border-radius: 22px;
+  background: linear-gradient(180deg, #111827, #0b111b);
+  box-shadow: 0 32px 100px rgb(0 0 0 / 0.6), 0 0 0 1px rgb(255 255 255 / 0.03) inset;
+  animation: app-dialog-pop 160ms ease-out;
+}
+
+.app-dialog-card.danger {
+  border-color: rgb(248 113 113 / 0.35);
+  box-shadow: 0 32px 100px rgb(0 0 0 / 0.65), 0 0 40px rgb(248 113 113 / 0.08);
+}
+
+.app-dialog-head {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  padding: 22px 24px 18px;
+  border-bottom: 1px solid var(--bg-border);
+}
+
+.app-dialog-head h3 {
+  margin: 2px 0 0;
+  font-size: 22px;
+  line-height: 1.15;
+  color: var(--text);
+}
+
+.app-dialog-badge {
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  border-radius: 14px;
+  background: rgb(124 92 255 / 0.14);
+  color: var(--accent);
+  border: 1px solid rgb(124 92 255 / 0.35);
+  font-weight: 800;
+  font-size: 20px;
+}
+
+.app-dialog-badge.danger {
+  background: rgb(248 113 113 / 0.13);
+  color: var(--danger);
+  border-color: rgb(248 113 113 / 0.36);
+}
+
+.app-dialog-body {
+  display: grid;
+  gap: 14px;
+  padding: 20px 24px;
+}
+
+.app-dialog-body p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.6;
+  font-size: 14px;
+}
+
+.app-dialog-detail {
+  white-space: pre-wrap;
+  border: 1px solid var(--bg-border);
+  border-radius: 14px;
+  background: rgb(2 6 23 / 0.55);
+  color: var(--text);
+  padding: 12px 14px;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.app-dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 18px 24px 22px;
+  border-top: 1px solid var(--bg-border);
+  background: rgb(2 6 23 / 0.28);
+}
+
+.btn-danger-solid {
+  border-color: rgb(248 113 113 / 0.48) !important;
+  background: linear-gradient(180deg, #ef4444, #b91c1c) !important;
+  color: #fff !important;
+  box-shadow: 0 12px 30px rgb(239 68 68 / 0.22);
+}
+
+.btn-danger-solid:hover {
+  filter: brightness(1.08);
+}
+
+@keyframes app-dialog-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes app-dialog-pop {
+  from { transform: translateY(10px) scale(0.97); opacity: 0; }
+  to { transform: translateY(0) scale(1); opacity: 1; }
+}
