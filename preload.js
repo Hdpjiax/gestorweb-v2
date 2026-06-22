@@ -44,7 +44,10 @@ contextBridge.exposeInMainWorld("api", Object.freeze({
     config: () => invoke("admin:config"),
     forgetConfig: () => invoke("admin:forgetConfig"),
     list: () => invoke("admin:list"),
+    history: (id) => invoke("admin:history", id),
     create: (license) => invoke("admin:create", license),
+    duplicate: (id, overrides) => invoke("admin:duplicate", id, overrides),
+    renew: (id, plan) => invoke("admin:renew", id, plan),
     revoke: (id, reason) => invoke("admin:revoke", id, reason),
     logout: () => invoke("admin:logout")
   }),
@@ -78,9 +81,6 @@ contextBridge.exposeInMainWorld("api", Object.freeze({
     exportFile: (state) => invoke("vault:exportFile", state),
     importFile: () => invoke("vault:importFile")
   }),
-  // Listener seguro para eventos push main → renderer.
-  // Uso: window.api.on('profiles:windowClosed', ({ id }) => { ... })
-  // Devuelve una función de cleanup: const off = api.on(...); off();
   on: (channel, callback) => {
     if (!ALLOWED_LISTEN_CHANNELS.includes(channel)) {
       console.warn(`[preload] canal no permitido: ${channel}`);
