@@ -1,13 +1,14 @@
 plugins {
-    id "com.android.application" version "8.5.2" apply false
+    id "com.android.application"   version "8.5.2"  apply false
+    id "org.jetbrains.kotlin.android" version "1.9.24" apply false
 }
 
 subprojects {
     configurations.configureEach {
         resolutionStrategy {
-            force "org.jetbrains.kotlin:kotlin-stdlib:1.8.22"
-            force "org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.8.22"
-            force "org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.8.22"
+            force "org.jetbrains.kotlin:kotlin-stdlib:1.9.24"
+            force "org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.9.24"
+            force "org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.9.24"
         }
     }
 }
