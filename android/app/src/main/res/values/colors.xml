@@ -1,1 +1,21 @@
-<resources><color name="launcher_bg">#0B1018</color></resources>
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Launcher -->
+    <color name="launcher_bg">#070A10</color>
+
+    <!-- Backgrounds -->
+    <color name="gw_bg">#070A10</color>
+    <color name="gw_panel">#0F1724</color>
+    <color name="gw_panel_2">#141F30</color>
+    <color name="gw_border">#2A3953</color>
+
+    <!-- Text -->
+    <color name="gw_text">#EEF4FC</color>
+    <color name="gw_muted">#8F9CB2</color>
+
+    <!-- Accents -->
+    <color name="gw_accent">#7C5CFC</color>
+    <color name="gw_accent_2">#26C6DA</color>
+    <color name="gw_danger">#FF6780</color>
+    <color name="gw_success">#4CAF82</color>
+</resources>

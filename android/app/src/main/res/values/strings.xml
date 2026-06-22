@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Gestor Web</string>
+
+    <!-- Activation screen -->
+    <string name="label_brand">GESTOR WEB</string>
+    <string name="label_activation_title">Activación Android</string>
+    <string name="label_activation_desc">Conecta este dispositivo al mismo sistema de licencias de escritorio.</string>
+    <string name="label_device_id_title">ID de este dispositivo</string>
+    <string name="btn_copy_hwid">COPIAR HWID</string>
+    <string name="label_license_title">Licencia</string>
+    <string name="label_license_desc">Pega la key GW-LIC-V1 generada desde el panel admin.</string>
+    <string name="hint_license">Pega aquí la licencia GW-LIC-V1</string>
+    <string name="btn_activate">ACTIVAR LICENCIA</string>
+
+    <!-- Loading -->
+    <string name="label_loading_title">Gestor Web</string>
+    <string name="label_loading_desc">Validando licencia y sesión segura…</string>
+
+    <!-- Dashboard -->
+    <string name="label_dashboard_brand">GESTOR WEB ANDROID</string>
+    <string name="label_dashboard_title">Panel principal</string>
+    <string name="label_dashboard_desc">Perfiles, licencia y navegación desde una vista tipo dashboard.</string>
+    <string name="label_stat_profiles">Perfiles</string>
+    <string name="label_stat_proxy">Con proxy</string>
+    <string name="label_license_active">Licencia activa</string>
+    <string name="pill_online">ONLINE</string>
+    <string name="label_hwid_prefix">HWID: </string>
+    <string name="label_new_profile">Nuevo perfil</string>
+    <string name="label_new_profile_desc">Crea un perfil con URL, proxy, user-agent y modo de privacidad seguro.</string>
+    <string name="hint_profile_name">Nombre del perfil</string>
+    <string name="hint_profile_url">URL inicial, ej. https://example.com</string>
+    <string name="hint_profile_proxy">Proxy opcional, ej. http://host:puerto</string>
+    <string name="hint_profile_ua">User-Agent opcional</string>
+    <string name="label_mode">Modo</string>
+    <string name="btn_create_profile">+ CREAR PERFIL</string>
+    <string name="label_profiles_title">Perfiles guardados</string>
+    <string name="label_profiles_empty">Aún no tienes perfiles. Crea uno arriba para empezar.</string>
+    <string name="label_android_limits_title">Funciones Android</string>
+    <string name="label_android_limits_1">Esta versión usa Android WebView. Comparte licencias y perfiles básicos con la lógica del sistema, pero no ejecuta Electron ni módulos internos de escritorio.</string>
+    <string name="label_android_limits_2">Modos disponibles: compatibilidad, privado y estricto. Son controles de privacidad/seguridad del WebView, no evasión encubierta.</string>
+    <string name="btn_deactivate">DESACTIVAR LICENCIA EN ESTE EQUIPO</string>
+    <string name="label_default_profile_name">Perfil</string>
+    <string name="label_direct">Conexión directa</string>
+    <string name="label_proxy_prefix">Proxy: </string>
+    <string name="label_ua_custom">UA personalizado</string>
+    <string name="btn_open_profile">ABRIR</string>
+    <string name="btn_delete_profile">ELIMINAR</string>
+
+    <!-- Browser -->
+    <string name="label_mode_prefix">Modo </string>
+    <string name="label_direct_suffix"> · directo</string>
+    <string name="label_proxy_suffix"> · proxy activo</string>
+    <string name="btn_back">‹</string>
+    <string name="btn_refresh">↻</string>
+    <string name="clipboard_hwid_label">HWID</string>
+</resources>
