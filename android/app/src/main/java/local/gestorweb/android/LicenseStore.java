@@ -30,6 +30,10 @@ final class LicenseStore {
     }
 
     String license() { return prefs.getString("license_text", ""); }
-    void saveLicense(String value) { prefs.edit().putString("license_text", value.trim()).apply(); }
+    void saveLicense(String value) { prefs.edit().putString("license_text", normalize(value)).apply(); }
     void clearLicense() { prefs.edit().remove("license_text").apply(); }
+
+    private static String normalize(String value) {
+        return String.valueOf(value == null ? "" : value).replace("\r\n", "\n").replace("\r", "\n").trim();
+    }
 }
