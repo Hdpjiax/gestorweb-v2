@@ -199,16 +199,30 @@ async function createLicense(license = {}) {
 async function revokeLicense(id, reason) {
   await assertAdminLicense();
   const licenseId = requireText(id, "ID de licencia", 6);
-  const updated = await supabaseRequest(`/rest/v1/licenses?id=eq.${encodeURIComponent(licenseId)}`, {
-    method: "PATCH",
-    body: {
-      revoked: true,
-      revoke_reason: String(reason || "revocada por administrador"),
-      revoked_at: new Date().toISOString()
-    }
-  });
-  const rows = Array.isArray(updated) ? updated : [];
+  const revokeReason = String(reason || "revocada por administrador");
+
+  let rows = [];
+  try {
+    const rpcRows = await supabaseRequest("/rest/v1/rpc/revoke_license_admin", {
+      method: "POST",
+      body: { p_id: licenseId, p_reason: revokeReason }
+    });
+    rows = Array.isArray(rpcRows) ? rpcRows : (rpcRows ? [rpcRows] : []);
+  } catch (rpcError) {
+    const patched = await supabaseRequest(`/rest/v1/licenses?id=eq.${encodeURIComponent(licenseId)}&select=*`, {
+      method: "PATCH",
+      body: {
+        revoked: true,
+        revoke_reason: revokeReason,
+        revoked_at: new Date().toISOString()
+      }
+    });
+    rows = Array.isArray(patched) ? patched : (patched ? [patched] : []);
+  }
+
   if (!rows.length) throw new Error("no se encontro la licencia para revocar");
+  if (!rows[0].revoked) throw new Error("Supabase respondio, pero la licencia no quedo marcada como revocada");
+
   const currentStatus = await currentLicenseStatus().catch(() => null);
   return { ok: true, license: publicRow(rows[0]), currentStatus };
 }
