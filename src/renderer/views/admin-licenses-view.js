@@ -1,5 +1,10 @@
 import { attr, esc } from "../helpers.js";
-import { ui } from "../state.js";
+import { state, ui } from "../state.js";
+
+function isAdminLicense() {
+  const features = Array.isArray(state.license?.features) ? state.license.features : [];
+  return !!state.license?.active && (state.license.tier === "admin" || features.includes("admin"));
+}
 
 function statusLabel(license) {
   if (license.status === "revoked" || license.revoked) return ["revocada", "danger"];
@@ -7,19 +12,38 @@ function statusLabel(license) {
   return ["activa", "live"];
 }
 
+function adminLocked() {
+  return `
+    <section class="section admin-login-shell">
+      <div class="metric stack">
+        <div>
+          <div class="label">Acceso restringido</div>
+          <h2>Administracion de licencias</h2>
+          <p class="muted">Esta seccion solo aparece para una licencia activa de tipo admin.</p>
+        </div>
+        <div class="callout">Activa una licencia <strong>lifetime admin</strong> en esta copia para poder emitir, listar y revocar licencias desde el programa.</div>
+      </div>
+    </section>
+  `;
+}
+
 function adminLogin() {
   return `
     <section class="section admin-login-shell">
       <form id="adminLoginForm" class="metric admin-login-card stack">
         <div>
-          <div class="label">Acceso restringido</div>
-          <h2>Administracion de licencias</h2>
-          <p class="muted">La credencial permanece solamente en memoria y nunca se guarda en el vault.</p>
+          <div class="label">Panel privado</div>
+          <h2>Conectar administrador Supabase</h2>
+          <p class="muted">La service role key y la clave privada permanecen en memoria durante esta sesion. No se guardan en el vault.</p>
         </div>
-        <label class="stack-sm"><span class="label">Servidor de licencias</span><input class="input mono" name="serverUrl" value="${attr(ui.adminServerUrl || "https://licencias.tudominio.com")}" required /></label>
-        <label class="stack-sm"><span class="label">Credencial unica de administrador</span><input class="input mono" type="password" name="credential" autocomplete="off" required /></label>
+        <div class="grid-2">
+          <label class="stack-sm"><span class="label">Supabase URL</span><input class="input mono" name="supabaseUrl" value="${attr(ui.adminServerUrl || "https://TU_PROJECT_REF.supabase.co")}" required /></label>
+          <label class="stack-sm"><span class="label">Anon / publishable key</span><input class="input mono" name="anonKey" autocomplete="off" required /></label>
+        </div>
+        <label class="stack-sm"><span class="label">Service role key solo admin</span><input class="input mono" type="password" name="serviceRoleKey" autocomplete="off" required /></label>
+        <label class="stack-sm"><span class="label">Clave privada PEM</span><textarea class="textarea mono" name="privateKeyPem" rows="8" placeholder="-----BEGIN PRIVATE KEY-----" required></textarea></label>
         ${ui.adminError ? `<div class="pill danger">${esc(ui.adminError)}</div>` : ""}
-        <button class="btn btn-primary" type="submit">entrar al panel privado</button>
+        <button class="btn btn-primary" type="submit">entrar al panel de licencias</button>
       </form>
     </section>
   `;
@@ -27,10 +51,12 @@ function adminLogin() {
 
 function licenseRow(license) {
   const [status, klass] = statusLabel(license);
+  const features = Array.isArray(license.features) ? license.features.join(", ") : String(license.features || "");
   return `
     <div class="admin-license-row">
       <div><strong class="mono">${esc(license.id)}</strong><small>${esc(license.hwid)}</small></div>
-      <span class="pill accent">${esc(license.platform || "any")}</span>
+      <span class="pill accent">${esc(license.tier || "standard")}</span>
+      <span class="small-note">${esc(features || "standard")}</span>
       <span>${esc(license.plan)}</span>
       <span class="mono">${license.expires_at ? esc(new Date(Number(license.expires_at)).toLocaleString()) : "permanente"}</span>
       <span class="pill ${klass}">${status}</span>
@@ -43,6 +69,7 @@ function licenseRow(license) {
 }
 
 export function renderAdminLicensesView() {
+  if (!isAdminLicense()) return adminLocked();
   if (!ui.adminAuthenticated) return adminLogin();
   const licenses = ui.adminLicenses || [];
   const active = licenses.filter((item) => statusLabel(item)[0] === "activa").length;
@@ -51,7 +78,7 @@ export function renderAdminLicensesView() {
   return `
     <section class="section admin-license-shell stack">
       <div class="between">
-        <div><div class="label">Panel privado</div><h2>Licencias Windows y Android</h2><div class="small-note mono">${esc(ui.adminServerUrl)}</div></div>
+        <div><div class="label">Panel privado</div><h2>Licencias Windows y Android</h2><div class="small-note mono">${esc(ui.adminServerUrl || "Supabase")}</div></div>
         <div class="flex"><button class="btn btn-ghost" data-action="refresh-admin-licenses">actualizar</button><button class="btn btn-ghost" data-action="logout-admin">salir</button></div>
       </div>
       <div class="grid-4">
@@ -61,20 +88,19 @@ export function renderAdminLicensesView() {
         <div class="metric"><div class="label">Revocadas</div><strong class="fail">${revoked}</strong></div>
       </div>
       <form id="adminCreateLicenseForm" class="metric stack">
-        <div class="between"><strong>Generar nueva key</strong><span class="small-note">Firmada, registrada y revocable</span></div>
+        <div class="between"><strong>Generar nueva licencia</strong><span class="small-note">Firmada, registrada en Supabase y revocable</span></div>
         <div class="admin-license-form">
           <input class="input mono" name="hwid" placeholder="HWID Windows o Device Install ID Android" required />
-          <select class="select" name="platform"><option value="windows">Windows</option><option value="android">Android</option><option value="any">Ambos</option></select>
           <select class="select" name="plan"><option>1d</option><option>7d</option><option>15d</option><option selected>30d</option><option value="lifetime">permanente</option></select>
-          <select class="select" name="tier"><option>standard</option><option>pro</option><option>enterprise</option></select>
-          <button class="btn btn-primary" type="submit">generar key</button>
+          <select class="select" name="tier"><option>standard</option><option>pro</option><option>enterprise</option><option>admin</option></select>
+          <button class="btn btn-primary" type="submit">generar licencia</button>
         </div>
-        <input class="input" name="features" value="standard" placeholder="features separadas por coma" />
+        <input class="input" name="features" value="standard" placeholder="features separadas por coma. Para admin usa: admin" />
       </form>
-      ${ui.adminGeneratedKey ? `<div class="metric stack-sm"><div class="between"><strong>Key generada</strong><button class="btn btn-primary" data-action="copy-generated-license">copiar</button></div><pre class="mono admin-generated-key">${esc(ui.adminGeneratedKey)}</pre></div>` : ""}
+      ${ui.adminGeneratedKey ? `<div class="metric stack-sm"><div class="between"><strong>Licencia generada</strong><button class="btn btn-primary" data-action="copy-generated-license">copiar</button></div><pre class="mono admin-generated-key">${esc(ui.adminGeneratedKey)}</pre></div>` : ""}
       ${ui.adminError ? `<div class="pill danger">${esc(ui.adminError)}</div>` : ""}
       <div class="admin-license-table">
-        <div class="admin-license-head"><span>Licencia / equipo</span><span>Plataforma</span><span>Plan</span><span>Vencimiento</span><span>Estado</span><span></span></div>
+        <div class="admin-license-head"><span>Licencia / equipo</span><span>Tier</span><span>Features</span><span>Plan</span><span>Vencimiento</span><span>Estado</span><span></span></div>
         ${licenses.map(licenseRow).join("") || `<div class="network-empty">No hay licencias registradas.</div>`}
       </div>
     </section>
