@@ -1,6 +1,7 @@
 import { load, setState, normalize, defaults, setRenderFn, setBindFn, render, native, state, ui } from "./state.js";
 import { clone } from "./helpers.js";
 import { bind, startScheduler, initKeyboard, closeProfile } from "./actions.js";
+import { initAdminLicenseActions } from "./admin-license-actions.js";
 import { renderShell, renderNetworkEntryList } from "./views/index.js";
 
 let previewRefreshBusy = false;
@@ -93,6 +94,7 @@ async function init() {
   setState(normalize({ ...clone(defaults), ...stored }));
   setRenderFn(renderShell);
   setBindFn(bind);
+  initAdminLicenseActions();
   const economy = (state.settings.resourceMode || "economy") === "economy";
   document.body.classList.toggle("resource-economy", economy);
   await native?.app?.setResourceMode?.(economy ? "economy" : "normal").catch(() => {});
