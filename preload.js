@@ -48,6 +48,8 @@ contextBridge.exposeInMainWorld("api", Object.freeze({
     create: (license) => invoke("admin:create", license),
     duplicate: (id, overrides) => invoke("admin:duplicate", id, overrides),
     renew: (id, plan) => invoke("admin:renew", id, plan),
+    suspend: (id, reason) => invoke("admin:suspend", id, reason),
+    reactivate: (id, reason) => invoke("admin:reactivate", id, reason),
     revoke: (id, reason) => invoke("admin:revoke", id, reason),
     logout: () => invoke("admin:logout")
   }),
