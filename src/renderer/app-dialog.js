@@ -1,4 +1,14 @@
+function ensureDialogStyles() {
+  if (document.getElementById("app-dialog-css")) return;
+  const link = document.createElement("link");
+  link.id = "app-dialog-css";
+  link.rel = "stylesheet";
+  link.href = "src/renderer/app-dialog.css";
+  document.head.appendChild(link);
+}
+
 export function appDialog({ title, message, detail = "", confirmText = "Aceptar", cancelText = "Cancelar", tone = "default", input = null }) {
+  ensureDialogStyles();
   return new Promise((resolve) => {
     const overlay = document.createElement("div");
     overlay.className = "app-dialog-backdrop";
