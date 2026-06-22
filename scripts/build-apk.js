@@ -1,4 +1,5 @@
 const fs = require("fs");
+const os = require("os");
 const path = require("path");
 const { spawnSync } = require("child_process");
 
@@ -46,7 +47,56 @@ function assertJava17() {
   process.exit(1);
 }
 
+function sdkCandidates() {
+  return [
+    process.env.ANDROID_HOME,
+    process.env.ANDROID_SDK_ROOT,
+    process.env.LOCALAPPDATA ? path.join(process.env.LOCALAPPDATA, "Android", "Sdk") : "",
+    path.join(os.homedir(), "AppData", "Local", "Android", "Sdk"),
+    path.join(os.homedir(), "Library", "Android", "sdk"),
+    "/Users/Shared/Android/sdk",
+    "/opt/android-sdk",
+    "/usr/local/share/android-sdk"
+  ].filter(Boolean);
+}
+
+function isValidSdk(dir) {
+  if (!dir || !fs.existsSync(dir)) return false;
+  return fs.existsSync(path.join(dir, "platforms")) || fs.existsSync(path.join(dir, "cmdline-tools"));
+}
+
+function configureAndroidSdk() {
+  const localProperties = path.join(androidDir, "local.properties");
+  if (fs.existsSync(localProperties)) return;
+
+  const sdk = sdkCandidates().find(isValidSdk);
+  if (!sdk) {
+    console.error([
+      "Android SDK no encontrado.",
+      "",
+      "Solucion rapida en PowerShell si tienes Android Studio instalado:",
+      "$env:ANDROID_HOME=\"$env:LOCALAPPDATA\\Android\\Sdk\"",
+      "$env:ANDROID_SDK_ROOT=$env:ANDROID_HOME",
+      "",
+      "Luego verifica que exista:",
+      "Test-Path \"$env:ANDROID_HOME\"",
+      "",
+      "Y vuelve a ejecutar:",
+      "npm run dist:apk",
+      "",
+      "Alternativa manual: crea android/local.properties con esta linea:",
+      "sdk.dir=C:/Users/Antonio Garcia/AppData/Local/Android/Sdk"
+    ].join("\n"));
+    process.exit(1);
+  }
+
+  const normalized = sdk.replace(/\\/g, "/");
+  fs.writeFileSync(localProperties, `sdk.dir=${normalized}\n`, "utf8");
+  console.log(`Android SDK configurado: ${path.relative(root, localProperties)} -> ${normalized}`);
+}
+
 assertJava17();
+configureAndroidSdk();
 
 const hasWrapper = fs.existsSync(gradlew) && fs.existsSync(wrapperJar);
 
