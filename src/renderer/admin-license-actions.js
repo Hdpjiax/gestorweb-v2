@@ -1,7 +1,34 @@
-import { ui, native, rerender } from "./state.js";
+import { ui, native, rerender, update } from "./state.js";
 
 function formText(data, name) {
   return String(data.get(name) || "").trim();
+}
+
+async function handleLicenseActivation(event) {
+  const form = event.target.closest?.("#licenseForm");
+  if (!form) return false;
+  event.preventDefault();
+  event.stopImmediatePropagation();
+
+  const text = document.getElementById("licenseText")?.value?.trim() || "";
+  if (!text) return alert("Pega una licencia GW-LIC-V1 para activar esta copia.");
+  if (!native?.license?.claimByKey) return alert("Activacion real solo disponible en Electron.");
+
+  const nativeStatus = await native.license.claimByKey(text);
+  if (!nativeStatus?.active) {
+    return alert(`Licencia invalida para este HWID (${nativeStatus?.hwid || "desconocido"}).\n${nativeStatus?.reason || "Verifica que la licencia fue generada para este dispositivo."}`);
+  }
+
+  ui.welcome = true;
+  update((state) => {
+    state.license = {
+      ...nativeStatus,
+      active: true,
+      text,
+      activatedAt: Date.now()
+    };
+  });
+  return true;
 }
 
 async function handleAdminLogin(event) {
@@ -33,6 +60,6 @@ async function handleAdminLogin(event) {
 
 export function initAdminLicenseActions() {
   document.addEventListener("submit", (event) => {
-    handleAdminLogin(event);
+    handleLicenseActivation(event) || handleAdminLogin(event);
   }, true);
 }
