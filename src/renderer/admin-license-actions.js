@@ -5,8 +5,6 @@ function formText(data, name) {
 }
 
 async function handleLicenseActivation(event) {
-  const form = event.target.closest?.("#licenseForm");
-  if (!form) return false;
   event.preventDefault();
   event.stopImmediatePropagation();
 
@@ -28,16 +26,13 @@ async function handleLicenseActivation(event) {
       activatedAt: Date.now()
     };
   });
-  return true;
 }
 
 async function handleAdminLogin(event) {
-  const form = event.target.closest?.("#adminLoginForm");
-  if (!form) return false;
   event.preventDefault();
   event.stopImmediatePropagation();
 
-  const data = new FormData(form);
+  const data = new FormData(event.target);
   ui.adminError = "";
   try {
     const result = await native?.admin?.login?.({
@@ -55,11 +50,16 @@ async function handleAdminLogin(event) {
     ui.adminError = error?.message || "no se pudo iniciar sesion admin";
   }
   rerender();
-  return true;
 }
 
 export function initAdminLicenseActions() {
   document.addEventListener("submit", (event) => {
-    handleLicenseActivation(event) || handleAdminLogin(event);
+    if (event.target?.id === "licenseForm") {
+      handleLicenseActivation(event);
+      return;
+    }
+    if (event.target?.id === "adminLoginForm") {
+      handleAdminLogin(event);
+    }
   }, true);
 }
