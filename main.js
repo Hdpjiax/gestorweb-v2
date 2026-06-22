@@ -74,7 +74,8 @@ async function enforceLicense() {
 
 function startLicenseEnforcement() {
   clearInterval(licenseEnforcementTimer);
-  licenseEnforcementTimer = setInterval(enforceLicense, 60 * 1000);
+  setTimeout(enforceLicense, 2500).unref?.();
+  licenseEnforcementTimer = setInterval(enforceLicense, 15 * 1000);
   licenseEnforcementTimer.unref?.();
 }
 
