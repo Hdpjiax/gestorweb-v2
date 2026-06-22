@@ -1,26 +1,30 @@
 plugins { id "com.android.application" }
 
-def licenseServerUrl = project.findProperty("LICENSE_SERVER_URL") ?: "https://licenses.example.com"
-
 android {
     namespace "local.gestorweb.android"
     compileSdk 35
+
     defaultConfig {
         applicationId "local.gestorweb.android"
         minSdk 26
         targetSdk 35
         versionCode 150
         versionName "1.5.0"
-        buildConfigField "String", "LICENSE_SERVER_URL", "\"${licenseServerUrl}\""
     }
+
     buildFeatures { buildConfig true }
+
     buildTypes {
         release {
-            minifyEnabled true
-            shrinkResources true
+            // APK instalable sin configurar keystore aun. Para Play Store o venta formal,
+            // reemplazar por una signingConfig propia de produccion.
+            signingConfig signingConfigs.debug
+            minifyEnabled false
+            shrinkResources false
             proguardFiles getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro"
         }
     }
+
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_17
         targetCompatibility JavaVersion.VERSION_17
