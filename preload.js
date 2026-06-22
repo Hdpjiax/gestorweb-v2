@@ -39,7 +39,7 @@ contextBridge.exposeInMainWorld("api", Object.freeze({
     ipcheck: () => invoke("license:ipcheck")
   }),
   admin: Object.freeze({
-    login: (serverUrl, credential) => invoke("admin:login", serverUrl, credential),
+    login: (config) => invoke("admin:login", config),
     list: () => invoke("admin:list"),
     create: (license) => invoke("admin:create", license),
     revoke: (id, reason) => invoke("admin:revoke", id, reason),
