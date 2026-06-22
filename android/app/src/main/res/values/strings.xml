@@ -57,16 +57,39 @@
     <string name="hint_license_key">Clave de licencia</string>
     <string name="clipboard_hwid_label">HWID</string>
 
-    <!-- Browser menu -->
+    <!-- Browser menu sections -->
+    <string name="menu_section_actions">Acciones</string>
+    <string name="menu_section_spoof">Spoof / Privacidad</string>
+    <string name="menu_section_data">Datos</string>
+
+    <!-- Browser menu items -->
     <string name="menu_share">Compartir URL</string>
     <string name="menu_copy_url">Copiar URL</string>
     <string name="menu_clear_data">Limpiar caché y cookies</string>
     <string name="menu_open_external">Abrir en navegador externo</string>
+    <string name="menu_desktop_mode">Modo escritorio</string>
+    <string name="menu_inject_dark">Inyectar modo oscuro</string>
+    <string name="menu_spoof_canvas">Spoof Canvas</string>
+    <string name="menu_spoof_webgl">Spoof WebGL</string>
+    <string name="menu_spoof_timezone">Spoof Timezone</string>
+    <string name="menu_spoof_lang">Spoof Language</string>
+    <string name="menu_state_on">● Activo</string>
+    <string name="menu_state_off">○ Inactivo</string>
 
     <!-- Toasts -->
     <string name="msg_url_copied">URL copiada</string>
     <string name="msg_cache_cleared">Caché y cookies eliminados</string>
     <string name="msg_no_browser">No se encontró navegador externo</string>
+    <string name="msg_desktop_on">Modo escritorio activado</string>
+    <string name="msg_desktop_off">Modo escritorio desactivado</string>
+    <string name="msg_dark_on">Modo oscuro inyectado</string>
+    <string name="msg_dark_off">Modo oscuro removido</string>
+    <string name="msg_canvas_on">Canvas spoof activado</string>
+    <string name="msg_canvas_off">Canvas spoof desactivado</string>
+    <string name="msg_webgl_on">WebGL spoof activado</string>
+    <string name="msg_webgl_off">WebGL spoof desactivado</string>
+    <string name="msg_tz_set">Timezone:</string>
+    <string name="msg_lang_set">Idioma:</string>
 
     <!-- Empty states -->
     <string name="empty_profiles">No hay perfiles. Crea uno arriba.</string>

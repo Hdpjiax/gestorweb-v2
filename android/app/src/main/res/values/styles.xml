@@ -1,93 +1,38 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-
-    <style name="Theme.GestorWeb" parent="Theme.AppCompat.NoActionBar">
+    <style name="AppTheme" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <item name="colorPrimary">@color/gw_accent</item>
+        <item name="colorPrimaryDark">@color/gw_bg</item>
+        <item name="colorAccent">@color/gw_accent</item>
         <item name="android:windowBackground">@color/gw_bg</item>
-        <item name="android:windowLightStatusBar">false</item>
-        <item name="android:statusBarColor">@color/gw_titlebar</item>
-        <item name="android:navigationBarColor">@color/gw_sidebar</item>
         <item name="android:textColor">@color/gw_text</item>
-        <item name="android:colorPrimary">@color/gw_accent</item>
-        <item name="android:colorAccent">@color/gw_accent</item>
     </style>
 
-    <!-- Title bar style -->
-    <style name="GW.TitleBar">
-        <item name="android:background">@color/gw_titlebar</item>
-        <item name="android:elevation">4dp</item>
+    <!-- Menu row item -->
+    <style name="MenuRow">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">56dp</item>
+        <item name="android:orientation">horizontal</item>
+        <item name="android:gravity">center_vertical</item>
+        <item name="android:paddingStart">20dp</item>
+        <item name="android:paddingEnd">20dp</item>
+        <item name="android:background">?attr/selectableItemBackground</item>
     </style>
 
-    <!-- Sidebar nav item -->
-    <style name="GW.NavItem">
-        <item name="android:background">?android:selectableItemBackground</item>
+    <!-- Menu icon (emoji/font text icon) -->
+    <style name="MenuIcon">
+        <item name="android:layout_width">28dp</item>
+        <item name="android:layout_height">28dp</item>
         <item name="android:gravity">center</item>
-        <item name="android:paddingTop">@dimen/space_2</item>
-        <item name="android:paddingBottom">@dimen/space_2</item>
+        <item name="android:textSize">16sp</item>
     </style>
 
-    <!-- Card panel -->
-    <style name="GW.Card">
-        <item name="android:background">@drawable/bg_card</item>
-        <item name="android:padding">@dimen/space_4</item>
-    </style>
-
-    <!-- Primary button -->
-    <style name="GW.Button.Primary">
-        <item name="android:background">@drawable/bg_btn_primary</item>
-        <item name="android:textColor">#FFFFFFFF</item>
-        <item name="android:textSize">@dimen/text_sm</item>
-        <item name="android:textStyle">bold</item>
-        <item name="android:height">@dimen/btn_height</item>
-        <item name="android:gravity">center</item>
-        <item name="android:letterSpacing">0.02</item>
-    </style>
-
-    <!-- Ghost button -->
-    <style name="GW.Button.Ghost">
-        <item name="android:background">@drawable/bg_btn_ghost</item>
+    <!-- Menu label -->
+    <style name="MenuLabel">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_marginStart">16dp</item>
         <item name="android:textColor">@color/gw_text</item>
-        <item name="android:textSize">@dimen/text_sm</item>
-        <item name="android:textStyle">bold</item>
-        <item name="android:height">@dimen/btn_height</item>
-        <item name="android:gravity">center</item>
+        <item name="android:textSize">15sp</item>
     </style>
-
-    <!-- Text input -->
-    <style name="GW.Input">
-        <item name="android:background">@drawable/bg_input</item>
-        <item name="android:textColor">@color/gw_text</item>
-        <item name="android:textColorHint">@color/gw_muted</item>
-        <item name="android:textSize">@dimen/text_sm</item>
-        <item name="android:paddingStart">@dimen/space_4</item>
-        <item name="android:paddingEnd">@dimen/space_4</item>
-        <item name="android:height">@dimen/input_height</item>
-        <item name="android:singleLine">true</item>
-        <item name="android:inputType">textNoSuggestions</item>
-    </style>
-
-    <!-- Address bar (browser) -->
-    <style name="GW.Input.Address" parent="GW.Input">
-        <item name="android:imeOptions">actionGo</item>
-        <item name="android:inputType">textUri</item>
-    </style>
-
-    <!-- Section label -->
-    <style name="GW.SectionLabel">
-        <item name="android:textSize">@dimen/text_xs</item>
-        <item name="android:textColor">@color/gw_muted</item>
-        <item name="android:textStyle">bold</item>
-        <item name="android:letterSpacing">0.12</item>
-        <item name="android:textAllCaps">true</item>
-    </style>
-
-    <!-- Nav button (browser toolbar) -->
-    <style name="GW.NavButton">
-        <item name="android:background">@drawable/bg_btn_nav</item>
-        <item name="android:textColor">@color/gw_text</item>
-        <item name="android:textSize">20sp</item>
-        <item name="android:gravity">center</item>
-        <item name="android:minWidth">@dimen/nav_item_size</item>
-        <item name="android:minHeight">@dimen/nav_item_size</item>
-    </style>
-
 </resources>

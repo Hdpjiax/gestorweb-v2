@@ -1,128 +1,181 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
+<ScrollView
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="vertical"
-    android:background="@color/gw_panel"
-    android:paddingTop="8dp"
-    android:paddingBottom="24dp">
+    android:background="@color/gw_panel">
 
-    <!-- Handle -->
-    <View
-        android:layout_width="40dp"
-        android:layout_height="4dp"
-        android:layout_gravity="center_horizontal"
-        android:layout_marginBottom="12dp"
-        android:background="@color/gw_border"
-        android:backgroundTintMode="src_over" />
-
-    <!-- Compartir -->
     <LinearLayout
-        android:id="@+id/menuItemShare"
         android:layout_width="match_parent"
-        android:layout_height="56dp"
-        android:orientation="horizontal"
-        android:gravity="center_vertical"
-        android:paddingStart="20dp"
-        android:paddingEnd="20dp"
-        android:background="?attr/selectableItemBackground">
-        <TextView
-            android:layout_width="28dp"
-            android:layout_height="28dp"
-            android:gravity="center"
-            android:text="&#xF08E;"
-            android:fontFamily="@font/fontawesome"
-            android:textSize="16sp"
-            android:textColor="@color/gw_accent"/>
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="16dp"
-            android:text="@string/menu_share"
-            android:textColor="@color/gw_text"
-            android:textSize="15sp"/>
-    </LinearLayout>
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingTop="8dp"
+        android:paddingBottom="32dp">
 
-    <!-- Copiar URL -->
-    <LinearLayout
-        android:id="@+id/menuItemCopy"
-        android:layout_width="match_parent"
-        android:layout_height="56dp"
-        android:orientation="horizontal"
-        android:gravity="center_vertical"
-        android:paddingStart="20dp"
-        android:paddingEnd="20dp"
-        android:background="?attr/selectableItemBackground">
-        <TextView
-            android:layout_width="28dp"
-            android:layout_height="28dp"
-            android:gravity="center"
-            android:text="&#xF0C5;"
-            android:fontFamily="@font/fontawesome"
-            android:textSize="16sp"
-            android:textColor="@color/gw_accent"/>
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="16dp"
-            android:text="@string/menu_copy_url"
-            android:textColor="@color/gw_text"
-            android:textSize="15sp"/>
-    </LinearLayout>
+        <!-- Handle -->
+        <View
+            android:layout_width="40dp"
+            android:layout_height="4dp"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginBottom="4dp"
+            android:background="@color/gw_border" />
 
-    <!-- Limpiar datos -->
-    <LinearLayout
-        android:id="@+id/menuItemClearData"
-        android:layout_width="match_parent"
-        android:layout_height="56dp"
-        android:orientation="horizontal"
-        android:gravity="center_vertical"
-        android:paddingStart="20dp"
-        android:paddingEnd="20dp"
-        android:background="?attr/selectableItemBackground">
+        <!-- ─── SECCIÓN: ACCIONES ─────────────────────────────────── -->
         <TextView
-            android:layout_width="28dp"
-            android:layout_height="28dp"
-            android:gravity="center"
-            android:text="&#xF12D;"
-            android:fontFamily="@font/fontawesome"
-            android:textSize="16sp"
-            android:textColor="@color/gw_danger"/>
-        <TextView
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginStart="16dp"
-            android:text="@string/menu_clear_data"
-            android:textColor="@color/gw_text"
-            android:textSize="15sp"/>
-    </LinearLayout>
+            android:paddingStart="20dp"
+            android:paddingTop="14dp"
+            android:paddingBottom="6dp"
+            android:text="@string/menu_section_actions"
+            android:textColor="@color/gw_text_secondary"
+            android:textSize="11sp"
+            android:textAllCaps="true"
+            android:letterSpacing="0.12"/>
 
-    <!-- Abrir en navegador externo -->
-    <LinearLayout
-        android:id="@+id/menuItemOpenExternal"
-        android:layout_width="match_parent"
-        android:layout_height="56dp"
-        android:orientation="horizontal"
-        android:gravity="center_vertical"
-        android:paddingStart="20dp"
-        android:paddingEnd="20dp"
-        android:background="?attr/selectableItemBackground">
+        <LinearLayout android:id="@+id/menuItemShare"
+            style="@style/MenuRow">
+            <TextView style="@style/MenuIcon" android:textColor="@color/gw_accent" android:text="\uf1e0"/>
+            <TextView style="@style/MenuLabel" android:text="@string/menu_share"/>
+        </LinearLayout>
+
+        <LinearLayout android:id="@+id/menuItemCopy"
+            style="@style/MenuRow">
+            <TextView style="@style/MenuIcon" android:textColor="@color/gw_accent" android:text="\uf0c5"/>
+            <TextView style="@style/MenuLabel" android:text="@string/menu_copy_url"/>
+        </LinearLayout>
+
+        <LinearLayout android:id="@+id/menuItemOpenExternal"
+            style="@style/MenuRow">
+            <TextView style="@style/MenuIcon" android:textColor="@color/gw_text_secondary" android:text="\uf35d"/>
+            <TextView style="@style/MenuLabel" android:text="@string/menu_open_external"/>
+        </LinearLayout>
+
+        <LinearLayout android:id="@+id/menuItemDesktopMode"
+            style="@style/MenuRow">
+            <TextView style="@style/MenuIcon" android:textColor="@color/gw_text_secondary" android:text="\uf108"/>
+            <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content"
+                android:layout_weight="1" android:orientation="vertical"
+                android:layout_marginStart="16dp">
+                <TextView style="@style/MenuLabel" android:layout_marginStart="0dp"
+                    android:text="@string/menu_desktop_mode"/>
+                <TextView android:id="@+id/tvDesktopModeState"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/menu_state_off"
+                    android:textColor="@color/gw_text_secondary"
+                    android:textSize="12sp"/>
+            </LinearLayout>
+        </LinearLayout>
+
+        <LinearLayout android:id="@+id/menuItemDarkMode"
+            style="@style/MenuRow">
+            <TextView style="@style/MenuIcon" android:textColor="@color/gw_text_secondary" android:text="\uf186"/>
+            <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content"
+                android:layout_weight="1" android:orientation="vertical"
+                android:layout_marginStart="16dp">
+                <TextView style="@style/MenuLabel" android:layout_marginStart="0dp"
+                    android:text="@string/menu_inject_dark"/>
+                <TextView android:id="@+id/tvDarkModeState"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/menu_state_off"
+                    android:textColor="@color/gw_text_secondary"
+                    android:textSize="12sp"/>
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- ─── SECCIÓN: SPOOF / PRIVACIDAD ──────────────────────── -->
         <TextView
-            android:layout_width="28dp"
-            android:layout_height="28dp"
-            android:gravity="center"
-            android:text="&#xF35D;"
-            android:fontFamily="@font/fontawesome"
-            android:textSize="16sp"
-            android:textColor="@color/gw_text_secondary"/>
-        <TextView
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginStart="16dp"
-            android:text="@string/menu_open_external"
-            android:textColor="@color/gw_text"
-            android:textSize="15sp"/>
-    </LinearLayout>
+            android:paddingStart="20dp"
+            android:paddingTop="18dp"
+            android:paddingBottom="6dp"
+            android:text="@string/menu_section_spoof"
+            android:textColor="@color/gw_text_secondary"
+            android:textSize="11sp"
+            android:textAllCaps="true"
+            android:letterSpacing="0.12"/>
 
-</LinearLayout>
+        <LinearLayout android:id="@+id/menuItemSpoofCanvas"
+            style="@style/MenuRow">
+            <TextView style="@style/MenuIcon" android:textColor="@color/gw_accent" android:text="\uf1fc"/>
+            <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content"
+                android:layout_weight="1" android:orientation="vertical"
+                android:layout_marginStart="16dp">
+                <TextView style="@style/MenuLabel" android:layout_marginStart="0dp"
+                    android:text="@string/menu_spoof_canvas"/>
+                <TextView android:id="@+id/tvCanvasState"
+                    android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:text="@string/menu_state_off"
+                    android:textColor="@color/gw_text_secondary" android:textSize="12sp"/>
+            </LinearLayout>
+        </LinearLayout>
+
+        <LinearLayout android:id="@+id/menuItemSpoofWebGL"
+            style="@style/MenuRow">
+            <TextView style="@style/MenuIcon" android:textColor="@color/gw_accent" android:text="\uf1b3"/>
+            <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content"
+                android:layout_weight="1" android:orientation="vertical"
+                android:layout_marginStart="16dp">
+                <TextView style="@style/MenuLabel" android:layout_marginStart="0dp"
+                    android:text="@string/menu_spoof_webgl"/>
+                <TextView android:id="@+id/tvWebGLState"
+                    android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:text="@string/menu_state_off"
+                    android:textColor="@color/gw_text_secondary" android:textSize="12sp"/>
+            </LinearLayout>
+        </LinearLayout>
+
+        <LinearLayout android:id="@+id/menuItemSpoofTimezone"
+            style="@style/MenuRow">
+            <TextView style="@style/MenuIcon" android:textColor="@color/gw_accent" android:text="\uf017"/>
+            <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content"
+                android:layout_weight="1" android:orientation="vertical"
+                android:layout_marginStart="16dp">
+                <TextView style="@style/MenuLabel" android:layout_marginStart="0dp"
+                    android:text="@string/menu_spoof_timezone"/>
+                <TextView android:id="@+id/tvTimezoneState"
+                    android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:text="@string/menu_state_off"
+                    android:textColor="@color/gw_text_secondary" android:textSize="12sp"/>
+            </LinearLayout>
+        </LinearLayout>
+
+        <LinearLayout android:id="@+id/menuItemSpoofLang"
+            style="@style/MenuRow">
+            <TextView style="@style/MenuIcon" android:textColor="@color/gw_accent" android:text="\uf0ac"/>
+            <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content"
+                android:layout_weight="1" android:orientation="vertical"
+                android:layout_marginStart="16dp">
+                <TextView style="@style/MenuLabel" android:layout_marginStart="0dp"
+                    android:text="@string/menu_spoof_lang"/>
+                <TextView android:id="@+id/tvLangState"
+                    android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:text="@string/menu_state_off"
+                    android:textColor="@color/gw_text_secondary" android:textSize="12sp"/>
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- ─── SECCIÓN: DATOS ────────────────────────────────────── -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingStart="20dp"
+            android:paddingTop="18dp"
+            android:paddingBottom="6dp"
+            android:text="@string/menu_section_data"
+            android:textColor="@color/gw_text_secondary"
+            android:textSize="11sp"
+            android:textAllCaps="true"
+            android:letterSpacing="0.12"/>
+
+        <LinearLayout android:id="@+id/menuItemClearData"
+            style="@style/MenuRow">
+            <TextView style="@style/MenuIcon" android:textColor="@color/gw_danger" android:text="\uf12d"/>
+            <TextView style="@style/MenuLabel" android:text="@string/menu_clear_data"/>
+        </LinearLayout>
+
+    </LinearLayout>
+</ScrollView>
