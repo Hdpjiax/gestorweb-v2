@@ -77,8 +77,8 @@ function licenseRow(license) {
       <span class="mono">${license.expires_at ? esc(new Date(Number(license.expires_at)).toLocaleString()) : "permanente"}</span>
       <span class="pill ${klass}">${status}</span>
       <div class="flex right">
-        <button class="btn btn-ghost" data-action="copy-admin-license" data-id="${attr(license.id)}">copiar key</button>
-        ${status === "activa" ? `<button class="btn btn-ghost btn-danger" data-action="revoke-admin-license" data-id="${attr(license.id)}">revocar acceso</button>` : ""}
+        <button class="btn btn-ghost" type="button" data-action="copy-admin-license" data-id="${attr(license.id)}">copiar key</button>
+        ${status === "activa" ? `<button class="btn btn-ghost btn-danger" type="button" data-action="revoke-admin-license" data-id="${attr(license.id)}">revocar acceso</button>` : ""}
       </div>
     </div>
   `;
@@ -95,7 +95,7 @@ export function renderAdminLicensesView() {
     <section class="section admin-license-shell stack">
       <div class="between">
         <div><div class="label">Panel privado</div><h2>Licencias Windows y Android</h2><div class="small-note mono">${esc(ui.adminServerUrl || "Supabase")}</div></div>
-        <div class="flex"><button class="btn btn-ghost" data-action="refresh-admin-licenses">actualizar</button><button class="btn btn-ghost" data-action="logout-admin">salir</button></div>
+        <div class="flex"><button class="btn btn-ghost" type="button" data-action="refresh-admin-licenses">actualizar</button><button class="btn btn-ghost" type="button" data-action="logout-admin">salir</button></div>
       </div>
       <div class="grid-4">
         <div class="metric"><div class="label">Total</div><strong>${licenses.length}</strong></div>
@@ -113,7 +113,7 @@ export function renderAdminLicensesView() {
           <button class="btn btn-primary" type="submit">generar licencia</button>
         </div>
       </form>
-      ${ui.adminGeneratedKey ? `<div class="metric stack-sm"><div class="between"><strong>Licencia generada</strong><button class="btn btn-primary" data-action="copy-generated-license">copiar</button></div><pre class="mono admin-generated-key">${esc(ui.adminGeneratedKey)}</pre></div>` : ""}
+      ${ui.adminGeneratedKey ? `<div class="metric stack-sm"><div class="between"><strong>Licencia generada</strong><button class="btn btn-primary" type="button" data-action="copy-generated-license">copiar</button></div><pre class="mono admin-generated-key">${esc(ui.adminGeneratedKey)}</pre></div>` : ""}
       ${ui.adminError ? `<div class="pill danger">${esc(ui.adminError)}</div>` : ""}
       <div class="admin-license-table">
         <div class="admin-license-head"><span>Licencia / equipo</span><span>Tier</span><span>Plan</span><span>Vencimiento</span><span>Estado</span><span></span></div>
