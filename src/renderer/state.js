@@ -39,7 +39,10 @@ export const ui = {
   adminGeneratedKey: "",
   adminConfig: null,
   adminResumeTried: false,
-  adminResumeBusy: false
+  adminResumeBusy: false,
+  adminFilters: { search: "", status: "all", plan: "all", tier: "all" },
+  adminHistoryLicenseId: null,
+  adminHistoryEvents: []
 };
 
 export const defaults = {
