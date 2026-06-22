@@ -25,16 +25,47 @@ function javaMajor(versionOutput) {
   return Number(version.split(/[.+-]/)[0]) || 0;
 }
 
-function assertJava17() {
-  const result = spawnSync("java", ["-version"], { encoding: "utf8", shell: isWindows });
+function readJavaMajor(javaExe) {
+  const result = spawnSync(javaExe, ["-version"], { encoding: "utf8", shell: isWindows });
   const output = `${result.stdout || ""}\n${result.stderr || ""}`;
-  const major = javaMajor(output);
-  if (major >= 17) return;
+  return javaMajor(output);
+}
+
+function jdkCandidates() {
+  return [
+    process.env.JAVA_HOME,
+    "C:\\Program Files\\Android\\Android Studio\\jbr",
+    "C:\\Program Files\\Android\\Android Studio\\jre",
+    "C:\\Program Files\\Eclipse Adoptium\\jdk-21",
+    "C:\\Program Files\\Eclipse Adoptium\\jdk-17",
+    "/Applications/Android Studio.app/Contents/jbr/Contents/Home",
+    "/Library/Java/JavaVirtualMachines/temurin-21.jdk/Contents/Home",
+    "/Library/Java/JavaVirtualMachines/temurin-17.jdk/Contents/Home",
+    "/usr/lib/jvm/java-21-openjdk",
+    "/usr/lib/jvm/java-17-openjdk"
+  ].filter(Boolean);
+}
+
+function configureJava17() {
+  const currentMajor = readJavaMajor("java");
+  if (currentMajor >= 17) return;
+
+  for (const candidate of jdkCandidates()) {
+    const javaExe = path.join(candidate, "bin", isWindows ? "java.exe" : "java");
+    if (!fs.existsSync(javaExe)) continue;
+    const major = readJavaMajor(javaExe);
+    if (major < 17) continue;
+    process.env.JAVA_HOME = candidate;
+    process.env.Path = `${path.join(candidate, "bin")};${process.env.Path || process.env.PATH || ""}`;
+    process.env.PATH = `${path.join(candidate, "bin")}${path.delimiter}${process.env.PATH || process.env.Path || ""}`;
+    console.log(`Java configurado automaticamente: ${candidate} (Java ${major})`);
+    return;
+  }
 
   console.error([
     "Java invalido para compilar Android.",
     "",
-    `Version detectada: ${major ? `Java ${major}` : "no detectada"}`,
+    `Version detectada: ${currentMajor ? `Java ${currentMajor}` : "no detectada"}`,
     "Android Gradle Plugin 8.x requiere Java 17 o superior.",
     "",
     "Solucion rapida en PowerShell si tienes Android Studio:",
@@ -96,19 +127,18 @@ function configureAndroidSdk() {
   console.log(`Android SDK configurado: ${path.relative(root, localProperties)} -> ${normalized}`);
 }
 
-assertJava17();
+configureJava17();
 configureAndroidSdk();
 
 const hasWrapper = fs.existsSync(gradlew) && fs.existsSync(wrapperJar);
 
 function runGradle() {
   if (hasWrapper && isWindows) {
-    // Ejecutar desde cwd evita problemas con rutas como C:\Users\Antonio Garcia\...
-    // Usamos CALL porque gradlew.bat es un archivo batch.
     return spawnSync("cmd.exe", ["/d", "/c", "call", "gradlew.bat", ...tasks], {
       cwd: androidDir,
       stdio: "inherit",
-      shell: false
+      shell: false,
+      env: process.env
     });
   }
 
@@ -116,7 +146,8 @@ function runGradle() {
     return spawnSync(gradlew, tasks, {
       cwd: androidDir,
       stdio: "inherit",
-      shell: false
+      shell: false,
+      env: process.env
     });
   }
 
@@ -124,7 +155,8 @@ function runGradle() {
   return spawnSync("gradle", tasks, {
     cwd: androidDir,
     stdio: "inherit",
-    shell: isWindows
+    shell: isWindows,
+    env: process.env
   });
 }
 
