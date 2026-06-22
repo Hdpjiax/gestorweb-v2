@@ -3,7 +3,7 @@ const crypto = require("crypto");
 const { currentLicenseStatus } = require("./license-ipc");
 const adminConfigStore = require("./admin-config-store");
 
-const CHANNELS = ["admin:login", "admin:resume", "admin:config", "admin:forgetConfig", "admin:list", "admin:create", "admin:revoke", "admin:logout"];
+const CHANNELS = ["admin:login", "admin:resume", "admin:config", "admin:forgetConfig", "admin:list", "admin:history", "admin:create", "admin:suspend", "admin:reactivate", "admin:revoke", "admin:logout"];
 const APP_ID = "gestor-web";
 const LICENSE_PREFIX = "GW-LIC-V1";
 const PLANS = {
@@ -42,20 +42,16 @@ function createLicenseId() {
   return `GW-${date}-${crypto.randomBytes(6).toString("hex").toUpperCase()}`;
 }
 
-function expiresForPlan(plan, now) {
-  const item = PLANS[plan];
-  if (!item) throw new Error(`plan invalido: ${plan}`);
-  if (item.days === null) return null;
-  return now + item.days * 24 * 60 * 60 * 1000;
+function normalizePlan(plan) {
+  const value = String(plan || "30d").trim();
+  if (!PLANS[value]) throw new Error(`plan invalido: ${value}`);
+  return value;
 }
 
-function normalizeFeatures(features, tier) {
-  const list = Array.isArray(features)
-    ? features
-    : String(features || tier || "standard").split(",");
-  const clean = list.map((item) => String(item).trim()).filter(Boolean);
-  if (tier === "admin" && !clean.includes("admin")) clean.unshift("admin");
-  return clean.length ? [...new Set(clean)].slice(0, 25) : ["standard"];
+function expiresForPlan(plan, now) {
+  const item = PLANS[normalizePlan(plan)];
+  if (item.days === null) return null;
+  return now + item.days * 24 * 60 * 60 * 1000;
 }
 
 function b64urlJson(value) {
@@ -110,18 +106,63 @@ function publicRow(row) {
     issued_at: row.issued_at,
     expires_at: row.expires_at,
     revoked: !!row.revoked,
+    suspended: !!row.suspended,
     revoke_reason: row.revoke_reason || null,
+    suspend_reason: row.suspend_reason || null,
     created_at: row.created_at || null,
     revoked_at: row.revoked_at || null,
+    suspended_at: row.suspended_at || null,
     last_check_at: row.last_check_at || null,
     last_hwid: row.last_hwid || null,
+    last_ip: row.last_ip || null,
+    last_user_agent: row.last_user_agent || null,
+    validation_failures: Number(row.validation_failures || 0),
+    mismatched_hwid_count: Number(row.mismatched_hwid_count || 0),
+    last_mismatched_hwid: row.last_mismatched_hwid || null,
+    last_mismatched_at: row.last_mismatched_at || null,
     licenseText: row.license_text || ""
   };
 }
 
+function publicEvent(row) {
+  return {
+    id: row.id,
+    license_id: row.license_id,
+    action: row.action,
+    detail: row.detail || "",
+    actor_license_id: row.actor_license_id || null,
+    actor_hwid: row.actor_hwid || null,
+    metadata: row.metadata || {},
+    created_at: row.created_at || null
+  };
+}
+
+async function actorInfo() {
+  const status = await currentLicenseStatus().catch(() => null);
+  return { actor_license_id: status?.id || null, actor_hwid: status?.hwid || null };
+}
+
+async function logLicenseEvent(licenseId, action, detail, metadata = {}) {
+  try {
+    const actor = await actorInfo();
+    await supabaseRequest("/rest/v1/license_events", {
+      method: "POST",
+      body: { license_id: licenseId, action, detail, actor_license_id: actor.actor_license_id, actor_hwid: actor.actor_hwid, metadata }
+    });
+  } catch {}
+}
+
+async function listHistory(licenseId = null) {
+  await assertAdminLicense();
+  const filter = licenseId ? `license_id=eq.${encodeURIComponent(String(licenseId))}&` : "";
+  const rows = await supabaseRequest(`/rest/v1/license_events?${filter}select=*&order=created_at.desc&limit=200`, { prefer: "" });
+  return { ok: true, events: (Array.isArray(rows) ? rows : []).map(publicEvent) };
+}
+
 async function listLicenses() {
   await assertAdminLicense();
-  const rows = await supabaseRequest("/rest/v1/licenses?select=id,hwid,app,plan,tier,features,issued_at,expires_at,revoked,revoke_reason,created_at,revoked_at,last_check_at,last_hwid,license_text&order=created_at.desc&limit=200", { prefer: "" });
+  const select = "id,hwid,app,plan,tier,features,issued_at,expires_at,revoked,suspended,revoke_reason,suspend_reason,created_at,revoked_at,suspended_at,last_check_at,last_hwid,last_ip,last_user_agent,validation_failures,mismatched_hwid_count,last_mismatched_hwid,last_mismatched_at,license_text";
+  const rows = await supabaseRequest(`/rest/v1/licenses?select=${select}&order=created_at.desc&limit=300`, { prefer: "" });
   return { ok: true, provider: "supabase", supabaseUrl: session.supabaseUrl, licenses: (Array.isArray(rows) ? rows : []).map(publicRow), config: adminConfigStore.info(session) };
 }
 
@@ -150,9 +191,9 @@ async function createLicense(license = {}) {
   await assertAdminLicense();
   if (!session) throw new Error("sesion admin no iniciada");
   const hwid = requireText(license.hwid, "HWID", 6);
-  const plan = String(license.plan || "30d").trim();
-  const tier = String(license.tier || "standard").trim();
-  const features = normalizeFeatures(license.features, tier);
+  const plan = normalizePlan(license.plan || "30d");
+  const tier = license.admin === true ? "admin" : "license";
+  const features = tier === "admin" ? ["admin"] : ["license"];
   const now = Date.now();
   const expiresAt = expiresForPlan(plan, now);
   const id = createLicenseId();
@@ -169,60 +210,60 @@ async function createLicense(license = {}) {
     features,
     online_required: true,
     license_provider: "supabase",
-    license_db: {
-      provider: "supabase",
-      url: session.supabaseUrl,
-      anon_key: session.anonKey
-    },
+    license_db: { provider: "supabase", url: session.supabaseUrl, anon_key: session.anonKey },
     sig_alg: "RSA-SHA256"
   };
   const licenseText = createLicenseText(payload);
   const row = {
-    id,
-    hwid,
-    app: APP_ID,
-    plan,
-    tier,
-    features,
-    issued_at: now,
-    expires_at: expiresAt,
-    revoked: false,
-    revoke_reason: null,
-    license_hash: sha256(licenseText),
-    license_text: licenseText
+    id, hwid, app: APP_ID, plan, tier, features, issued_at: now, expires_at: expiresAt,
+    revoked: false, suspended: false, revoke_reason: null, suspend_reason: null,
+    license_hash: sha256(licenseText), license_text: licenseText
   };
   const inserted = await supabaseRequest("/rest/v1/licenses", { method: "POST", body: row });
   const saved = Array.isArray(inserted) && inserted[0] ? publicRow(inserted[0]) : publicRow(row);
+  await logLicenseEvent(id, "created", `Licencia ${plan} creada`, { plan });
   return { ok: true, license: saved, licenseText };
+}
+
+async function patchLicense(id, body) {
+  const rows = await supabaseRequest(`/rest/v1/licenses?id=eq.${encodeURIComponent(id)}&select=*`, { method: "PATCH", body });
+  const row = Array.isArray(rows) ? rows[0] : null;
+  if (!row) throw new Error("no se encontro la licencia");
+  return row;
+}
+
+async function suspendLicense(id, reason) {
+  await assertAdminLicense();
+  const licenseId = requireText(id, "ID de licencia", 6);
+  const suspendReason = requireText(reason, "motivo de suspension", 4);
+  const row = await patchLicense(licenseId, { suspended: true, suspend_reason: suspendReason, suspended_at: new Date().toISOString() });
+  await logLicenseEvent(licenseId, "suspended", suspendReason);
+  return { ok: true, license: publicRow(row) };
+}
+
+async function reactivateLicense(id, reason = "reactivada por administrador") {
+  await assertAdminLicense();
+  const licenseId = requireText(id, "ID de licencia", 6);
+  const row = await patchLicense(licenseId, { suspended: false, suspend_reason: null, suspended_at: null, revoked: false, revoke_reason: null, revoked_at: null });
+  await logLicenseEvent(licenseId, "reactivated", String(reason || "reactivada por administrador"));
+  return { ok: true, license: publicRow(row) };
 }
 
 async function revokeLicense(id, reason) {
   await assertAdminLicense();
   const licenseId = requireText(id, "ID de licencia", 6);
-  const revokeReason = String(reason || "revocada por administrador");
-
+  const revokeReason = requireText(reason, "motivo de revocacion", 4);
   let rows = [];
   try {
-    const rpcRows = await supabaseRequest("/rest/v1/rpc/revoke_license_admin", {
-      method: "POST",
-      body: { p_id: licenseId, p_reason: revokeReason }
-    });
+    const rpcRows = await supabaseRequest("/rest/v1/rpc/revoke_license_admin", { method: "POST", body: { p_id: licenseId, p_reason: revokeReason } });
     rows = Array.isArray(rpcRows) ? rpcRows : (rpcRows ? [rpcRows] : []);
-  } catch (rpcError) {
-    const patched = await supabaseRequest(`/rest/v1/licenses?id=eq.${encodeURIComponent(licenseId)}&select=*`, {
-      method: "PATCH",
-      body: {
-        revoked: true,
-        revoke_reason: revokeReason,
-        revoked_at: new Date().toISOString()
-      }
-    });
-    rows = Array.isArray(patched) ? patched : (patched ? [patched] : []);
+  } catch {
+    const patched = await patchLicense(licenseId, { revoked: true, revoke_reason: revokeReason, revoked_at: new Date().toISOString() });
+    rows = [patched];
   }
-
   if (!rows.length) throw new Error("no se encontro la licencia para revocar");
   if (!rows[0].revoked) throw new Error("Supabase respondio, pero la licencia no quedo marcada como revocada");
-
+  await logLicenseEvent(licenseId, "revoked", revokeReason);
   const currentStatus = await currentLicenseStatus().catch(() => null);
   return { ok: true, license: publicRow(rows[0]), currentStatus };
 }
@@ -236,7 +277,10 @@ function registerLicenseAdminIpc() {
   ipcMain.handle("admin:config", () => adminConfigStore.info());
   ipcMain.handle("admin:forgetConfig", () => adminConfigStore.forgetConfig());
   ipcMain.handle("admin:list", () => listLicenses());
+  ipcMain.handle("admin:history", (_event, licenseId) => listHistory(licenseId));
   ipcMain.handle("admin:create", (_event, license) => createLicense(license));
+  ipcMain.handle("admin:suspend", (_event, id, reason) => suspendLicense(id, reason));
+  ipcMain.handle("admin:reactivate", (_event, id, reason) => reactivateLicense(id, reason));
   ipcMain.handle("admin:revoke", (_event, id, reason) => revokeLicense(id, reason));
   ipcMain.handle("admin:logout", () => { session = null; return { ok: true, config: adminConfigStore.info() }; });
 }
