@@ -6,9 +6,9 @@ Requisitos:
 
 - Windows
 - Node.js 18+
-- npm install ejecutado
+- `npm install` ejecutado
 - `build/icon.ico` existente
-- `src/main/license-public-key.pem` incluido si se usaran licencias firmadas en produccion
+- `src/main/license-public-key.pem` incluido para licencias firmadas en produccion
 
 Comando:
 
@@ -26,56 +26,51 @@ El script ejecuta Electron Builder y despues limpia `dist` para dejar solo el `.
 
 ## Android: unico APK
 
-El proyecto principal es Electron. Electron no genera APK directamente. Para un APK real se necesita un port Android dentro de `/android`.
+Ya existe un proyecto Android nativo en `/android`.
 
-El comando reservado es:
+Antes de compilar, reemplaza el placeholder de clave publica en:
+
+```txt
+android/app/src/main/assets/license-public-key.pem
+```
+
+con el contenido real de:
+
+```txt
+backend/license-server/public_key.pem
+```
+
+Comando desde la raiz del repo:
 
 ```bash
 npm run dist:apk
 ```
 
-Cuando exista un proyecto Android funcional con `android/gradlew`, el script ejecutara:
-
-```bash
-cd android
-./gradlew assembleRelease
-```
-
-y copiara el APK final a:
+Salida esperada:
 
 ```txt
 dist/Gestor-Web.apk
 ```
 
-## Pendiente para APK funcional completo
+El script ejecuta `assembleRelease`. Si existe wrapper completo usa `gradlew`; si no, intenta usar `gradle` instalado en el sistema.
 
-Crear `/android` con una de estas rutas:
+## Licencias Android
 
-### Ruta A: Android nativo
-
-- Kotlin/Java.
-- WebView o UI nativa.
-- Implementar `deviceInstallId` como HWID Android.
-- Implementar validacion `GW-LIC-V1` contra Supabase.
-- Implementar almacenamiento seguro.
-- Reemplazar funciones Electron IPC por codigo Android.
-
-### Ruta B: Capacitor
-
-- Reutilizar parte de la UI web.
-- Crear plugins nativos para licencias, storage, WebView/perfiles, cookies y red.
-- Generar APK release desde Android Studio/Gradle.
+1. Instala `dist/Gestor-Web.apk`.
+2. Abre la app y copia el ID `ANDROID-...`.
+3. Desde el panel admin de Windows genera una licencia para ese HWID.
+4. Pega la licencia `GW-LIC-V1` en Android.
 
 ## No hacer
 
-No meter en la APK:
+No meter en el setup ni en el APK:
 
 - `private_key.pem`
 - `SUPABASE_SERVICE_ROLE_KEY`
 - credenciales admin
 
-La APK solo debe llevar:
+El cliente solo debe llevar:
 
 - clave publica de licencia
-- Supabase anon/publishable key
+- Supabase anon/publishable key incluida dentro del payload de cada licencia
 - logica de validacion publica
