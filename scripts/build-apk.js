@@ -14,20 +14,39 @@ if (!fs.existsSync(androidDir)) {
   process.exit(1);
 }
 
-const command = fs.existsSync(gradlew) && fs.existsSync(wrapperJar)
-  ? gradlew
-  : "gradle";
+const hasWrapper = fs.existsSync(gradlew) && fs.existsSync(wrapperJar);
 
-if (command === "gradle") {
+function runGradle() {
+  if (hasWrapper && isWindows) {
+    const command = `"${gradlew}" ${task}`;
+    return spawnSync("cmd.exe", ["/d", "/s", "/c", command], {
+      cwd: androidDir,
+      stdio: "inherit",
+      windowsVerbatimArguments: false
+    });
+  }
+
+  if (hasWrapper) {
+    return spawnSync(gradlew, [task], {
+      cwd: androidDir,
+      stdio: "inherit",
+      shell: false
+    });
+  }
+
   console.warn("No se encontro gradle-wrapper.jar. Usando Gradle instalado en el sistema.");
+  return spawnSync("gradle", [task], {
+    cwd: androidDir,
+    stdio: "inherit",
+    shell: isWindows
+  });
 }
 
-const result = spawnSync(command, [task], {
-  cwd: androidDir,
-  stdio: "inherit",
-  shell: isWindows || command === "gradle"
-});
-
+const result = runGradle();
+if (result.error) {
+  console.error(result.error.message || result.error);
+  process.exit(1);
+}
 if (result.status !== 0) process.exit(result.status || 1);
 
 const apkCandidates = [];
