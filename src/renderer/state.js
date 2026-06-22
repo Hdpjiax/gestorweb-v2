@@ -36,7 +36,10 @@ export const ui = {
   adminLicenses: [],
   adminError: "",
   adminServerUrl: "",
-  adminGeneratedKey: ""
+  adminGeneratedKey: "",
+  adminConfig: null,
+  adminResumeTried: false,
+  adminResumeBusy: false
 };
 
 export const defaults = {
