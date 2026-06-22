@@ -1,171 +1,43 @@
 package local.gestorweb.android;
 
-/**
- * SpoofInjector — genera el script de arranque que se inyecta vía
- * WebView.addJavascriptInterface + evaluateJavascript ANTES de que
- * cualquier script de la página se ejecute.
- *
- * Técnica: Object.defineProperty con configurable:false + writable:false
- * para que ningún framework pueda leer ni sobreescribir los valores.
- * NO muta window.navigator directamente (detectable); en su lugar
- * redefine cada descriptor en el prototype chain.
- */
+/** Genera mitigaciones de fingerprint coherentes con un dispositivo Android. */
 final class SpoofInjector {
+    static String buildScript(ProfileStore.Profile p) {
+        if (p == null || "off".equals(p.spoofLevel)) return privacyOnly(p);
+        boolean strong = "strong".equals(p.spoofLevel) || p.hardenAll;
+        StringBuilder js = new StringBuilder("(()=>{'use strict';");
+        js.append("const seed=").append(Math.abs(p.noiseSeed % 2147483647L)).append(";");
+        js.append("const def=(o,k,v)=>{try{Object.defineProperty(o,k,{get:()=>v,configurable:true,enumerable:true})}catch(e){}};");
+        js.append("const n=(i)=>((seed^(i*1103515245))>>>0)%3-1;");
+        js.append("def(navigator,'platform','Linux armv8l');def(navigator,'vendor','Google Inc.');");
+        js.append("def(navigator,'hardwareConcurrency',").append(p.cores).append(");def(navigator,'deviceMemory',").append(p.memoryGb).append(");");
+        js.append("def(navigator,'language',").append(q(p.locale)).append(");def(navigator,'languages',[").append(q(p.locale)).append(",'es','en-US']);");
+        js.append("def(screen,'width',").append(p.width).append(");def(screen,'height',").append(p.height).append(");def(screen,'availWidth',").append(p.width).append(");def(screen,'availHeight',").append(Math.max(1, p.height - 80)).append(");");
 
-    /** Preset de spoofing asociado a un perfil. */
-    static final class Preset {
-        final String platform;        // "Win32", "Linux x86_64", "MacIntel", etc.
-        final String vendor;          // "Google Inc.", "", etc.
-        final int    hardwareConcurrency; // 4, 8, 16 …
-        final int    deviceMemory;    // 4, 8 (GB)
-        final String languages;       // JSON array string: "[\"es-MX\",\"es\"]"
-        final boolean hideWebdriver;  // ocultar navigator.webdriver
-        final boolean spoofPlugins;   // fingir plugins reales de Chrome
-        final boolean spoofCanvas;    // pequeño ruido en canvas fingerprint
-
-        Preset(String platform, String vendor, int hardwareConcurrency,
-               int deviceMemory, String languages,
-               boolean hideWebdriver, boolean spoofPlugins, boolean spoofCanvas) {
-            this.platform             = platform;
-            this.vendor               = vendor;
-            this.hardwareConcurrency  = hardwareConcurrency;
-            this.deviceMemory         = deviceMemory;
-            this.languages            = languages;
-            this.hideWebdriver        = hideWebdriver;
-            this.spoofPlugins         = spoofPlugins;
-            this.spoofCanvas          = spoofCanvas;
+        if (p.sanitizeHeaders) js.append("try{def(navigator,'userAgentData',undefined)}catch(e){};");
+        if (strong) {
+            js.append("try{const gp=WebGLRenderingContext.prototype.getParameter;WebGLRenderingContext.prototype.getParameter=function(x){if(x===37445)return'Google Inc. (Google)';if(x===37446)return").append(q(p.webGlLabel())).append(";return gp.call(this,x)}}catch(e){};");
+            js.append("try{const gi=CanvasRenderingContext2D.prototype.getImageData;CanvasRenderingContext2D.prototype.getImageData=function(){const d=gi.apply(this,arguments);for(let i=0;i<Math.min(d.data.length,128);i+=4)d.data[i]=Math.max(0,Math.min(255,d.data[i]+n(i)));return d}}catch(e){};");
+            js.append("try{const gc=AudioBuffer.prototype.getChannelData;AudioBuffer.prototype.getChannelData=function(){const d=gc.apply(this,arguments),c=new Float32Array(d);for(let i=0;i<Math.min(c.length,64);i++)c[i]+=n(i)*1e-7;return c}}catch(e){};");
+            js.append("try{const Old=Intl.DateTimeFormat;Intl.DateTimeFormat=function(l,o){o=Object.assign({},o||{});if(!o.timeZone)o.timeZone=").append(q(p.timezone)).append(";return new Old(l,o)};Intl.DateTimeFormat.prototype=Old.prototype}catch(e){};");
         }
-
-        /** Preset por defecto: Windows 10 Chrome, 8 cores, 8 GB RAM */
-        static Preset defaults() {
-            return new Preset(
-                "Win32", "Google Inc.", 8, 8,
-                "[\\"es-MX\\",\\"es\\",\\"en\\"]",
-                true, true, true
-            );
-        }
-
-        /** Preset mobile: Android Chrome */
-        static Preset mobile() {
-            return new Preset(
-                "Linux armv8l", "Google Inc.", 4, 4,
-                "[\\"es-MX\\",\\"es\\"]",
-                true, false, true
-            );
-        }
-
-        /** Preset macOS */
-        static Preset macos() {
-            return new Preset(
-                "MacIntel", "Google Inc.", 10, 16,
-                "[\\"es-MX\\",\\"es\\",\\"en\\"]",
-                true, true, true
-            );
-        }
+        js.append(privacyBody(p));
+        js.append("})();");
+        return js.toString();
     }
 
-    /**
-     * Construye el script completo de spoofing para un Preset dado.
-     * Usar como argumento de WebView.evaluateJavascript() en onPageStarted
-     * O como startup script vía addJavascriptInterface + document.write trick.
-     */
-    static String buildScript(Preset p) {
-        StringBuilder sb = new StringBuilder();
-        sb.append("(function(){");
-        sb.append("'use strict';");
+    private static String privacyOnly(ProfileStore.Profile p) { return "(()=>{'use strict';" + privacyBody(p) + "})();"; }
 
-        // Helper local — define una propiedad no configurable, no escribible
-        sb.append("function def(obj,prop,val){");
-        sb.append("try{Object.defineProperty(obj,prop,");
-        sb.append("{get:function(){return val;},");
-        sb.append("configurable:false,enumerable:true});");
-        sb.append("}catch(e){}}");
-
-        // navigator.platform
-        appendDef(sb, "navigator", "platform", quote(p.platform));
-
-        // navigator.vendor
-        appendDef(sb, "navigator", "vendor", quote(p.vendor));
-
-        // navigator.hardwareConcurrency
-        appendDef(sb, "navigator", "hardwareConcurrency", String.valueOf(p.hardwareConcurrency));
-
-        // navigator.deviceMemory
-        appendDef(sb, "navigator", "deviceMemory", String.valueOf(p.deviceMemory));
-
-        // navigator.languages
-        appendDef(sb, "navigator", "languages", p.languages);
-        appendDef(sb, "navigator", "language",
-            // primer elemento del array
-            p.languages.replaceAll(".*\\[\\\\?\"([^\"]+).*", "'$1'")
-                       .replaceAll(".*\\[\"([^\"]+).*", "'$1'")
-        );
-
-        // navigator.webdriver → false (no configurable)
-        if (p.hideWebdriver) {
-            appendDef(sb, "navigator", "webdriver", "false");
+    private static String privacyBody(ProfileStore.Profile p) {
+        if (p == null) return "";
+        StringBuilder js = new StringBuilder();
+        if (p.webrtcBlock || p.antiLeak) {
+            js.append("try{const deny=()=>{throw new DOMException('Blocked by profile','NotAllowedError')};window.RTCPeerConnection=undefined;window.webkitRTCPeerConnection=undefined;if(navigator.mediaDevices){navigator.mediaDevices.getUserMedia=()=>Promise.reject(new DOMException('Blocked','NotAllowedError'));navigator.mediaDevices.enumerateDevices=()=>Promise.resolve([])}}catch(e){};");
         }
-
-        // navigator.plugins — fingir 5 plugins reales de Chrome
-        if (p.spoofPlugins) {
-            sb.append("try{");
-            sb.append("var fakePlugins={");
-            sb.append("0:{name:'Chrome PDF Plugin',filename:'internal-pdf-viewer',description:'Portable Document Format'},");
-            sb.append("1:{name:'Chrome PDF Viewer',filename:'mhjfbmdgcfjbbpaeojofohoefgiehjai',description:''},");
-            sb.append("2:{name:'Native Client',filename:'internal-nacl-plugin',description:''},");
-            sb.append("length:3,item:function(i){return this[i]||null;},");
-            sb.append("namedItem:function(n){for(var i=0;i<this.length;i++)if(this[i].name===n)return this[i];return null;},");
-            sb.append("refresh:function(){}");
-            sb.append("};");
-            sb.append("def(navigator,'plugins',fakePlugins);");
-            sb.append("}catch(e){}");
-        }
-
-        // Canvas fingerprint noise — sobrescribe toDataURL y getImageData
-        if (p.spoofCanvas) {
-            sb.append("try{");
-            // toDataURL
-            sb.append("var origToDataURL=HTMLCanvasElement.prototype.toDataURL;");
-            sb.append("Object.defineProperty(HTMLCanvasElement.prototype,'toDataURL',{");
-            sb.append("value:function(){var d=origToDataURL.apply(this,arguments);");
-            // Añadir 1 char de ruido determinista en la posición 32
-            sb.append("return d.substring(0,32)+(d.charCodeAt(32)^1).toString(16)+d.substring(33);},");
-            sb.append("configurable:false,writable:false});");
-            // getImageData
-            sb.append("var origGID=CanvasRenderingContext2D.prototype.getImageData;");
-            sb.append("Object.defineProperty(CanvasRenderingContext2D.prototype,'getImageData',{");
-            sb.append("value:function(){var d=origGID.apply(this,arguments);");
-            sb.append("if(d&&d.data&&d.data.length>4){d.data[0]=(d.data[0]+1)&0xFF;}");
-            sb.append("return d;},configurable:false,writable:false});");
-            sb.append("}catch(e){}");
-        }
-
-        // Ocultar rastros de automatización en chrome.runtime
-        sb.append("try{if(!window.chrome){");
-        sb.append("Object.defineProperty(window,'chrome',{value:{runtime:{}},configurable:false,enumerable:true});");
-        sb.append("}}catch(e){}");
-
-        // Permissions API — navigator.permissions.query simula 'granted' para notifications
-        sb.append("try{var origQuery=window.navigator.permissions.query.bind(navigator.permissions);");
-        sb.append("Object.defineProperty(navigator.permissions,'query',{");
-        sb.append("value:function(p){if(p&&p.name==='notifications')");
-        sb.append("return Promise.resolve({state:'granted',onchange:null});");
-        sb.append("return origQuery(p);},configurable:false,writable:false});}catch(e){}");
-
-        sb.append("})();");
-        return sb.toString();
+        if (p.strictReferer) js.append("try{let m=document.createElement('meta');m.name='referrer';m.content='no-referrer';(document.head||document.documentElement).appendChild(m)}catch(e){};");
+        return js.toString();
     }
 
-    // ── helpers ──────────────────────────────────────────────────────────────
-
-    private static void appendDef(StringBuilder sb, String obj, String prop, String jsVal) {
-        sb.append("def(").append(obj).append(",'")
-          .append(prop).append("',").append(jsVal).append(");");
-    }
-
-    private static String quote(String value) {
-        return "'" + value.replace("'", "\\'") + "'";
-    }
-
+    private static String q(String value) { return "'" + String.valueOf(value).replace("\\", "\\\\").replace("'", "\\'") + "'"; }
     private SpoofInjector() {}
 }

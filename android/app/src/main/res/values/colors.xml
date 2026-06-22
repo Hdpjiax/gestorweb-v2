@@ -1,1 +1,14 @@
-<resources><color name="launcher_bg">#0B1018</color></resources>
+<resources>
+    <color name="launcher_bg">#070B12</color>
+    <color name="bg">#070B12</color>
+    <color name="panel">#0F1724</color>
+    <color name="panel_2">#141F30</color>
+    <color name="border">#2A3953</color>
+    <color name="text">#EEF4FC</color>
+    <color name="muted">#8F9CB2</color>
+    <color name="accent">#7C5CFC</color>
+    <color name="accent_2">#26C6DA</color>
+    <color name="success">#22C55E</color>
+    <color name="warning">#F59E0B</color>
+    <color name="danger">#FF6780</color>
+</resources>

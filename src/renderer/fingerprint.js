@@ -3,7 +3,7 @@ import { ICONS } from "./icons.js";
 
 export function makeFingerprint(template, overrides) {
   const isMobile = template.os === "Android" || template.os === "iOS";
-  const platform = template.os === "macOS" ? "MacIntel" : template.os === "Android" ? "Linux armv8l" : template.os === "iOS" ? "iPhone" : "Win32";
+  const platform = template.platform || (template.os === "macOS" ? "MacIntel" : template.os === "Android" ? "Linux armv8l" : template.os === "iOS" ? "iPhone" : "Win32");
   let ua;
   if (template.os === "iOS") {
     ua = "Mozilla/5.0 (iPhone; CPU iPhone OS 17_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Mobile/15E148 Safari/604.1";
@@ -27,16 +27,19 @@ export function makeFingerprint(template, overrides) {
     "ANGLE (Intel, Intel(R) UHD Graphics 630 Direct3D11 vs_5_0 ps_5_0), or similar",
     "ANGLE (Intel, Intel(R) Iris Xe Graphics Direct3D11 vs_5_0 ps_5_0), or similar"
   ];
-  const gpu = gpus[Math.floor(Math.random() * gpus.length)];
+  const gpu = template.webgl || gpus[Math.floor(Math.random() * gpus.length)];
   return {
     templateId: template.id,
     os: template.os,
     browser: template.browser,
     platform,
     userAgent: ua,
-    vendor: template.browser.includes("Safari") ? "Apple Computer, Inc." : template.browser.includes("Firefox") ? "" : "Google Inc.",
+    vendor: template.vendor ?? (template.browser.includes("Safari") ? "Apple Computer, Inc." : template.browser.includes("Firefox") ? "" : "Google Inc."),
     mobile: isMobile,
-    touchPoints: isMobile ? 5 : 0,
+    touchPoints: Number(template.touchPoints ?? (isMobile ? 5 : 0)),
+    deviceScaleFactor: Number(template.deviceScaleFactor || 1),
+    model: template.model || "",
+    architecture: template.architecture || (isMobile ? "arm" : "x86"),
     webgl: gpu,
     canvas: `gw-${shortId(10).toLowerCase()}`,
     audio: `gw-${shortId(10).toLowerCase()}`,

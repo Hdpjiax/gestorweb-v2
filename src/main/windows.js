@@ -357,6 +357,15 @@ async function openManagedProfileWindow(profile, proxy, startUrl, engineMode) {
     webPreferences.sandbox = true;
     webPreferences.devTools = false;
   });
+  win.webContents.on("did-attach-webview", (_event, guestContents) => {
+    if (fp.mobile) {
+      guestContents.on("dom-ready", () => {
+        const vendor = fp.vendor || (fp.os === "iOS" ? "Apple Computer, Inc." : "Google Inc.");
+        guestContents.executeJavaScript(`Object.defineProperty(Navigator.prototype, 'vendor', { get: () => ${JSON.stringify(vendor)}, configurable: true })`).catch(() => {});
+      });
+    }
+    applyMobileEmulation(guestContents, fp);
+  });
 
   const item = {
     type: "electron",
@@ -381,7 +390,9 @@ async function openManagedProfileWindow(profile, proxy, startUrl, engineMode) {
       partition,
       startUrl: startUrl || "",
       userAgent: fp.userAgent || "",
-      engineMode
+      engineMode,
+      mobile: fp.mobile ? "1" : "0",
+      deviceLabel: fp.mobile ? `${fp.os || "Mobile"} · ${fp.model || fp.browser || "device"}` : ""
     }
   });
   win.show();
@@ -397,6 +408,59 @@ function openFirefoxWindow(profile, proxy, startUrl) {
 }
 
 // ─── Dispatcher ────────────────────────────────────────────────────────────────
+async function applyMobileEmulation(contents, fp = {}) {
+  if (!contents || contents.isDestroyed() || !fp.mobile) return;
+  const width = Math.max(320, Number(fp.resolution?.width) || 412);
+  const height = Math.max(480, Number(fp.resolution?.height) || 915);
+  const deviceScaleFactor = Math.max(1, Number(fp.deviceScaleFactor) || 2.625);
+  try {
+    if (!contents.debugger.isAttached()) contents.debugger.attach("1.3");
+    await contents.debugger.sendCommand("Page.addScriptToEvaluateOnNewDocument", {
+      source: `(() => {
+        const define = (target, key, value) => { try { Object.defineProperty(target, key, { get: () => value, configurable: true }); } catch {} };
+        define(Navigator.prototype, 'vendor', ${JSON.stringify(fp.vendor || (fp.os === "iOS" ? "Apple Computer, Inc." : "Google Inc."))});
+        define(Navigator.prototype, 'platform', ${JSON.stringify(fp.platform || (fp.os === "iOS" ? "iPhone" : "Linux armv8l"))});
+        define(Navigator.prototype, 'maxTouchPoints', ${Math.max(1, Number(fp.touchPoints) || 5)});
+      })();`
+    });
+    await contents.debugger.sendCommand("Emulation.setDeviceMetricsOverride", {
+      width, height, deviceScaleFactor, mobile: true,
+      screenWidth: width, screenHeight: height, positionX: 0, positionY: 0,
+      screenOrientation: { type: height >= width ? "portraitPrimary" : "landscapePrimary", angle: height >= width ? 0 : 90 }
+    });
+    await contents.debugger.sendCommand("Emulation.setTouchEmulationEnabled", {
+      enabled: true,
+      maxTouchPoints: Math.max(1, Number(fp.touchPoints) || 5)
+    });
+    await contents.debugger.sendCommand("Emulation.setEmitTouchEventsForMouse", { enabled: true, configuration: "mobile" }).catch(() => {});
+    await contents.debugger.sendCommand("Emulation.setTimezoneOverride", { timezoneId: fp.timezone || "America/Mexico_City" });
+    await contents.debugger.sendCommand("Emulation.setLocaleOverride", { locale: fp.locale || "es-MX" }).catch(() => {});
+    await contents.debugger.sendCommand("Network.enable");
+    const userAgentOverride = {
+      userAgent: fp.userAgent,
+      acceptLanguage: `${fp.locale || "es-MX"},${String(fp.locale || "es-MX").split("-")[0]};q=0.9,en;q=0.7`,
+      platform: fp.platform || (fp.os === "iOS" ? "iPhone" : "Android")
+    };
+    if (fp.os === "Android" && /Chrome/i.test(fp.browser || "")) {
+      userAgentOverride.userAgentMetadata = {
+        brands: [{ brand: "Chromium", version: "126" }, { brand: "Google Chrome", version: "126" }, { brand: "Not/A)Brand", version: "99" }],
+        fullVersionList: [{ brand: "Chromium", version: "126.0.0.0" }, { brand: "Google Chrome", version: "126.0.0.0" }],
+        fullVersion: "126.0.0.0",
+        platform: "Android",
+        platformVersion: "14.0.0",
+        architecture: fp.architecture || "arm",
+        model: fp.model || "Pixel 8",
+        mobile: true,
+        bitness: "64",
+        wow64: false
+      };
+    }
+    await contents.debugger.sendCommand("Network.setUserAgentOverride", userAgentOverride);
+  } catch (error) {
+    console.warn(`[windows] mobile emulation failed for ${fp.templateId || "profile"}: ${error.message}`);
+  }
+}
+
 async function openProfileWindow(profile, proxy, startUrl) {
   if (!profile?.id) return { ok: false, error: "missing profile" };
   console.log(`[windows] openProfileWindow called with profile: ${profile?.id}, proxy: ${proxy ? JSON.stringify(proxy) : 'null'}, startUrl: ${startUrl}`);

@@ -26,7 +26,7 @@ function javaMajor(versionOutput) {
 }
 
 function readJavaMajor(javaExe) {
-  const result = spawnSync(javaExe, ["-version"], { encoding: "utf8", shell: isWindows });
+  const result = spawnSync(javaExe, ["-version"], { encoding: "utf8", shell: false });
   const output = `${result.stdout || ""}\n${result.stderr || ""}`;
   return javaMajor(output);
 }

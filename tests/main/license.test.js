@@ -49,7 +49,9 @@ module.exports = async function licenseTests() {
   assert.equal(expired.active, false);
   assert.equal(expired.reason, "licencia expirada");
 
-  const tampered = `${licenseText.slice(0, -1)}${licenseText.endsWith("A") ? "B" : "A"}`;
+  const tamperedParts = licenseText.split("\n");
+  tamperedParts[2] = `${tamperedParts[2][0] === "A" ? "B" : "A"}${tamperedParts[2].slice(1)}`;
+  const tampered = tamperedParts.join("\n");
   const bad = verifySignedLicense(tampered, hwid, { publicKey });
   assert.equal(bad.active, false);
   assert.equal(bad.reason, "firma criptografica invalida");

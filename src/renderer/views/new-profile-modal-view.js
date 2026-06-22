@@ -110,7 +110,9 @@ export function renderNewProfileModal() {
           <button class="btn btn-ghost" type="button" data-action="toggle-profile-advanced">
             ${ui.profileAdvanced ? "ocultar" : "mostrar"} avanzado
           </button>
-          ${ui.profileAdvanced ? renderProfileAdvancedFields(selectedTemplate) : ""}
+          <div id="profileAdvancedFields" ${ui.profileAdvanced ? "" : "hidden"}>
+            ${renderProfileAdvancedFields(selectedTemplate)}
+          </div>
         </div>
         <div class="modal-foot between">
           <button class="btn btn-ghost" type="button" data-action="close-modal">cancelar</button>

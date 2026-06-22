@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="vertical" android:background="@color/bg">
+    <LinearLayout android:layout_width="match_parent" android:layout_height="38dp" android:gravity="center_vertical" android:paddingHorizontal="14dp" android:background="@color/panel">
+        <View android:layout_width="7dp" android:layout_height="7dp" android:background="@color/accent"/>
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginStart="9dp" android:text="Gestor Web" android:textColor="@color/text" android:textStyle="bold" android:textSize="13sp"/>
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginStart="9dp" android:text="v1.5.0" android:textColor="@color/muted" android:textSize="11sp"/>
+        <Space android:layout_width="0dp" android:layout_height="1dp" android:layout_weight="1"/>
+        <TextView android:id="@+id/globalStatus" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="ANDROID · AHORRO" android:textColor="@color/success" android:textStyle="bold" android:textSize="11sp"/>
+    </LinearLayout>
+
+    <ScrollView android:id="@+id/activationScreen" android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" android:fillViewport="true">
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="20dp">
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="ACTIVACIÓN ANDROID" android:textColor="@color/accent_2" android:textStyle="bold" android:textSize="12sp"/>
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="6dp" android:text="Licencia del dispositivo" android:textColor="@color/text" android:textStyle="bold" android:textSize="30sp"/>
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="18dp" android:orientation="vertical" android:padding="16dp" android:background="@drawable/bg_panel">
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="HWID / Device Install ID" android:textColor="@color/muted"/>
+                <TextView android:id="@+id/deviceId" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:textColor="@color/text" android:textIsSelectable="true" android:textStyle="bold"/>
+                <Button android:id="@+id/copyDeviceId" android:layout_width="match_parent" android:layout_height="48dp" android:layout_marginTop="12dp" android:text="COPIAR HWID" android:textColor="@color/text" android:background="@drawable/bg_panel_2"/>
+            </LinearLayout>
+            <EditText android:id="@+id/licenseInput" android:layout_width="match_parent" android:layout_height="150dp" android:layout_marginTop="14dp" android:gravity="top" android:padding="14dp" android:hint="Pega la key GW-LIC-V1" android:textColor="@color/text" android:textColorHint="@color/muted" android:background="@drawable/bg_panel_2"/>
+            <TextView android:id="@+id/licenseError" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:textColor="@color/danger"/>
+            <Button android:id="@+id/activateButton" android:layout_width="match_parent" android:layout_height="52dp" android:layout_marginTop="12dp" android:text="ACTIVAR LICENCIA" android:textColor="@color/text" android:textStyle="bold" android:background="@drawable/bg_primary"/>
+        </LinearLayout>
+    </ScrollView>
+
+    <LinearLayout android:id="@+id/appScreen" android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" android:orientation="vertical" android:visibility="gone">
+        <HorizontalScrollView android:layout_width="match_parent" android:layout_height="52dp" android:scrollbars="none" android:background="@color/panel">
+            <LinearLayout android:layout_width="wrap_content" android:layout_height="match_parent" android:gravity="center_vertical" android:paddingHorizontal="8dp">
+                <Button android:id="@+id/navDashboard" style="@style/NavButton" android:text="Panel"/>
+                <Button android:id="@+id/navProfiles" style="@style/NavButton" android:text="Perfiles"/>
+                <Button android:id="@+id/navFingerprint" style="@style/NavButton" android:text="Fingerprint"/>
+                <Button android:id="@+id/navPrivacy" style="@style/NavButton" android:text="Privacidad"/>
+                <Button android:id="@+id/navNetwork" style="@style/NavButton" android:text="Red"/>
+                <Button android:id="@+id/navSettings" style="@style/NavButton" android:text="Ajustes"/>
+            </LinearLayout>
+        </HorizontalScrollView>
+
+        <FrameLayout android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1">
+            <ScrollView android:id="@+id/panelDashboard" android:layout_width="match_parent" android:layout_height="match_parent"><LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="16dp">
+                <TextView style="@style/PageEyebrow" android:text="ANDROID CONTROL CENTER"/><TextView style="@style/PageTitle" android:text="Panel principal"/>
+                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal">
+                    <TextView android:id="@+id/statProfiles" style="@style/StatCard" android:layout_weight="1"/><TextView android:id="@+id/statProxies" style="@style/StatCard" android:layout_weight="1"/>
+                </LinearLayout>
+                <Button android:id="@+id/newProfile" style="@style/PrimaryButton" android:text="+ NUEVO PERFIL"/>
+                <Button android:id="@+id/importProfiles" style="@style/GhostButton" android:text="IMPORTAR JSON"/>
+                <Button android:id="@+id/exportProfiles" style="@style/GhostButton" android:text="EXPORTAR JSON"/>
+                <TextView style="@style/SectionTitle" android:text="Resumen de privacidad"/><LinearLayout android:id="@+id/dashboardSummary" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical"/>
+            </LinearLayout></ScrollView>
+
+            <ScrollView android:id="@+id/panelProfiles" android:layout_width="match_parent" android:layout_height="match_parent" android:visibility="gone"><LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="16dp"><TextView style="@style/PageEyebrow" android:text="IDENTIDADES"/><TextView style="@style/PageTitle" android:text="Perfiles"/><LinearLayout android:id="@+id/profileList" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical"/></LinearLayout></ScrollView>
+
+            <ScrollView android:id="@+id/panelFingerprint" android:layout_width="match_parent" android:layout_height="match_parent" android:visibility="gone"><LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="16dp"><TextView style="@style/PageEyebrow" android:text="IDENTIDAD DEL PERFIL"/><TextView android:id="@+id/fingerprintTitle" style="@style/PageTitle" android:text="Fingerprint"/><Spinner android:id="@+id/fingerprintProfile" style="@style/DarkSpinner"/><LinearLayout android:id="@+id/fingerprintRows" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical"/></LinearLayout></ScrollView>
+
+            <ScrollView android:id="@+id/panelPrivacy" android:layout_width="match_parent" android:layout_height="match_parent" android:visibility="gone"><LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="16dp"><TextView style="@style/PageEyebrow" android:text="PRESETS Y CONTROLES"/><TextView style="@style/PageTitle" android:text="Privacidad"/><Spinner android:id="@+id/privacyProfile" style="@style/DarkSpinner"/><LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal"><Button android:id="@+id/presetNone" style="@style/PresetButton" android:text="None"/><Button android:id="@+id/presetStandard" style="@style/PresetButton" android:text="Standard"/></LinearLayout><LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal"><Button android:id="@+id/presetHardened" style="@style/PresetButton" android:text="Hardened"/><Button android:id="@+id/presetAnonymous" style="@style/PresetButton" android:text="Anonymous"/></LinearLayout><LinearLayout android:id="@+id/privacyFlags" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical"/></LinearLayout></ScrollView>
+
+            <ScrollView android:id="@+id/panelNetwork" android:layout_width="match_parent" android:layout_height="match_parent" android:visibility="gone"><LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="16dp"><TextView style="@style/PageEyebrow" android:text="MONITOR LOCAL"/><TextView style="@style/PageTitle" android:text="Historial y red"/><Button android:id="@+id/clearHistory" style="@style/GhostButton" android:text="LIMPIAR HISTORIAL"/><LinearLayout android:id="@+id/historyList" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical"/></LinearLayout></ScrollView>
+
+            <ScrollView android:id="@+id/panelSettings" android:layout_width="match_parent" android:layout_height="match_parent" android:visibility="gone"><LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="16dp"><TextView style="@style/PageEyebrow" android:text="APLICACIÓN"/><TextView style="@style/PageTitle" android:text="Ajustes"/><androidx.appcompat.widget.SwitchCompat android:id="@+id/resourceMode" style="@style/FlagSwitch" android:text="Modo ahorro"/><TextView style="@style/HintText" android:text="Reduce animaciones, refrescos y trabajo en segundo plano."/><Button android:id="@+id/logoutLicense" style="@style/GhostButton" android:text="DESACTIVAR LICENCIA"/><TextView style="@style/HintText" android:text="WebView usa el Chromium suministrado por Android. Firefox, Camoufox, headless real, Tor embebido y HAR completo requieren motores o servicios que Android no incluye."/></LinearLayout></ScrollView>
+        </FrameLayout>
+    </LinearLayout>
+</LinearLayout>

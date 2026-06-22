@@ -41,10 +41,16 @@ module.exports = async function profileBrowserTests() {
   assert.match(windows, /profile-browser\.html/);
   assert.match(windows, /startUrl \|\| profile\.url \|\| ""/);
   assert.match(windows, /setCertificateVerifyProc/);
+  assert.match(windows, /Emulation\.setDeviceMetricsOverride/);
+  assert.match(windows, /Emulation\.setTouchEmulationEnabled/);
+  assert.match(windows, /Network\.setUserAgentOverride/);
+  assert.match(windows, /did-attach-webview/);
 
   assert.doesNotMatch(actions, /forceFirefoxFingerprint/);
   assert.match(actions, /template_id: template\.id/);
   assert.match(modal, /selectedTemplate/);
   assert.match(fingerprint, /templateId: template\.id/);
   assert.match(fingerprint, /Chrome\/126\.0\.0\.0/);
+  assert.match(fingerprint, /deviceScaleFactor/);
+  assert.match(fingerprint, /architecture/);
 };

@@ -98,14 +98,14 @@ export const quickLinks = [
 ];
 
 export const templates = [
-  { id: "win_firefox_mx", label: "Windows / Firefox 135 (MX)", locale: "es-MX", timezone: "America/Monterrey", os: "Windows", browser: "Firefox", width: 1920, height: 1080 },
-  { id: "win_firefox_es", label: "Windows / Firefox 135 (ES)", locale: "es-ES", timezone: "Europe/Madrid", os: "Windows", browser: "Firefox", width: 1536, height: 864 },
-  { id: "win_chrome_mx", label: "Windows / Chrome (MX)", locale: "es-MX", timezone: "America/Monterrey", os: "Windows", browser: "Chrome", width: 1920, height: 1080 },
-  { id: "win_chrome_es", label: "Windows / Chrome (ES)", locale: "es-ES", timezone: "Europe/Madrid", os: "Windows", browser: "Chrome", width: 1536, height: 864 },
-  { id: "mac_safari_es", label: "macOS / Safari (ES)", locale: "es-ES", timezone: "Europe/Madrid", os: "macOS", browser: "Safari", width: 1440, height: 900 },
-  { id: "android_chrome", label: "Android / Chrome (movil)", locale: "es-MX", timezone: "America/Mexico_City", os: "Android", browser: "Chrome Mobile", width: 412, height: 915 },
-  { id: "iphone_safari", label: "iPhone / Safari (movil)", locale: "es-MX", timezone: "America/Mexico_City", os: "iOS", browser: "Mobile Safari", width: 390, height: 844 },
-  { id: "anonymous", label: "Anonymous (Tor-like)", locale: "en-US", timezone: "UTC", os: "Windows", browser: "Firefox", width: 1366, height: 768 }
+  { id: "win_firefox_mx", label: "Windows / Firefox 135 (MX)", locale: "es-MX", timezone: "America/Monterrey", os: "Windows", browser: "Firefox", platform: "Win32", vendor: "", width: 1920, height: 1080, deviceScaleFactor: 1, touchPoints: 0 },
+  { id: "win_firefox_es", label: "Windows / Firefox 135 (ES)", locale: "es-ES", timezone: "Europe/Madrid", os: "Windows", browser: "Firefox", platform: "Win32", vendor: "", width: 1536, height: 864, deviceScaleFactor: 1, touchPoints: 0 },
+  { id: "win_chrome_mx", label: "Windows / Chrome (MX)", locale: "es-MX", timezone: "America/Monterrey", os: "Windows", browser: "Chrome", platform: "Win32", vendor: "Google Inc.", width: 1920, height: 1080, deviceScaleFactor: 1, touchPoints: 0 },
+  { id: "win_chrome_es", label: "Windows / Chrome (ES)", locale: "es-ES", timezone: "Europe/Madrid", os: "Windows", browser: "Chrome", platform: "Win32", vendor: "Google Inc.", width: 1536, height: 864, deviceScaleFactor: 1, touchPoints: 0 },
+  { id: "mac_safari_es", label: "macOS / Safari (ES)", locale: "es-ES", timezone: "Europe/Madrid", os: "macOS", browser: "Safari", platform: "MacIntel", vendor: "Apple Computer, Inc.", width: 1440, height: 900, deviceScaleFactor: 2, touchPoints: 0, webgl: "Apple M2" },
+  { id: "android_chrome", label: "Android / Chrome (movil)", locale: "es-MX", timezone: "America/Mexico_City", os: "Android", browser: "Chrome Mobile", platform: "Linux armv8l", vendor: "Google Inc.", model: "Pixel 8", architecture: "arm", width: 412, height: 915, deviceScaleFactor: 2.625, touchPoints: 5, webgl: "ANGLE (Google, Mali-G715)" },
+  { id: "iphone_safari", label: "iPhone / Safari (movil)", locale: "es-MX", timezone: "America/Mexico_City", os: "iOS", browser: "Mobile Safari", platform: "iPhone", vendor: "Apple Computer, Inc.", model: "iPhone", architecture: "arm", width: 390, height: 844, deviceScaleFactor: 3, touchPoints: 5, webgl: "Apple A16 GPU" },
+  { id: "anonymous", label: "Anonymous (Tor-like)", locale: "en-US", timezone: "UTC", os: "Windows", browser: "Firefox", platform: "Win32", vendor: "", width: 1366, height: 768, deviceScaleFactor: 1, touchPoints: 0 }
 ];
 
 export const timezones = ["America/Monterrey", "America/Mexico_City", "America/Bogota", "Europe/Madrid", "America/New_York", "Europe/London", "UTC"];

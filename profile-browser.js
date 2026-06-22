@@ -3,6 +3,8 @@ const profileName = params.get("profileName") || "Perfil";
 const partition = params.get("partition") || "";
 const userAgent = params.get("userAgent") || "";
 const engineMode = params.get("engineMode") || "chromium";
+const mobileMode = params.get("mobile") === "1";
+const deviceLabel = params.get("deviceLabel") || "";
 const startUrl = params.get("startUrl") || "";
 
 const stage = document.getElementById("browserStage");
@@ -23,7 +25,9 @@ let currentUrl = "";
 const themedCursorCss = `html,body,body * { cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='32' viewBox='0 0 28 32'%3E%3Cpath d='M3 2v24l6-6 5 10 6-3-5-9h9z' fill='%238b5cf6' stroke='%23060a12' stroke-width='2' stroke-linejoin='round'/%3E%3Cpath d='M5 5v15l4-4h9z' fill='%2367e8f9' opacity='.78'/%3E%3C/svg%3E") 3 2, auto !important; }`;
 
 document.title = `${profileName} — Gestor Browser`;
-engineLabel.textContent = engineMode === "camoufox" ? "Camoufox identity" : "Chromium identity";
+engineLabel.textContent = mobileMode
+  ? `${deviceLabel || "Mobile"} emulation`
+  : engineMode === "camoufox" ? "Camoufox identity" : "Chromium identity";
 routeBadge.textContent = profileName;
 
 function searchUrl(query) {
@@ -127,10 +131,10 @@ function ensureWebview(url) {
   webview.setAttribute("partition", partition);
   webview.setAttribute("allowpopups", "true");
   if (userAgent) webview.setAttribute("useragent", userAgent);
+  webview.setAttribute("src", url);
   bindWebview(webview);
   stage.appendChild(webview);
   syncWebviewBounds();
-  webview.src = url;
   requestAnimationFrame(syncWebviewBounds);
   return webview;
 }

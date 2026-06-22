@@ -122,6 +122,28 @@ function bindWebviews() {
   });
 }
 
+function openNewProfileModal() {
+  ui.newProfile = true;
+  ui.profileAdvanced = false;
+  ui.profileTemplateId = "win_firefox_mx";
+  rerender();
+}
+
+function closeNewProfileModal() {
+  ui.newProfile = false;
+  ui.profileAdvanced = false;
+  ui.profileTemplateId = "win_firefox_mx";
+  rerender();
+}
+
+function toggleProfileAdvanced() {
+  ui.profileAdvanced = !ui.profileAdvanced;
+  const fields = document.getElementById("profileAdvancedFields");
+  const button = document.querySelector('[data-action="toggle-profile-advanced"]');
+  if (fields) fields.hidden = !ui.profileAdvanced;
+  if (button) button.textContent = `${ui.profileAdvanced ? "ocultar" : "mostrar"} avanzado`;
+}
+
 function handleClick(event) {
   const target = event.target.closest("[data-action]");
   if (!target) return;
@@ -134,9 +156,9 @@ function handleClick(event) {
     "copy-hwid": () => navigator.clipboard?.writeText(target.dataset.hwid),
     "import-license": () => alert("Importador .gw pendiente. Pega la licencia en el textarea para activar esta replica."),
     "set-view": () => update((s) => { s.view = target.dataset.view; }),
-    "new-profile": () => { ui.newProfile = true; ui.profileAdvanced = false; ui.profileTemplateId = "win_firefox_mx"; rerender(); },
-    "close-modal": () => { ui.newProfile = false; rerender(); },
-    "toggle-profile-advanced": () => { ui.profileAdvanced = !ui.profileAdvanced; rerender(); },
+    "new-profile": () => openNewProfileModal(),
+    "close-modal": () => closeNewProfileModal(),
+    "toggle-profile-advanced": () => toggleProfileAdvanced(),
     "select-profile": () => update((s) => { s.selectedId = id; }),
     "open-profile": () => openProfile(id, { openWindow: true, focusBrowser: true, createTab: true }),
     "close-profile": () => closeProfile(id),
@@ -269,12 +291,16 @@ function createProfile(event) {
     }),
     ...preset
   };
+  // Cerrar y reiniciar el modal ANTES de renderizar el nuevo estado.
+  // `update` reconstruye el DOM; hacerlo despues dejaba el formulario viejo visible.
+  ui.newProfile = false;
+  ui.profileAdvanced = false;
+  ui.profileTemplateId = "win_firefox_mx";
   update((s) => {
     s.profiles.unshift(profile);
     s.selectedId = profile.id;
     logEvent("created", profile.id, profile.url || "sin URL");
   });
-  ui.newProfile = false;
 }
 
 async function openProfile(id, options = {}) {
@@ -981,14 +1007,14 @@ function resetData() {
 function closeWelcome(create) {
   update((s) => { s.onboardingSeen = true; });
   ui.welcome = false;
-  if (create) ui.newProfile = true;
+  if (create) return openNewProfileModal();
   rerender();
 }
 
 function runCommand(run) {
   ui.command = false;
   ui.commandQuery = "";
-  if (run === "new-profile") { ui.newProfile = true; rerender(); return; }
+  if (run === "new-profile") { openNewProfileModal(); return; }
   if (run.startsWith("view:")) update((s) => { s.view = run.slice(5); });
   if (run.startsWith("open:")) openProfile(run.slice(5));
 }
@@ -1045,6 +1071,8 @@ export function initKeyboard() {
     if (event.key === "Escape") {
       if (ui.newProfile || ui.command || ui.cookieProfileId) {
         ui.newProfile = false;
+        ui.profileAdvanced = false;
+        ui.profileTemplateId = "win_firefox_mx";
         ui.command = false;
         ui.cookieProfileId = null;
         rerender();
@@ -1052,7 +1080,7 @@ export function initKeyboard() {
         update((s) => { s.filters = { search: "", group: "", proxyState: "all" }; });
       }
     }
-    if (event.ctrlKey && key === "n") { event.preventDefault(); ui.newProfile = true; rerender(); }
+    if (event.ctrlKey && key === "n") { event.preventDefault(); openNewProfileModal(); }
     if (event.ctrlKey && key === "k") { event.preventDefault(); ui.command = true; ui.commandQuery = ""; rerender(); }
     if (event.ctrlKey && key === "t") { event.preventDefault(); browserNewTab(); }
     if (event.ctrlKey && /^[0-9]$/.test(key)) {

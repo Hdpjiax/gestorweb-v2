@@ -23,6 +23,7 @@ const tests = [
   ["renderer/browser-shell-size", "../tests/renderer/browser-shell-size.test.js"],
   ["renderer/topbar-always", "../tests/renderer/topbar-always.test.js"],
   ["renderer/profile-inspector-polish", "../tests/renderer/profile-inspector-polish.test.js"],
+  ["renderer/profile-create-flow", "../tests/renderer/profile-create-flow.test.js"],
   ["renderer/proxy-assignment", "../tests/renderer/proxy-assignment.test.js"]
 ];
 

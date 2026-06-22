@@ -5,5 +5,27 @@
         <item name="android:navigationBarColor">#090D13</item>
         <item name="android:statusBarColor">#090D13</item>
         <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowActivityTransitions">true</item>
+        <item name="android:windowEnterTransition">@android:transition/fade</item>
+        <item name="android:windowExitTransition">@android:transition/fade</item>
+        <item name="android:windowActionModeOverlay">true</item>
     </style>
+
+    <style name="Theme.GestorWeb.Starting" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">@color/bg</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/ic_launcher_foreground</item>
+        <item name="postSplashScreenTheme">@style/Theme.GestorWeb</item>
+    </style>
+    <style name="NavButton" parent="Widget.AppCompat.Button.Borderless"><item name="android:layout_width">wrap_content</item><item name="android:layout_height">40dp</item><item name="android:textColor">@color/muted</item><item name="android:textAllCaps">false</item></style>
+    <style name="PageEyebrow" parent="TextAppearance.AppCompat.Caption"><item name="android:layout_width">wrap_content</item><item name="android:layout_height">wrap_content</item><item name="android:textColor">@color/accent_2</item><item name="android:textStyle">bold</item></style>
+    <style name="PageTitle" parent="TextAppearance.AppCompat.Headline"><item name="android:layout_width">wrap_content</item><item name="android:layout_height">wrap_content</item><item name="android:layout_marginTop">4dp</item><item name="android:layout_marginBottom">14dp</item><item name="android:textColor">@color/text</item><item name="android:textStyle">bold</item><item name="android:textSize">30sp</item></style>
+    <style name="SectionTitle" parent="TextAppearance.AppCompat.Title"><item name="android:layout_width">wrap_content</item><item name="android:layout_height">wrap_content</item><item name="android:layout_marginTop">18dp</item><item name="android:layout_marginBottom">8dp</item><item name="android:textColor">@color/text</item><item name="android:textStyle">bold</item></style>
+    <style name="StatCard" parent="TextAppearance.AppCompat.Title"><item name="android:layout_width">0dp</item><item name="android:layout_height">74dp</item><item name="android:layout_margin">4dp</item><item name="android:padding">12dp</item><item name="android:gravity">center_vertical</item><item name="android:background">@drawable/bg_panel</item><item name="android:textColor">@color/text</item><item name="android:textStyle">bold</item></style>
+    <style name="PrimaryButton" parent="Widget.AppCompat.Button"><item name="android:layout_width">match_parent</item><item name="android:layout_height">52dp</item><item name="android:layout_marginTop">10dp</item><item name="android:background">@drawable/bg_primary</item><item name="android:textColor">@color/text</item><item name="android:textStyle">bold</item></style>
+    <style name="GhostButton" parent="Widget.AppCompat.Button"><item name="android:layout_width">match_parent</item><item name="android:layout_height">48dp</item><item name="android:layout_marginTop">8dp</item><item name="android:background">@drawable/bg_panel_2</item><item name="android:textColor">@color/text</item></style>
+    <style name="PresetButton" parent="Widget.AppCompat.Button"><item name="android:layout_width">0dp</item><item name="android:layout_height">46dp</item><item name="android:layout_weight">1</item><item name="android:layout_margin">4dp</item><item name="android:background">@drawable/bg_panel_2</item><item name="android:textColor">@color/text</item><item name="android:textAllCaps">false</item></style>
+    <style name="DarkSpinner" parent="Widget.AppCompat.Spinner"><item name="android:layout_width">match_parent</item><item name="android:layout_height">50dp</item><item name="android:layout_marginBottom">10dp</item><item name="android:background">@drawable/bg_panel_2</item><item name="android:paddingHorizontal">12dp</item></style>
+    <style name="FlagSwitch" parent="Widget.AppCompat.CompoundButton.Switch"><item name="android:layout_width">match_parent</item><item name="android:layout_height">52dp</item><item name="android:layout_marginTop">6dp</item><item name="android:paddingHorizontal">12dp</item><item name="android:background">@drawable/bg_panel</item><item name="android:textColor">@color/text</item></style>
+    <style name="HintText" parent="TextAppearance.AppCompat.Body1"><item name="android:layout_width">match_parent</item><item name="android:layout_height">wrap_content</item><item name="android:layout_marginTop">8dp</item><item name="android:textColor">@color/muted</item></style>
+    <style name="ProfileInput" parent="Widget.AppCompat.EditText"><item name="android:layout_width">match_parent</item><item name="android:layout_height">52dp</item><item name="android:layout_marginTop">8dp</item><item name="android:paddingHorizontal">12dp</item><item name="android:background">@drawable/bg_panel_2</item><item name="android:textColor">@color/text</item><item name="android:textColorHint">@color/muted</item></style>
 </resources>

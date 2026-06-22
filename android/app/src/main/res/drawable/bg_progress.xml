@@ -1,0 +1,4 @@
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item><shape><solid android:color="@color/panel_2"/></shape></item>
+    <item><clip><shape><solid android:color="@color/accent"/></shape></clip></item>
+</layer-list>

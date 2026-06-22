@@ -122,6 +122,9 @@ function writeFingerprintPreload(profile) {
     os: fp.os || "Windows",
     mobile: !!fp.mobile,
     touchPoints: Number(fp.touchPoints || 0),
+    deviceScaleFactor: Number(fp.deviceScaleFactor || 1),
+    model: fp.model || "",
+    architecture: fp.architecture || (fp.mobile ? "arm" : "x86"),
     locale: fp.locale || "es-MX",
     timezone: fp.timezone || "America/Mexico_City",
     width: fp.resolution?.width || 1920,
@@ -129,6 +132,7 @@ function writeFingerprintPreload(profile) {
     cores: fp.cores || 8,
     memoryGB: fp.memoryGB || 16,
     webgl: fp.webgl || "ANGLE (NVIDIA, NVIDIA GeForce GTX 980 Direct3D11 vs_5_0 ps_5_0), or similar",
+    webglVendor: fp.os === "iOS" || fp.os === "macOS" ? "Apple Inc." : fp.os === "Android" ? "Google Inc. (Google)" : "Google Inc. (NVIDIA)",
     seed: fp.noiseSeed || 123456,
     webrtcBlock: !!profile.webrtc_block,
     compatMode: !!profile.compat_mode
@@ -157,9 +161,9 @@ function writeFingerprintPreload(profile) {
       mobile: fp.mobile,
       platform: platformName,
       getHighEntropyValues: async (hints) => Object.fromEntries((hints || []).map((hint) => [hint, ({
-        architecture: fp.mobile ? 'arm' : 'x86',
+        architecture: fp.architecture,
         bitness: fp.mobile ? '64' : '64',
-        model: fp.mobile ? 'Pixel 8' : '',
+        model: fp.model,
         platformVersion: fp.os === 'Android' ? '14.0.0' : fp.os === 'Windows' ? '10.0.0' : '14.4.0',
         uaFullVersion: '126.0.0.0',
         fullVersionList: [{ brand: 'Chromium', version: '126.0.0.0' }, { brand: 'Google Chrome', version: '126.0.0.0' }]
@@ -175,6 +179,9 @@ function writeFingerprintPreload(profile) {
   define(screen, 'availHeight', Math.max(1, fp.height - 48));
   define(screen, 'colorDepth', 24);
   define(screen, 'pixelDepth', 24);
+  define(window, 'devicePixelRatio', fp.deviceScaleFactor);
+  define(window, 'innerWidth', fp.width);
+  define(window, 'innerHeight', fp.height);
   try {
     const originalResolvedOptions = Intl.DateTimeFormat.prototype.resolvedOptions;
     Intl.DateTimeFormat.prototype.resolvedOptions = function () {
@@ -184,14 +191,14 @@ function writeFingerprintPreload(profile) {
   try {
     const getParameter = WebGLRenderingContext.prototype.getParameter;
     WebGLRenderingContext.prototype.getParameter = function (param) {
-      if (param === 37445) return 'Google Inc. (NVIDIA)';
+      if (param === 37445) return fp.webglVendor;
       if (param === 37446) return fp.webgl;
       return getParameter.call(this, param);
     };
     if (window.WebGL2RenderingContext) {
       const getParameter2 = WebGL2RenderingContext.prototype.getParameter;
       WebGL2RenderingContext.prototype.getParameter = function (param) {
-        if (param === 37445) return 'Google Inc. (NVIDIA)';
+        if (param === 37445) return fp.webglVendor;
         if (param === 37446) return fp.webgl;
         return getParameter2.call(this, param);
       };

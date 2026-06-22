@@ -1,59 +1,32 @@
 # Gestor Web Android 1.5.0
 
-Cliente Android nativo. No ejecuta Electron dentro del APK; usa Android WebView y valida licencias `GW-LIC-V1` contra Supabase DB-only.
+Cliente Android nativo con la misma licencia Windows/Android y una interfaz organizada en paneles XML: Panel, Perfiles, Fingerprint, Privacidad, Red/Historial y Ajustes.
 
-Cada instalacion genera un `ANDROID-UUID` guardado en almacenamiento cifrado. Ese valor se usa como HWID para emitir licencias desde el panel admin de Windows.
+## Incluido
 
-## Requisitos
+- crear, editar, eliminar, importar y exportar perfiles JSON;
+- proxy por perfil mediante `ProxyController` cuando el proveedor WebView lo soporta;
+- historial por perfil y monitor básico de solicitudes GET/recursos;
+- almacenamiento, cookies y caché aislados por perfil cuando el WebView instalado expone `MULTI_PROFILE`;
+- presets `none`, `standard`, `hardened` y `anonymous`;
+- niveles de fingerprint `off`, `balanced` y `strong`;
+- bloqueo local de aproximadamente 80 dominios de tracking, limpieza de parámetros, Force HTTPS, WebRTC mitigado, no-cache, auto-wipe y anti-leak;
+- inyección en document-start mediante AndroidX WebKit cuando la versión instalada lo permite;
+- splash, icono adaptativo, barra de progreso, transiciones y deep link `gestorweb://profile/ID`.
 
-- Android Studio o Android SDK 35.
-- JDK 17 o superior. El script intenta usar automaticamente el JDK de Android Studio.
-- Clave publica de licencias en `android/app/src/main/assets/license-public-key.pem`.
+La exportación excluye contraseñas de proxy y licencias.
 
-## Compilar APK unico desde la raiz del repo
+## Límites reales de Android
+
+Android WebView siempre usa el Chromium provisto por Android. No puede cargar los binarios Electron, Firefox o Camoufox del escritorio. Tampoco permite a una aplicación configurar DoH global sin cambiar el DNS privado del sistema, ejecutar headless real ni producir un HAR completo con cuerpos POST/respuestas. Tor requiere Orbot u otro servicio externo. La mitigación de fingerprint reduce superficies, pero no garantiza invisibilidad o indetectabilidad.
+
+## Compilar
+
+Requisitos: Android SDK 35 y JDK 17.
 
 ```powershell
-npm run dist:apk
+cd android
+.\gradlew.bat assembleRelease
 ```
 
-Salida:
-
-```txt
-dist/Gestor-Web.apk
-```
-
-El script prepara la clave publica, configura Android SDK si lo encuentra, limpia el proyecto y ejecuta `assembleRelease`.
-
-## Generar licencia Android
-
-1. Instala el APK.
-2. Abre la app y copia el ID `ANDROID-...`.
-3. En el panel admin de Windows genera una licencia para ese HWID.
-4. Pega la licencia `GW-LIC-V1` en Android.
-
-## Panel Android
-
-La app incluye:
-
-- Pantalla de activacion con HWID copiable.
-- Dashboard oscuro tipo panel.
-- Resumen de licencia activa.
-- Conteo de perfiles y perfiles con proxy.
-- Creacion de perfiles con nombre, URL, proxy, user-agent y modo.
-- Tarjetas de perfil con acciones de abrir/eliminar.
-- Navegador interno con barra superior y estado del perfil.
-
-## Modos de perfil
-
-Los modos son controles legitimos de WebView:
-
-- `compatibilidad`: mayor compatibilidad con sitios web; permite cookies de terceros.
-- `privado`: bloquea cookies de terceros, geolocalizacion y contenido mixto.
-- `estricto`: desactiva cache, bloquea cookies y endurece contenido mixto.
-
-## Limitaciones Android actuales
-
-- Usa WebView/Chromium del sistema.
-- No puede ejecutar Electron, Firefox ni Camoufox dentro del APK.
-- No incluye credenciales admin, `private_key.pem` ni `SUPABASE_SERVICE_ROLE_KEY`.
-- La validacion online se repite cada 60 segundos mientras hay navegador abierto.
+El APK queda en `app/build/outputs/apk/release/`. La configuración actual usa firma debug para generar un APK instalable de pruebas; antes de distribución comercial configura un keystore privado de release.

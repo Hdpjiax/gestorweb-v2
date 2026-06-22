@@ -14,15 +14,26 @@ const path = require('path');
 const os = require('os');
 const fs = require('fs');
 const net = require('net');
+const crypto = require('crypto');
+const { createLicenseText } = require('../../src/main/license');
 
 // ─── Setup / Teardown ────────────────────────────────────────────────────────
 
 let electronApp;
 let tmpDataDir;
+let testPrivateKey;
+let testPublicKey;
 
 test.beforeAll(async () => {
   // Directorio temporal fresco por cada run — vault completamente limpio
   tmpDataDir = fs.mkdtempSync(path.join(os.tmpdir(), 'gw-ipc-test-'));
+  const pair = crypto.generateKeyPairSync('rsa', {
+    modulusLength: 2048,
+    publicKeyEncoding: { type: 'spki', format: 'pem' },
+    privateKeyEncoding: { type: 'pkcs8', format: 'pem' }
+  });
+  testPrivateKey = pair.privateKey;
+  testPublicKey = pair.publicKey;
 
   electronApp = await electron.launch({
     args: [path.join(__dirname, '../../main.js')],
@@ -31,7 +42,9 @@ test.beforeAll(async () => {
       // main.js llama app.setPath('userData', ...) con este valor
       // ANTES de app.whenReady(), así todo el vault queda aislado
       GW_TEST_USERDATA: tmpDataDir,
-      GW_LICENSE_SECRET: ''
+      GW_LICENSE_SECRET: '',
+      GW_LICENSE_PUBLIC_KEY: testPublicKey,
+      GW_LICENSE_SERVER_URL: ''
     }
   });
   const mainWindow = await electronApp.firstWindow();
@@ -147,13 +160,17 @@ test('license:claimByKey rechaza clave GW-LIC-V1 sin GW_LICENSE_SECRET configura
   const fakeKey = 'GW-LIC-V1:' + Buffer.from('{"tier":"pro"}').toString('base64') + '.aabbccdd';
   const result = await ipc('license:claimByKey', fakeKey);
   expect(result.active).toBe(false);
-  expect(result.reason).toMatch(/GW_LICENSE_SECRET/i);
+  expect(result.reason).toMatch(/firma|formato/i);
 });
 
 test('license:install con clave válida GW-XXXX activa la licencia en el vault', async () => {
   const hwid = await ipc('license:hwid');
-  const tail = hwid.replace(/-/g, '').toUpperCase().slice(-12);
-  const validKey = `GW-${tail.slice(0,4)}-${tail.slice(4,8)}-${tail.slice(8,12)}`;
+  const validKey = createLicenseText({
+    id: 'GW-IPC-VALID', hwid, platform: 'windows', app: 'gestor-web',
+    plan: '1d', tier: 'standard', issued_at: Date.now(),
+    expires_at: Date.now() + 86400000, features: ['standard'],
+    online_required: false, sig_alg: 'RSA-SHA256'
+  }, testPrivateKey);
 
   const result = await ipc('license:install', validKey);
   expect(result.active).toBe(true);
@@ -395,6 +412,97 @@ test('perfil con URL abre la URL y conserva la identidad Chromium seleccionada',
 });
 
 // ── Validación de seguridad ───────────────────────────────────────────────────
+test('plantilla Android aplica viewport, touch, UA y client hints moviles reales', async () => {
+  const server = require('http').createServer((_request, response) => {
+    response.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+    response.end('<!doctype html><meta name="viewport" content="width=device-width"><title>Mobile ready</title>');
+  });
+  await new Promise((resolve, reject) => {
+    server.once('error', reject);
+    server.listen(0, '127.0.0.1', resolve);
+  });
+  const url = `http://127.0.0.1:${server.address().port}/mobile`;
+  const profile = {
+    id: 'shell-android-mobile', name: 'Pixel 8', url, gw_engine: false,
+    fingerprint: {
+      templateId: 'android_chrome', os: 'Android', browser: 'Chrome Mobile',
+      userAgent: 'Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Mobile Safari/537.36',
+      platform: 'Linux armv8l', vendor: 'Google Inc.', mobile: true, touchPoints: 5,
+      deviceScaleFactor: 2.625, model: 'Pixel 8', architecture: 'arm',
+      locale: 'es-MX', timezone: 'America/Mexico_City', resolution: { width: 412, height: 915 }
+    }
+  };
+  try {
+    const windowPromise = electronApp.waitForEvent('window');
+    const opened = await ipc('profiles:openWindow', profile, null, '');
+    const profileWindow = await windowPromise;
+    expect(opened.ok).toBe(true);
+    await profileWindow.waitForLoadState('domcontentloaded');
+    await expect(profileWindow.locator('#engineLabel')).toContainText('Android');
+    await expect.poll(() => electronApp.evaluate(async ({ webContents }, expectedUrl) => {
+      const guest = webContents.getAllWebContents().find((item) => item.getURL() === expectedUrl);
+      if (!guest) return null;
+      return guest.executeJavaScript(`(async () => ({
+        mobileUa: /Android 14; Pixel 8/.test(navigator.userAgent), platform: navigator.platform,
+        touch: navigator.maxTouchPoints, screen: [screen.width, screen.height],
+        viewport: [innerWidth, innerHeight], dpr: devicePixelRatio,
+        uaMobile: navigator.userAgentData?.mobile,
+        model: navigator.userAgentData ? (await navigator.userAgentData.getHighEntropyValues(['model'])).model : ''
+      }))()`);
+    }, url)).toEqual({ mobileUa: true, platform: 'Linux armv8l', touch: 5, screen: [412, 915], viewport: [412, 915], dpr: 2.625, uaMobile: true, model: 'Pixel 8' });
+  } finally {
+    await ipc('profiles:closeWindow', profile.id);
+    await new Promise((resolve) => server.close(resolve));
+  }
+});
+
+test('plantilla iPhone aplica viewport, touch y UA de identidad movil', async () => {
+  const server = require('http').createServer((_request, response) => {
+    response.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+    response.end('<!doctype html><meta name="viewport" content="width=device-width"><title>iPhone ready</title>');
+  });
+  await new Promise((resolve, reject) => { server.once('error', reject); server.listen(0, '127.0.0.1', resolve); });
+  const url = `http://127.0.0.1:${server.address().port}/iphone`;
+  const profile = {
+    id: 'shell-iphone-mobile', name: 'iPhone', url, gw_engine: false,
+    fingerprint: {
+      templateId: 'iphone_safari', os: 'iOS', browser: 'Mobile Safari',
+      userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Mobile/15E148 Safari/604.1',
+      platform: 'iPhone', vendor: 'Apple Computer, Inc.', mobile: true, touchPoints: 5,
+      deviceScaleFactor: 3, model: 'iPhone', architecture: 'arm',
+      locale: 'es-MX', timezone: 'America/Mexico_City', resolution: { width: 390, height: 844 }
+    }
+  };
+  try {
+    const hwid = await ipc('license:hwid');
+    const license = createLicenseText({
+      id: 'GW-IPC-IPHONE', hwid, platform: 'windows', app: 'gestor-web',
+      plan: '1d', tier: 'standard', issued_at: Date.now(), expires_at: Date.now() + 86400000,
+      features: ['standard'], online_required: false, sig_alg: 'RSA-SHA256'
+    }, testPrivateKey);
+    await ipc('license:install', license);
+    await ipc('profiles:openWindow', profile, null, '');
+    await expect.poll(() => electronApp.windows().some((page) => page.url().includes('profile-browser.html') && page.url().includes(profile.id))).toBe(true);
+    const profileWindow = electronApp.windows().find((page) => page.url().includes('profile-browser.html') && page.url().includes(profile.id));
+    await profileWindow.waitForLoadState('domcontentloaded');
+    await expect(profileWindow.locator('#engineLabel')).toContainText('iOS');
+    await expect(profileWindow.locator('webview')).toHaveCount(1);
+    await expect.poll(() => electronApp.evaluate(async ({ webContents }, expectedUrl) => {
+      const guest = webContents.getAllWebContents().find((item) => item.getType() === 'webview');
+      if (!guest) return null;
+      const identity = await guest.executeJavaScript(`({
+        iphoneUa: /iPhone OS 17_4/.test(navigator.userAgent), platform: navigator.platform,
+        vendor: navigator.vendor, touch: navigator.maxTouchPoints,
+        screen: [screen.width, screen.height], viewport: [innerWidth, innerHeight], dpr: devicePixelRatio
+      })`);
+      return { currentUrl: guest.getURL(), expectedUrl, identity };
+    }, url)).toEqual({ currentUrl: url, expectedUrl: url, identity: { iphoneUa: true, platform: 'iPhone', vendor: 'Apple Computer, Inc.', touch: 5, screen: [390, 844], viewport: [390, 844], dpr: 3 } });
+  } finally {
+    await ipc('profiles:closeWindow', profile.id);
+    await new Promise((resolve) => server.close(resolve));
+  }
+});
+
 test('app:openExternal rechaza URL con protocolo no permitido', async () => {
   const result = await ipc('app:openExternal', 'javascript:alert(1)');
   expect(result.ok).toBe(false);
